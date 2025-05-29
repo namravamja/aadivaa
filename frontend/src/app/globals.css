@@ -1,0 +1,390 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+:root {
+  --font-jakarta: "Plus Jakarta Sans", sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
+}
+
+body {
+  font-family: var(--font-jakarta);
+}
+
+:root {
+  --color-terracotta-50: #fdf4f2;
+  --color-terracotta-100: #fbe8e4;
+  --color-terracotta-200: #f7d5cd;
+  --color-terracotta-300: #f0b8a8;
+  --color-terracotta-400: #e79078;
+  --color-terracotta-500: #dd6b4e;
+  --color-terracotta-600: #cb4f30;
+  --color-terracotta-700: #ab3c25;
+  --color-terracotta-800: #8c3423;
+  --color-terracotta-900: #752e22;
+  --color-terracotta-950: #3f150f;
+
+  --color-sage-50: #f5f7f5;
+  --color-sage-100: #e6ebe6;
+  --color-sage-200: #d1dbd1;
+  --color-sage-300: #b0c2b0;
+  --color-sage-400: #8aa38a;
+  --color-sage-500: #6b866b;
+  --color-sage-600: #556c55;
+  --color-sage-700: #455745;
+  --color-sage-800: #3a473a;
+  --color-sage-900: #323c32;
+  --color-sage-950: #1a201a;
+
+  --color-clay-50: #f9f7f4;
+  --color-clay-100: #f1ece5;
+  --color-clay-200: #e2d8cb;
+  --color-clay-300: #d0bda7;
+  --color-clay-400: #b99c7d;
+  --color-clay-500: #a98260;
+  --color-clay-600: #96704f;
+  --color-clay-700: #7d5c42;
+  --color-clay-800: #674c3a;
+  --color-clay-900: #564032;
+  --color-clay-950: #2e211a;
+}
+
+/* Apply custom colors to Tailwind classes */
+.bg-terracotta-50 {
+  background-color: var(--color-terracotta-50);
+}
+.bg-terracotta-100 {
+  background-color: var(--color-terracotta-100);
+}
+.bg-terracotta-200 {
+  background-color: var(--color-terracotta-200);
+}
+.bg-terracotta-300 {
+  background-color: var(--color-terracotta-300);
+}
+.bg-terracotta-400 {
+  background-color: var(--color-terracotta-400);
+}
+.bg-terracotta-500 {
+  background-color: var(--color-terracotta-500);
+}
+.bg-terracotta-600 {
+  background-color: var(--color-terracotta-600);
+}
+.bg-terracotta-700 {
+  background-color: var(--color-terracotta-700);
+}
+.bg-terracotta-800 {
+  background-color: var(--color-terracotta-800);
+}
+.bg-terracotta-900 {
+  background-color: var(--color-terracotta-900);
+}
+.bg-terracotta-950 {
+  background-color: var(--color-terracotta-950);
+}
+
+.text-terracotta-50 {
+  color: var(--color-terracotta-50);
+}
+.text-terracotta-100 {
+  color: var(--color-terracotta-100);
+}
+.text-terracotta-200 {
+  color: var(--color-terracotta-200);
+}
+.text-terracotta-300 {
+  color: var(--color-terracotta-300);
+}
+.text-terracotta-400 {
+  color: var(--color-terracotta-400);
+}
+.text-terracotta-500 {
+  color: var(--color-terracotta-500);
+}
+.text-terracotta-600 {
+  color: var(--color-terracotta-600);
+}
+.text-terracotta-700 {
+  color: var(--color-terracotta-700);
+}
+.text-terracotta-800 {
+  color: var(--color-terracotta-800);
+}
+.text-terracotta-900 {
+  color: var(--color-terracotta-900);
+}
+.text-terracotta-950 {
+  color: var(--color-terracotta-950);
+}
+
+.hover\:bg-terracotta-50:hover {
+  background-color: var(--color-terracotta-50);
+}
+.hover\:bg-terracotta-100:hover {
+  background-color: var(--color-terracotta-100);
+}
+.hover\:bg-terracotta-200:hover {
+  background-color: var(--color-terracotta-200);
+}
+.hover\:bg-terracotta-300:hover {
+  background-color: var(--color-terracotta-300);
+}
+.hover\:bg-terracotta-400:hover {
+  background-color: var(--color-terracotta-400);
+}
+.hover\:bg-terracotta-500:hover {
+  background-color: var(--color-terracotta-500);
+}
+.hover\:bg-terracotta-600:hover {
+  background-color: var(--color-terracotta-600);
+}
+.hover\:bg-terracotta-700:hover {
+  background-color: var(--color-terracotta-700);
+}
+.hover\:bg-terracotta-800:hover {
+  background-color: var(--color-terracotta-800);
+}
+.hover\:bg-terracotta-900:hover {
+  background-color: var(--color-terracotta-900);
+}
+.hover\:bg-terracotta-950:hover {
+  background-color: var(--color-terracotta-950);
+}
+
+.hover\:text-terracotta-50:hover {
+  color: var(--color-terracotta-50);
+}
+.hover\:text-terracotta-100:hover {
+  color: var(--color-terracotta-100);
+}
+.hover\:text-terracotta-200:hover {
+  color: var(--color-terracotta-200);
+}
+.hover\:text-terracotta-300:hover {
+  color: var(--color-terracotta-300);
+}
+.hover\:text-terracotta-400:hover {
+  color: var(--color-terracotta-400);
+}
+.hover\:text-terracotta-500:hover {
+  color: var(--color-terracotta-500);
+}
+.hover\:text-terracotta-600:hover {
+  color: var(--color-terracotta-600);
+}
+.hover\:text-terracotta-700:hover {
+  color: var(--color-terracotta-700);
+}
+.hover\:text-terracotta-800:hover {
+  color: var(--color-terracotta-800);
+}
+.hover\:text-terracotta-900:hover {
+  color: var(--color-terracotta-900);
+}
+.hover\:text-terracotta-950:hover {
+  color: var(--color-terracotta-950);
+}
+
+.bg-sage-50 {
+  background-color: var(--color-sage-50);
+}
+.bg-sage-100 {
+  background-color: var(--color-sage-100);
+}
+.bg-sage-200 {
+  background-color: var(--color-sage-200);
+}
+.bg-sage-300 {
+  background-color: var(--color-sage-300);
+}
+.bg-sage-400 {
+  background-color: var(--color-sage-400);
+}
+.bg-sage-500 {
+  background-color: var(--color-sage-500);
+}
+.bg-sage-600 {
+  background-color: var(--color-sage-600);
+}
+.bg-sage-700 {
+  background-color: var(--color-sage-700);
+}
+.bg-sage-800 {
+  background-color: var(--color-sage-800);
+}
+.bg-sage-900 {
+  background-color: var(--color-sage-900);
+}
+.bg-sage-950 {
+  background-color: var(--color-sage-950);
+}
+
+.text-sage-50 {
+  color: var(--color-sage-50);
+}
+.text-sage-100 {
+  color: var(--color-sage-100);
+}
+.text-sage-200 {
+  color: var(--color-sage-200);
+}
+.text-sage-300 {
+  color: var(--color-sage-300);
+}
+.text-sage-400 {
+  color: var(--color-sage-400);
+}
+.text-sage-500 {
+  color: var(--color-sage-500);
+}
+.text-sage-600 {
+  color: var(--color-sage-600);
+}
+.text-sage-700 {
+  color: var(--color-sage-700);
+}
+.text-sage-800 {
+  color: var(--color-sage-800);
+}
+.text-sage-900 {
+  color: var(--color-sage-900);
+}
+.text-sage-950 {
+  color: var(--color-sage-950);
+}
+
+.bg-clay-50 {
+  background-color: var(--color-clay-50);
+}
+.bg-clay-100 {
+  background-color: var(--color-clay-100);
+}
+.bg-clay-200 {
+  background-color: var(--color-clay-200);
+}
+.bg-clay-300 {
+  background-color: var(--color-clay-300);
+}
+.bg-clay-400 {
+  background-color: var(--color-clay-400);
+}
+.bg-clay-500 {
+  background-color: var(--color-clay-500);
+}
+.bg-clay-600 {
+  background-color: var(--color-clay-600);
+}
+.bg-clay-700 {
+  background-color: var(--color-clay-700);
+}
+.bg-clay-800 {
+  background-color: var(--color-clay-800);
+}
+.bg-clay-900 {
+  background-color: var(--color-clay-900);
+}
+.bg-clay-950 {
+  background-color: var(--color-clay-950);
+}
+
+.text-clay-50 {
+  color: var(--color-clay-50);
+}
+.text-clay-100 {
+  color: var(--color-clay-100);
+}
+.text-clay-200 {
+  color: var(--color-clay-200);
+}
+.text-clay-300 {
+  color: var(--color-clay-300);
+}
+.text-clay-400 {
+  color: var(--color-clay-400);
+}
+.text-clay-500 {
+  color: var(--color-clay-500);
+}
+.text-clay-600 {
+  color: var(--color-clay-600);
+}
+.text-clay-700 {
+  color: var(--color-clay-700);
+}
+.text-clay-800 {
+  color: var(--color-clay-800);
+}
+.text-clay-900 {
+  color: var(--color-clay-900);
+}
+.text-clay-950 {
+  color: var(--color-clay-950);
+}
+
+/* Hide scrollbar for Chrome, Safari and Opera */
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* Hide scrollbar for IE, Edge and Firefox */
+.scrollbar-hide {
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
+}
+
+/* Container responsive padding */
+.container {
+  width: 100%;
+  margin-right: auto;
+  margin-left: auto;
+  padding-right: 1rem;
+  padding-left: 1rem;
+}
+
+@media (min-width: 640px) {
+  .container {
+    max-width: 640px;
+    padding-right: 1.5rem;
+    padding-left: 1.5rem;
+  }
+}
+
+@media (min-width: 768px) {
+  .container {
+    max-width: 768px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .container {
+    max-width: 1024px;
+    padding-right: 2rem;
+    padding-left: 2rem;
+  }
+}
+
+@media (min-width: 1280px) {
+  .container {
+    max-width: 1280px;
+  }
+}
+
+@media (min-width: 1536px) {
+  .container {
+    max-width: 1536px;
+  }
+}
+
+@keyframes pulse-slow {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.6;
+  }
+}
+
+.animate-pulse-slow {
+  animation: pulse-slow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
