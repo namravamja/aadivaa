@@ -6,8 +6,8 @@ import cookieParser from "cookie-parser";
 import dotenv from "dotenv";
 import { errorHandler, notFound } from "./middleware/errorHandler";
 import { logger } from "./utils/logger";
-import authRoutes from "./routes/auth.routes";
-
+import authRoutes from "./routes/common/auth.routes";
+import buyerRoutes from "./routes/Buyer/buyer.routes";
 
 // Load .env variables
 dotenv.config();
@@ -48,6 +48,9 @@ app.get("/health", (req, res) => {
 
 // Auth routes
 app.use("/api/auth", authRoutes);
+
+// Buyer routes
+app.use("/api/buyer", buyerRoutes);
 
 // 404 and error handlers
 app.use(notFound);

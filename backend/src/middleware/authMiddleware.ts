@@ -14,7 +14,8 @@ export const verifyToken = (
   const token = req.cookies.token;
 
   if (!token) {
-    return res.status(401).json({ error: "Unauthorized" });
+    res.status(401).json({ error: "Unauthorized" });
+    return;
   }
 
   try {
@@ -22,9 +23,10 @@ export const verifyToken = (
       token,
       process.env.JWT_SECRET as string
     ) as AuthPayload;
-    (req as any).user = decoded;
+    (req as any).user = decoded; // attach decoded payload (including id) to req.user
     next();
   } catch (err) {
-    return res.status(401).json({ error: "Invalid token" });
+    res.status(401).json({ error: "Invalid token" });
+    return;
   }
 };

@@ -1,5 +1,5 @@
 import { PrismaClient } from "@prisma/client";
-import { hashPassword, comparePassword, generateToken } from "../utils/jwt";
+import { hashPassword, comparePassword, generateToken } from "../../utils/jwt";
 
 interface SignupData {
   email: string;
@@ -38,6 +38,38 @@ export const loginBuyer = async ({
   }
 
   const token = generateToken({ id: buyer.id, role: "BUYER" });
+
+  return { token };
+};
+
+export const signupArtist = async (data: SignupData) => {
+  const existing = await prisma.artist.findUnique({
+    where: { email: data.email },
+  });
+  if (existing) throw new Error("Email already registered");
+
+  const hashed = await hashPassword(data.password);
+
+  const artist = await prisma.artist.create({
+    data: { ...data, password: hashed },
+  });
+
+  return { message: "Artist created", id: artist.id };
+};
+
+export const loginArtist = async ({
+  email,
+  password,
+}: {
+  email: string;
+  password: string;
+}) => {
+  const artist = await prisma.artist.findUnique({ where: { email } });
+  if (!artist || !(await comparePassword(password, artist.password))) {
+    throw new Error("Invalid credentials");
+  }
+
+  const token = generateToken({ id: artist.id, role: "ARTIST" });
 
   return { token };
 };
