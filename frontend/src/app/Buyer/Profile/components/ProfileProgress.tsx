@@ -58,7 +58,7 @@ export default function ProfileProgress({ user }: ProfileProgressProps) {
   const progress = calculateProgress();
 
   const getProgressColor = () => {
-    if (progress >= 80) return "bg-green-600";
+    if (progress >= 80) return "bg-sage-500";
     if (progress >= 50) return "bg-terracotta-600";
     return "bg-yellow-500";
   };
