@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Link from "next/link";
 import { Menu, X, ShoppingBag, User } from "lucide-react";
 import LanguageSelector from "../LanguageSelector";
 import Logo from "../Navbar/components/Logo";

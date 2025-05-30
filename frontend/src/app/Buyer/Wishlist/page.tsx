@@ -30,7 +30,7 @@ const initialWishlistItems = [
   },
 ];
 
-export default function WishlistPage() {
+export default function BuyerWishlist() {
   const [wishlistItems, setWishlistItems] = useState(initialWishlistItems);
   const [addedToCart, setAddedToCart] = useState<Record<string, boolean>>({});
 

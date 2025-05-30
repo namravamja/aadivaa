@@ -39,7 +39,7 @@ export default function ActionButtons({
 
       {showCart && (
         <Link
-          href="/cart"
+          href="/Buyer/Cart"
           className="relative text-stone-600 hover:text-terracotta-600 transition-colors duration-300 p-1 rounded-md hover:bg-stone-50"
           aria-label="Cart"
         >

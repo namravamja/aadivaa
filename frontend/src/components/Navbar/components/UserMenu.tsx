@@ -21,13 +21,13 @@ interface UserMenuProps {
 }
 
 const userMenuItems = [
-  { name: "Profile", href: "/profile", icon: UserCircle },
-  { name: "Orders", href: "/orders", icon: Package },
-  { name: "Track Order", href: "/track-order", icon: Truck },
+  { name: "Profile", href: "/Buyer/Profile", icon: UserCircle },
+  { name: "Orders", href: "/Buyer/Orders", icon: Package },
+  { name: "Track Order", href: "/Buyer/TrackOrder", icon: Truck },
 ];
 
 const mobileActionItems = [
-  { name: "Cart", href: "/cart", icon: ShoppingBag, showBadge: true },
+  { name: "Cart", href: "/Buyer/Cart", icon: ShoppingBag, showBadge: true },
   { name: "Wishlist", href: "/Buyer/Wishlist", icon: Heart },
 ];
 
