@@ -8,6 +8,7 @@ import { errorHandler, notFound } from "./middleware/errorHandler";
 import { logger } from "./utils/logger";
 import authRoutes from "./routes/common/auth.routes";
 import buyerRoutes from "./routes/Buyer/buyer.routes";
+import artistRoutes from "./routes/Artist/artist.routes";
 
 // Load .env variables
 dotenv.config();
@@ -51,6 +52,9 @@ app.use("/api/auth", authRoutes);
 
 // Buyer routes
 app.use("/api/buyer", buyerRoutes);
+
+// Artist routes
+app.use("/api/artist", artistRoutes);
 
 // 404 and error handlers
 app.use(notFound);
