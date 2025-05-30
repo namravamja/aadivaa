@@ -1,4 +1,4 @@
-import HomePage from "./User/Homepage/page";
+import HomePage from "./(users)/(Homepage)/page";
 import Footer from "../components/Footer";
 import Header from "../components/Navbar";
 

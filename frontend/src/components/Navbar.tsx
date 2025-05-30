@@ -16,8 +16,8 @@ import LanguageSelector from "./LanguageSelector";
 
 const navigation = [
   { name: "Home", href: "/" },
-  { name: "Shop", href: "/User/Products" },
-  { name: "Artists", href: "/User/Artists" },
+  { name: "Shop", href: "/Products" },
+  { name: "Artists", href: "/Artists" },
   {
     name: "Become Seller",
     children: [
@@ -25,8 +25,8 @@ const navigation = [
       { name: "Go to dashboard", href: "/Artist/login" },
     ],
   },
-  { name: "About", href: "/User/About" },
-  { name: "Journal", href: "/User/Journal" },
+  { name: "About", href: "/About" },
+  { name: "Journal", href: "/Journal" },
 ];
 
 export default function Navbar() {
@@ -120,14 +120,14 @@ export default function Navbar() {
               <Search className="w-4 h-4 sm:w-5 sm:h-5" />
             </button>
             <Link
-              href="/User/login"
+              href="/Buyer/login"
               className="text-stone-600 hover:text-terracotta-600 transition-colors duration-300"
               aria-label="Account"
             >
               <User className="w-4 h-4 sm:w-5 sm:h-5" />
             </Link>
             <Link
-              href="/User/Wishlist"
+              href="/Buyer/Wishlist"
               className="text-stone-600 hover:text-terracotta-600 transition-colors duration-300"
               aria-label="Wishlist"
             >
@@ -258,7 +258,7 @@ export default function Navbar() {
                   <span>Account</span>
                 </Link>
                 <Link
-                  href="/User/Wishlist"
+                  href="/Buyer/Wishlist"
                   className="text-stone-900 text-lg sm:text-xl font-light flex items-center gap-3 hover:text-terracotta-600 transition-colors duration-300 p-2 hover:bg-white rounded-md"
                   onClick={() => setIsMenuOpen(false)}
                 >
