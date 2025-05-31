@@ -39,6 +39,11 @@ export const loginBuyer = async ({
 
   const token = generateToken({ id: buyer.id, role: "BUYER" });
 
+  await prisma.buyer.update({
+    where: { id: buyer.id },
+    data: { isAuthenticated: true },
+  });
+
   return { token };
 };
 
@@ -70,6 +75,11 @@ export const loginArtist = async ({
   }
 
   const token = generateToken({ id: artist.id, role: "ARTIST" });
+
+  await prisma.artist.update({
+    where: { id: artist.id },
+    data: { isAuthenticated: true },
+  });
 
   return { token };
 };
