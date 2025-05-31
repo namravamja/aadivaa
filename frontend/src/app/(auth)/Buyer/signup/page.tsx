@@ -6,9 +6,12 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Eye, EyeOff, ArrowRight, User, Mail, Lock } from "lucide-react";
+import { useSignupBuyerMutation } from "@/services/api/authApi"; // Update this path
 
 export default function SignupPage() {
   const router = useRouter();
+  const [signupBuyer, { isLoading, isError, error }] = useSignupBuyerMutation();
+
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const [formData, setFormData] = useState({
     firstName: "",
@@ -22,13 +25,25 @@ export default function SignupPage() {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // In a real app, this would register with a backend
-    console.log("Customer Signup attempt:", formData);
 
-    // Simulate successful registration and redirect
-    router.push("/");
+    try {
+      // Send data to API using RTK Query
+      const result = await signupBuyer(formData).unwrap();
+
+      // Handle successful signup
+      console.log("Signup successful:", result);
+
+      // You might want to store user data or token here
+      // localStorage.setItem('token', result.token); // if your API returns a token
+
+      // Redirect to login or dashboard
+      router.push("/Buyer/login"); // or wherever you want to redirect
+    } catch (err) {
+      // Error is already handled by RTK Query state
+      console.error("Signup failed:", err);
+    }
   };
 
   return (
@@ -76,6 +91,18 @@ export default function SignupPage() {
           </div>
 
           <div className="p-8">
+            {/* Error display */}
+            {isError && (
+              <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+                <p className="text-red-600 text-sm">
+                  {error && "data" in error
+                    ? (error.data as any)?.message ||
+                      "Signup failed. Please try again."
+                    : "An error occurred. Please try again."}
+                </p>
+              </div>
+            )}
+
             <form onSubmit={handleSubmit} className="space-y-5">
               <div className="grid grid-cols-2 gap-4 mb-5">
                 <div className="relative group">
@@ -89,7 +116,8 @@ export default function SignupPage() {
                     required
                     value={formData.firstName}
                     onChange={handleChange}
-                    className="w-full pl-11 pr-4 py-3.5 bg-stone-50 border border-stone-200 rounded-xl focus:border-terracotta-500 focus:outline-none focus:ring-2 focus:ring-terracotta-100 transition-all duration-200"
+                    disabled={isLoading}
+                    className="w-full pl-11 pr-4 py-3.5 bg-stone-50 border border-stone-200 rounded-xl focus:border-terracotta-500 focus:outline-none focus:ring-2 focus:ring-terracotta-100 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                     placeholder="First Name"
                   />
                 </div>
@@ -101,7 +129,8 @@ export default function SignupPage() {
                     required
                     value={formData.lastName}
                     onChange={handleChange}
-                    className="w-full px-4 py-3.5 bg-stone-50 border border-stone-200 rounded-xl focus:border-terracotta-500 focus:outline-none focus:ring-2 focus:ring-terracotta-100 transition-all duration-200"
+                    disabled={isLoading}
+                    className="w-full px-4 py-3.5 bg-stone-50 border border-stone-200 rounded-xl focus:border-terracotta-500 focus:outline-none focus:ring-2 focus:ring-terracotta-100 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                     placeholder="Last Name"
                   />
                 </div>
@@ -118,7 +147,8 @@ export default function SignupPage() {
                   required
                   value={formData.email}
                   onChange={handleChange}
-                  className="w-full pl-11 pr-4 py-3.5 bg-stone-50 border border-stone-200 rounded-xl focus:border-terracotta-500 focus:outline-none focus:ring-2 focus:ring-terracotta-100 transition-all duration-200"
+                  disabled={isLoading}
+                  className="w-full pl-11 pr-4 py-3.5 bg-stone-50 border border-stone-200 rounded-xl focus:border-terracotta-500 focus:outline-none focus:ring-2 focus:ring-terracotta-100 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                   placeholder="Email address"
                 />
               </div>
@@ -134,13 +164,15 @@ export default function SignupPage() {
                   required
                   value={formData.password}
                   onChange={handleChange}
-                  className="w-full pl-11 pr-11 py-3.5 bg-stone-50 border border-stone-200 rounded-xl focus:border-terracotta-500 focus:outline-none focus:ring-2 focus:ring-terracotta-100 transition-all duration-200"
+                  disabled={isLoading}
+                  className="w-full pl-11 pr-11 py-3.5 bg-stone-50 border border-stone-200 rounded-xl focus:border-terracotta-500 focus:outline-none focus:ring-2 focus:ring-terracotta-100 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                   placeholder="Password"
                 />
                 <button
                   type="button"
                   onClick={() => setIsPasswordVisible(!isPasswordVisible)}
-                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-stone-400 hover:text-terracotta-600 transition-colors duration-200"
+                  disabled={isLoading}
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-stone-400 hover:text-terracotta-600 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                   aria-label={
                     isPasswordVisible ? "Hide password" : "Show password"
                   }
@@ -162,7 +194,8 @@ export default function SignupPage() {
                   name="terms"
                   type="checkbox"
                   required
-                  className="h-4 w-4 rounded border-stone-300 text-terracotta-600 focus:ring-terracotta-500"
+                  disabled={isLoading}
+                  className="h-4 w-4 rounded border-stone-300 text-terracotta-600 focus:ring-terracotta-500 disabled:opacity-50 disabled:cursor-not-allowed"
                 />
                 <label
                   htmlFor="terms"
@@ -187,10 +220,20 @@ export default function SignupPage() {
 
               <button
                 type="submit"
-                className="w-full bg-terracotta-600 text-white py-3.5 px-4 rounded-xl font-medium hover:bg-terracotta-700 flex items-center justify-center shadow-md hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-300"
+                disabled={isLoading}
+                className="w-full bg-terracotta-600 text-white py-3.5 px-4 rounded-xl font-medium hover:bg-terracotta-700 flex items-center justify-center shadow-md hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
               >
-                Create Account
-                <ArrowRight className="ml-2 h-4 w-4 animate-pulse-slow" />
+                {isLoading ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent mr-2"></div>
+                    Creating Account...
+                  </>
+                ) : (
+                  <>
+                    Create Account
+                    <ArrowRight className="ml-2 h-4 w-4 animate-pulse-slow" />
+                  </>
+                )}
               </button>
             </form>
 

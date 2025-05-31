@@ -6,9 +6,12 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Eye, EyeOff, ArrowRight, User, Lock } from "lucide-react";
+import { useLoginBuyerMutation } from "@/services/api/authApi"; // Adjust import path as needed
 
 export default function LoginPage() {
   const router = useRouter();
+  const [loginBuyer, { isLoading, error }] = useLoginBuyerMutation();
+
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const [formData, setFormData] = useState({
     email: "",
@@ -20,13 +23,29 @@ export default function LoginPage() {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // In a real app, this would authenticate with a backend
-    console.log("Customer Login attempt:", formData);
 
-    // Simulate successful login and redirect
-    router.push("/");
+    try {
+      const result = await loginBuyer({
+        email: formData.email,
+        password: formData.password,
+      }).unwrap();
+
+      // Handle successful login
+      console.log("Login successful:", result);
+
+      // Store token if provided
+      if (result.token) {
+        localStorage.setItem("authToken", result.token);
+      }
+
+      // Redirect to dashboard or home
+      router.push("/");
+    } catch (err) {
+      console.error("Login failed:", err);
+      // Error is already handled by RTK Query and available in the error state
+    }
   };
 
   return (
@@ -69,6 +88,15 @@ export default function LoginPage() {
 
           <div className="p-8">
             <form onSubmit={handleSubmit} className="space-y-5">
+              {/* Error display */}
+              {error && (
+                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm">
+                  {"data" in (error as object) && (error as any).data?.message
+                    ? (error as any).data.message
+                    : "Login failed. Please try again."}
+                </div>
+              )}
+
               <div>
                 <div className="relative group">
                   <div className="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-stone-400 group-focus-within:text-terracotta-500 transition-colors duration-200">
@@ -81,7 +109,8 @@ export default function LoginPage() {
                     required
                     value={formData.email}
                     onChange={handleChange}
-                    className="w-full pl-11 pr-4 py-3.5 bg-stone-50 border border-stone-200 rounded-xl focus:border-terracotta-500 focus:outline-none focus:ring-2 focus:ring-terracotta-100 transition-all duration-200"
+                    disabled={isLoading}
+                    className="w-full pl-11 pr-4 py-3.5 bg-stone-50 border border-stone-200 rounded-xl focus:border-terracotta-500 focus:outline-none focus:ring-2 focus:ring-terracotta-100 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                     placeholder="Email address"
                   />
                 </div>
@@ -99,13 +128,15 @@ export default function LoginPage() {
                     required
                     value={formData.password}
                     onChange={handleChange}
-                    className="w-full pl-11 pr-11 py-3.5 bg-stone-50 border border-stone-200 rounded-xl focus:border-terracotta-500 focus:outline-none focus:ring-2 focus:ring-terracotta-100 transition-all duration-200"
+                    disabled={isLoading}
+                    className="w-full pl-11 pr-11 py-3.5 bg-stone-50 border border-stone-200 rounded-xl focus:border-terracotta-500 focus:outline-none focus:ring-2 focus:ring-terracotta-100 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                     placeholder="Password"
                   />
                   <button
                     type="button"
                     onClick={() => setIsPasswordVisible(!isPasswordVisible)}
-                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-stone-400 hover:text-terracotta-600 transition-colors duration-200"
+                    disabled={isLoading}
+                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-stone-400 hover:text-terracotta-600 transition-colors duration-200 disabled:opacity-50"
                     aria-label={
                       isPasswordVisible ? "Hide password" : "Show password"
                     }
@@ -125,7 +156,8 @@ export default function LoginPage() {
                     id="remember-me"
                     name="remember-me"
                     type="checkbox"
-                    className="h-4 w-4 rounded border-stone-300 text-terracotta-600 focus:ring-terracotta-500"
+                    disabled={isLoading}
+                    className="h-4 w-4 rounded border-stone-300 text-terracotta-600 focus:ring-terracotta-500 disabled:opacity-50"
                   />
                   <label
                     htmlFor="remember-me"
@@ -138,7 +170,9 @@ export default function LoginPage() {
                 <div className="text-sm">
                   <Link
                     href="/forgot-password"
-                    className="text-terracotta-600 hover:text-terracotta-700 font-medium transition-colors duration-200"
+                    className={`text-terracotta-600 hover:text-terracotta-700 font-medium transition-colors duration-200 ${
+                      isLoading ? "pointer-events-none opacity-50" : ""
+                    }`}
                   >
                     Forgot password?
                   </Link>
@@ -147,10 +181,20 @@ export default function LoginPage() {
 
               <button
                 type="submit"
-                className="w-full bg-terracotta-600 text-white py-3.5 px-4 rounded-xl font-medium hover:bg-terracotta-700 flex items-center justify-center shadow-md hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-300"
+                disabled={isLoading}
+                className="w-full bg-terracotta-600 text-white py-3.5 px-4 rounded-xl font-medium hover:bg-terracotta-700 flex items-center justify-center shadow-md hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
               >
-                Sign in{" "}
-                <ArrowRight className="ml-2 h-4 w-4 animate-pulse-slow" />
+                {isLoading ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent mr-2"></div>
+                    Signing in...
+                  </>
+                ) : (
+                  <>
+                    Sign in{" "}
+                    <ArrowRight className="ml-2 h-4 w-4 animate-pulse-slow" />
+                  </>
+                )}
               </button>
             </form>
 
@@ -159,7 +203,9 @@ export default function LoginPage() {
                 Don&apos;t have an account?{" "}
                 <Link
                   href="/Buyer/signup"
-                  className="text-terracotta-600 hover:text-terracotta-700 font-medium transition-colors duration-200"
+                  className={`text-terracotta-600 hover:text-terracotta-700 font-medium transition-colors duration-200 ${
+                    isLoading ? "pointer-events-none opacity-50" : ""
+                  }`}
                 >
                   Sign up
                 </Link>
