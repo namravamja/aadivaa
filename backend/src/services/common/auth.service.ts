@@ -36,7 +36,6 @@ export const loginBuyer = async ({
   if (!buyer || !(await comparePassword(password, buyer.password))) {
     throw new Error("Invalid credentials");
   }
-
   const token = generateToken({ id: buyer.id, role: "BUYER" });
 
   await prisma.buyer.update({
@@ -44,7 +43,7 @@ export const loginBuyer = async ({
     data: { isAuthenticated: true },
   });
 
-  return { token };
+  return { token, buyer };
 };
 
 export const signupArtist = async (data: SignupData) => {
@@ -81,5 +80,5 @@ export const loginArtist = async ({
     data: { isAuthenticated: true },
   });
 
-  return { token };
+  return { token, artist };
 };

@@ -4,8 +4,8 @@ import {
   signupBuyer,
   loginArtist,
   signupArtist,
-  logout,
 } from "../../controllers/common/auth.controller";
+import { logout } from "../../controllers/common/logout.controller";
 
 const router = express.Router();
 
