@@ -1,0 +1,82 @@
+import { Request, Response, NextFunction } from "express";
+import { verifyVerificationToken } from "../../utils/jwt";
+import { PrismaClient } from "@prisma/client";
+
+const prisma = new PrismaClient();
+
+export const verifyEmail = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const { token } = req.query;
+
+    if (!token || typeof token !== "string") {
+      res.status(400).json({ error: "Verification token is required" });
+      return;
+    }
+
+    const payload = verifyVerificationToken(token);
+
+    if (payload.role === "BUYER") {
+      const buyer = await prisma.buyer.findUnique({
+        where: { id: payload.id },
+      });
+
+      if (!buyer || buyer.isVerified) {
+        res.status(400).json({ error: "Invalid or already verified token" });
+        return;
+      }
+
+      if (buyer.verifyToken !== token || buyer.verifyExpires! < new Date()) {
+        res
+          .status(400)
+          .json({ error: "Verification token expired or invalid" });
+        return;
+      }
+
+      await prisma.buyer.update({
+        where: { id: buyer.id },
+        data: {
+          isVerified: true,
+          verifyToken: null,
+          verifyExpires: null,
+        },
+      });
+    } else if (payload.role === "ARTIST") {
+      const artist = await prisma.artist.findUnique({
+        where: { id: payload.id },
+      });
+
+      if (!artist || artist.isVerified) {
+        res.status(400).json({ error: "Invalid or already verified token" });
+        return;
+      }
+
+      if (artist.verifyToken !== token || artist.verifyExpires! < new Date()) {
+        res
+          .status(400)
+          .json({ error: "Verification token expired or invalid" });
+        return;
+      }
+
+      await prisma.artist.update({
+        where: { id: artist.id },
+        data: {
+          isVerified: true,
+          verifyToken: null,
+          verifyExpires: null,
+        },
+      });
+    } else {
+      res.status(400).json({ error: "Invalid role in token" });
+      return;
+    }
+
+    // Redirect to frontend login page after successful verification
+    res.redirect(`${process.env.FRONTEND_URL}/login?verified=true`);
+  } catch (err) {
+    next(err); // Pass error to Express error handler
+  }
+};

@@ -8,19 +8,24 @@ datasource db {
 }
 
 model Buyer {
-  id              String    @id @default(uuid())
-  email           String    @unique
-  password        String
-  firstName       String?
-  lastName        String?
-  phone           String?
-  avatar          String?
-  dateOfBirth     DateTime?
-  gender          String?
-  addresses       Address[]
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
-  isAuthenticated Boolean   @default(false)
+  id                    String    @id @default(uuid())
+  email                 String    @unique
+  password              String
+  firstName             String?
+  lastName              String?
+  phone                 String?
+  avatar                String?
+  dateOfBirth           DateTime?
+  gender                String?
+  addresses             Address[]
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+  isAuthenticated       Boolean   @default(false)
+  forgotPasswordToken   String?   @unique
+  forgotPasswordExpires DateTime?
+  verifyToken           String?   @unique
+  verifyExpires         DateTime?
+  isVerified            Boolean   @default(false)
 }
 
 model Address {
@@ -88,6 +93,13 @@ model Artist {
   createdAt        DateTime  @default(now())
   updatedAt        DateTime? @updatedAt
   isAuthenticated  Boolean   @default(false)
+
+  forgotPasswordToken   String?   @unique
+  forgotPasswordExpires DateTime?
+  verifyToken           String?   @unique
+  verifyExpires         DateTime?
+  isVerified            Boolean   @default(false)
+
 }
 
 model BusinessAddress {

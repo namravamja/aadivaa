@@ -6,6 +6,7 @@ import {
   signupArtist,
 } from "../../controllers/common/auth.controller";
 import { logout } from "../../controllers/common/logout.controller";
+import { verifyEmail } from "../../controllers/common/verifymail.controller";
 
 const router = express.Router();
 
@@ -16,6 +17,9 @@ router.post("/buyer/login", loginBuyer);
 // Artist routes
 router.post("/artist/signup", signupArtist);
 router.post("/artist/login", loginArtist);
+
+// Verification routes
+router.get("/verify-email", verifyEmail);
 
 router.post("/logout", logout);
 

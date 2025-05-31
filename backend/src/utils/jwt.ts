@@ -17,3 +17,23 @@ export const generateToken = (payload: {
     expiresIn: "7d",
   });
 };
+
+export const generateVerificationToken = (payload: {
+  id: string;
+  role: "BUYER" | "ARTIST";
+}) => {
+  return jwt.sign(payload, process.env.JWT_SECRET as string, {
+    expiresIn: "1d", // verification token valid for 1 day
+  });
+};
+
+export const verifyVerificationToken = (token: string) => {
+  try {
+    return jwt.verify(token, process.env.JWT_SECRET as string) as {
+      id: string;
+      role: "BUYER" | "ARTIST";
+    };
+  } catch (err) {
+    throw new Error("Invalid or expired verification token");
+  }
+};
