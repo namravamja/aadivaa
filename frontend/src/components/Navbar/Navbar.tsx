@@ -1,14 +1,14 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Menu, X, ShoppingBag, User } from "lucide-react";
+import { Menu, X, User } from "lucide-react";
 import LanguageSelector from "../LanguageSelector";
 import Logo from "../Navbar/components/Logo";
 import DesktopNavigation from "../Navbar/components/DesktopNavigation";
 import ActionButtons from "../Navbar/components/ActionButtons";
 import UserMenu from "../Navbar/components/UserMenu";
 import MobileMenu from "../Navbar/components/MobileMenu";
-import { NavigationItem, User as UserType } from "../Navbar/components/types";
+import { NavigationItem } from "../Navbar/components/types";
 
 const navigation: NavigationItem[] = [
   { name: "Home", href: "/" },
@@ -29,15 +29,6 @@ const navigation: NavigationItem[] = [
 export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
-  const [user, setUser] = useState<UserType | null>({
-    name: "John Doe",
-    image: "/Profile.jpg",
-  });
-
-  const handleLogout = () => {
-    setUser(null);
-    setIsUserMenuOpen(false);
-  };
 
   const closeMenu = () => {
     setIsMenuOpen(false);
@@ -103,7 +94,7 @@ export default function Navbar() {
           <div className="hidden lg:flex items-center space-x-2 xl:space-x-4">
             <LanguageSelector />
             <ActionButtons />
-            <UserMenu user={user} onLogout={handleLogout} />
+            <UserMenu />
           </div>
 
           {/* Tablet Actions - Shown on medium screens only */}
@@ -116,36 +107,16 @@ export default function Navbar() {
               <button
                 onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
                 className="flex items-center text-stone-600 hover:text-terracotta-600 transition-colors duration-300 p-1 rounded-md hover:bg-stone-50"
-                aria-label={user ? "User menu" : "Login"}
+                aria-label="User menu"
               >
-                {user ? (
-                  user.image ? (
-                    <img
-                      src={user.image}
-                      alt={user.name}
-                      className="w-7 h-7 rounded-full object-cover border-2 border-stone-200"
-                    />
-                  ) : (
-                    <div className="w-7 h-7 bg-stone-200 rounded-full flex items-center justify-center">
-                      <User className="w-4 h-4 text-stone-600" />
-                    </div>
-                  )
-                ) : (
-                  <User className="w-5 h-5" />
-                )}
+                <User className="w-5 h-5" />
               </button>
 
               {/* Tablet User Dropdown */}
               {isUserMenuOpen && (
                 <div className="absolute right-0 top-full mt-2 w-64 bg-white border border-stone-100 rounded-lg shadow-xl z-50 max-h-[calc(100vh-100px)] overflow-y-auto">
                   <div className="p-3 space-y-1">
-                    <UserMenu
-                      user={user}
-                      onLogout={handleLogout}
-                      isMobile
-                      onClose={closeUserMenu}
-                      cartCount={3}
-                    />
+                    <UserMenu isMobile onClose={closeUserMenu} />
                   </div>
                 </div>
               )}
@@ -188,36 +159,16 @@ export default function Navbar() {
               <button
                 onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
                 className="flex items-center text-stone-600 hover:text-terracotta-600 transition-colors duration-300 p-1 rounded-md hover:bg-stone-50"
-                aria-label={user ? "User menu" : "Login"}
+                aria-label="User menu"
               >
-                {user ? (
-                  user.image ? (
-                    <img
-                      src={user.image}
-                      alt={user.name}
-                      className="w-6 h-6 sm:w-7 sm:h-7 rounded-full object-cover border-2 border-stone-200"
-                    />
-                  ) : (
-                    <div className="w-6 h-6 sm:w-7 sm:h-7 bg-stone-200 rounded-full flex items-center justify-center">
-                      <User className="w-3 h-3 sm:w-4 sm:h-4 text-stone-600" />
-                    </div>
-                  )
-                ) : (
-                  <User className="w-5 h-5 sm:w-6 sm:h-6" />
-                )}
+                <User className="w-5 h-5 sm:w-6 sm:h-6" />
               </button>
 
               {/* Mobile User Dropdown */}
               {isUserMenuOpen && (
                 <div className="absolute right-0 top-full mt-2 w-64 sm:w-72 bg-white border border-stone-100 rounded-lg shadow-xl z-50 max-h-[calc(100vh-100px)] overflow-y-auto">
                   <div className="p-3 sm:p-4 space-y-1">
-                    <UserMenu
-                      user={user}
-                      onLogout={handleLogout}
-                      isMobile
-                      onClose={closeUserMenu}
-                      cartCount={3}
-                    />
+                    <UserMenu isMobile onClose={closeUserMenu} />
                   </div>
                 </div>
               )}

@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import {
   User,
@@ -9,42 +10,125 @@ import {
   Truck,
   ShoppingBag,
   Heart,
+  LucideIcon,
 } from "lucide-react";
-import { User as UserType } from "./types";
+import { useGetBuyerQuery } from "@/services/api/buyerApi";
 
+// Types
 interface UserMenuProps {
-  user: UserType | null;
-  onLogout: () => void;
   isMobile?: boolean;
   onClose?: () => void;
-  cartCount?: number;
 }
 
-const userMenuItems = [
+interface MenuItem {
+  name: string;
+  href: string;
+  icon: LucideIcon;
+}
+
+interface ActionMenuItem extends MenuItem {
+  showBadge?: boolean;
+}
+
+interface BuyerData {
+  firstName?: string;
+  avatar?: string;
+  [key: string]: any;
+}
+
+interface User {
+  name: string;
+  image: string;
+}
+
+interface ApiError {
+  status?: number;
+  data?: any;
+  [key: string]: any;
+}
+
+const userMenuItems: MenuItem[] = [
   { name: "Profile", href: "/Buyer/Profile", icon: UserCircle },
   { name: "Orders", href: "/Buyer/Orders", icon: Package },
   { name: "Track Order", href: "/Buyer/TrackOrder", icon: Truck },
 ];
 
-const mobileActionItems = [
+const mobileActionItems: ActionMenuItem[] = [
   { name: "Cart", href: "/Buyer/Cart", icon: ShoppingBag, showBadge: true },
   { name: "Wishlist", href: "/Buyer/Wishlist", icon: Heart },
 ];
 
-export default function UserMenu({
-  user,
-  onLogout,
-  isMobile = false,
-  onClose,
-  cartCount = 3,
-}: UserMenuProps) {
-  const handleLogout = () => {
-    onLogout();
+export default function UserMenu({ isMobile = false, onClose }: UserMenuProps) {
+  const [cartCount, setCartCount] = useState<number>(3);
+  const [hasTriedAuth, setHasTriedAuth] = useState<boolean>(false);
+
+  // Fetch buyer data - RTK Query will handle error states automatically
+  const {
+    data: buyerData,
+    isLoading,
+    isError,
+    error,
+  } = useGetBuyerQuery(undefined);
+
+  // Track when we've tried authentication
+  useEffect(() => {
+    if (isError || buyerData) {
+      setHasTriedAuth(true);
+    }
+  }, [isError, buyerData]);
+
+  // Determine authentication state
+  const isAuthenticated: boolean = !isError && !!buyerData && hasTriedAuth;
+  const apiError = error as ApiError | undefined;
+
+  console.log("Auth status:", {
+    isAuthenticated,
+    hasTriedAuth,
+    errorStatus: apiError?.status,
+  });
+
+  // Extract user data from RTK query response
+  const user: User | null =
+    isAuthenticated && buyerData
+      ? {
+          name: (buyerData as BuyerData).firstName || "User",
+          image: (buyerData as BuyerData).avatar || "/Profile.jpg",
+        }
+      : null;
+
+  const handleLogout = (): void => {
+    // Add your logout logic here
+    // This might include:
+    // - API call to logout endpoint
+    // - Clearing auth state from your store/context
+    // - Redirecting to login page
+
+    console.log("Logout clicked");
     onClose?.();
+
+    // If you need to reload the page after logout:
+    // window.location.reload();
   };
 
+  const handleImageError = (
+    e: React.SyntheticEvent<HTMLImageElement, Event>
+  ): void => {
+    const target = e.currentTarget;
+    target.style.display = "none";
+  };
+
+  // Show loading only on initial load, not on 401 errors
+  if (isLoading && !hasTriedAuth) {
+    return (
+      <div className="flex items-center justify-center p-3">
+        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-terracotta-600"></div>
+      </div>
+    );
+  }
+
   if (isMobile) {
-    if (!user) {
+    // Show login if not authenticated or got 401
+    if (!isAuthenticated) {
       return (
         <Link
           href="/Buyer/login"
@@ -60,11 +144,12 @@ export default function UserMenu({
     return (
       <>
         <div className="flex items-center gap-3 p-3 bg-stone-50 rounded-lg">
-          {user.image ? (
+          {user?.image ? (
             <img
               src={user.image}
               alt={user.name}
               className="w-8 h-8 sm:w-9 sm:h-9 md:w-10 md:h-10 rounded-full object-cover border-2 border-stone-200 flex-shrink-0"
+              onError={handleImageError}
             />
           ) : (
             <div className="w-8 h-8 sm:w-9 sm:h-9 md:w-10 md:h-10 bg-stone-200 rounded-full flex items-center justify-center flex-shrink-0">
@@ -72,11 +157,11 @@ export default function UserMenu({
             </div>
           )}
           <span className="text-stone-900 font-medium text-sm sm:text-base md:text-lg truncate">
-            {user.name}
+            {user?.name || "User"}
           </span>
         </div>
 
-        {userMenuItems.map((item) => {
+        {userMenuItems.map((item: MenuItem) => {
           const IconComponent = item.icon;
           return (
             <Link
@@ -91,8 +176,7 @@ export default function UserMenu({
           );
         })}
 
-        {/* Mobile Action Items (Cart, Wishlist) */}
-        {mobileActionItems.map((item) => {
+        {mobileActionItems.map((item: ActionMenuItem) => {
           const IconComponent = item.icon;
           return (
             <Link
@@ -117,6 +201,7 @@ export default function UserMenu({
         <button
           onClick={handleLogout}
           className="text-stone-900 text-base sm:text-lg md:text-xl font-light flex items-center gap-3 hover:text-terracotta-600 transition-colors duration-300 p-3 hover:bg-stone-50 rounded-lg w-full text-left"
+          type="button"
         >
           <LogOut className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 flex-shrink-0" />
           <span>Logout</span>
@@ -126,7 +211,7 @@ export default function UserMenu({
   }
 
   // Desktop version
-  if (!user) {
+  if (!isAuthenticated) {
     return (
       <div className="relative group">
         <Link
@@ -148,11 +233,12 @@ export default function UserMenu({
   return (
     <div className="relative group py-2">
       <div className="flex items-center cursor-pointer p-1 rounded-md hover:bg-stone-50 transition-colors duration-300">
-        {user.image ? (
+        {user?.image ? (
           <img
             src={user.image}
             alt={user.name}
             className="w-7 h-7 lg:w-8 lg:h-8 rounded-full object-cover border-2 border-stone-200 group-hover:border-terracotta-600 transition-colors duration-300"
+            onError={handleImageError}
           />
         ) : (
           <div className="w-7 h-7 lg:w-8 lg:h-8 bg-stone-200 rounded-full flex items-center justify-center group-hover:bg-terracotta-100 transition-colors duration-300">
@@ -163,7 +249,7 @@ export default function UserMenu({
 
       {/* Hover dropdown menu */}
       <div className="absolute right-0 mt-2 w-48 lg:w-52 bg-white border border-stone-100 rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 transform origin-top-right scale-95 group-hover:scale-100 z-50">
-        {userMenuItems.map((item) => {
+        {userMenuItems.map((item: MenuItem) => {
           const IconComponent = item.icon;
           return (
             <Link
@@ -179,6 +265,7 @@ export default function UserMenu({
         <button
           onClick={handleLogout}
           className="flex items-center w-full text-left px-4 py-3 text-xs lg:text-sm text-stone-700 hover:bg-stone-50 hover:text-terracotta-600 transition-colors duration-200 rounded-b-lg"
+          type="button"
         >
           <LogOut className="w-4 h-4 mr-3 flex-shrink-0" />
           Logout
