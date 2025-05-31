@@ -75,7 +75,7 @@ export const verifyEmail = async (
     }
 
     // Redirect to frontend login page after successful verification
-    res.redirect(`${process.env.FRONTEND_URL}/login?verified=true`);
+    res.redirect(`${process.env.FRONTEND_URL}/`);
   } catch (err) {
     next(err); // Pass error to Express error handler
   }
