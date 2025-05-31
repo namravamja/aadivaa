@@ -9,21 +9,21 @@ const artists = [
     name: "Maya Johnson",
     tribe: "Navajo",
     craft: "Jewelry & Beadwork",
-    image: "/artists/artist1.jpg",
+    image: "/Profile.jpg", // Adjust path as needed
   },
   {
     id: "2",
     name: "Tomas Rivera",
     tribe: "Hopi",
     craft: "Textiles & Weaving",
-    image: "/artists/artist2.jpg",
+    image: "/Profile.jpg",
   },
   {
     id: "3",
     name: "Leila White",
     tribe: "Cherokee",
     craft: "Pottery & Ceramics",
-    image: "/artists/artist3.jpg",
+    image: "/Profile.jpg",
   },
 ];
 

@@ -11,28 +11,28 @@ const products = [
     id: "1",
     name: "Beaded Necklace",
     price: 45.99,
-    image: "/products/necklace.jpg",
+    image: "/Profile.jpg", // Adjust path as needed
     artist: "Maya Johnson",
   },
   {
     id: "2",
     name: "Woven Wall Hanging",
     price: 89.99,
-    image: "/products/wall-hanging.jpg",
+    image: "/Profile.jpg",
     artist: "Tomas Rivera",
   },
   {
     id: "3",
     name: "Ceramic Vase",
     price: 65.0,
-    image: "/products/vase.jpg",
+    image: "/Profile.jpg",
     artist: "Leila White",
   },
   {
     id: "4",
     name: "Leather Pouch",
     price: 35.5,
-    image: "/products/pouch.jpg",
+    image: "/Profile.jpg",
     artist: "Daniel Black",
   },
 ];

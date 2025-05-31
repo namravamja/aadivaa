@@ -5,22 +5,22 @@ const categories = [
   {
     id: "jewelry",
     name: "Jewelry",
-    image: "/categories/jewelry.jpg",
+    image: "/Profile.jpg",
   },
   {
     id: "textiles",
     name: "Textiles",
-    image: "/categories/textiles.jpg",
+    image: "/Profile.jpg",
   },
   {
     id: "decor",
     name: "Decor",
-    image: "/categories/decor.jpg",
+    image: "/Profile.jpg",
   },
   {
     id: "accessories",
     name: "Accessories",
-    image: "/categories/accessories.jpg",
+    image: "/Profile.jpg",
   },
 ];
 

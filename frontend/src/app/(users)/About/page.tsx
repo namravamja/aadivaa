@@ -213,22 +213,22 @@ export default function AboutPage() {
               {
                 name: "Elena Martinez",
                 role: "Founder & CEO",
-                image: "/team/team1.jpg",
+                image: "/Profile.jpg",
               },
               {
                 name: "Michael Thompson",
                 role: "Director of Artisan Relations",
-                image: "/team/team2.jpg",
+                image: "/Profile.jpg",
               },
               {
                 name: "Sarah Johnson",
                 role: "Head of Marketing",
-                image: "/team/team3.jpg",
+                image: "/Profile.jpg",
               },
               {
                 name: "David Wilson",
                 role: "Operations Manager",
-                image: "/team/team4.jpg",
+                image: "/Profile.jpg",
               },
             ].map((member, index) => (
               <div key={index} className="text-center">

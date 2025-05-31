@@ -21,7 +21,7 @@ export default function HeroSection() {
         </div>
         <div className="order-1 md:order-2 relative h-[40vh] sm:h-[50vh] md:h-[60vh] w-full">
           <Image
-            src="/hero-image.jpg"
+            src="/Profile.jpg"
             alt="Handcrafted tribal pottery"
             fill
             className="object-cover"
