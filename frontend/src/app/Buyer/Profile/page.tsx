@@ -1,187 +1,230 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useGetBuyerQuery } from "@/services/api/buyerApi";
 import ProfileProgress from "./components/ProfileProgress";
 import AccountDetails from "./components/AccountDetails";
 import ShippingAddresses from "./components/ShippingAddresses";
 import SecuritySettings from "./components/SecuritySettings";
 import AccountInfo from "./components/AccountInfo";
+import { LoadingSkeleton } from "./components/loading-skeleton";
 
-interface Address {
-  id: string;
-  firstName: string;
-  lastName: string;
-  company?: string;
-  addressLine1: string;
-  addressLine2?: string;
-  city: string;
-  state: string;
-  postalCode: string;
-  country: string;
-  phone?: string;
-  isDefault: boolean;
-}
-
+// Updated interface to match the Buyer model exactly
 interface UserProfile {
   id: string;
   email: string;
-  firstName: string;
-  lastName: string;
+  password?: string;
+  firstName?: string;
+  lastName?: string;
   phone?: string;
   avatar?: string;
   dateOfBirth?: string;
   gender?: string;
-  addresses: Address[];
+  addresses: any[];
   createdAt: string;
+  updatedAt: string;
 }
 
-// Mock user data
-const mockUser: UserProfile = {
-  id: "user1",
-  email: "john.doe@example.com",
-  firstName: "John",
-  lastName: "Doe",
-  phone: "+1 (555) 123-4567",
-  avatar: "/placeholder.svg?height=100&width=100",
-  dateOfBirth: "1990-05-15",
-  gender: "male",
-  addresses: [
-    {
-      id: "addr1",
-      firstName: "John",
-      lastName: "Doe",
-      company: "Tech Corp",
-      addressLine1: "123 Main Street",
-      addressLine2: "Apt 4B",
-      city: "New York",
-      state: "NY",
-      postalCode: "10001",
-      country: "USA",
-      phone: "+1 (555) 123-4567",
-      isDefault: true,
-    },
-    {
-      id: "addr2",
-      firstName: "John",
-      lastName: "Doe",
-      addressLine1: "456 Oak Avenue",
-      city: "Brooklyn",
-      state: "NY",
-      postalCode: "11201",
-      country: "USA",
-      phone: "+1 (555) 987-6543",
-      isDefault: false,
-    },
-  ],
-  createdAt: "2023-01-15T10:30:00Z",
+// Helper function to format date for display
+const formatDateForDisplay = (dateString: string): string => {
+  if (!dateString) return "";
+
+  try {
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return "";
+    return date.toISOString().split("T")[0];
+  } catch (error) {
+    console.error("Error formatting date for display:", error);
+    return "";
+  }
 };
 
 export default function BuyerProfilePage() {
-  const [user, setUser] = useState<UserProfile>(mockUser);
-  const [isLoading, setIsLoading] = useState(false);
+  // Get buyer data for the profile progress component only
+  const {
+    data: buyerData,
+    isLoading: isFetching,
+    isError,
+    error,
+    refetch,
+  } = useGetBuyerQuery(undefined, {
+    refetchOnMountOrArgChange: true,
+    refetchOnFocus: true,
+    refetchOnReconnect: true,
+  });
 
-  const handleProfileUpdate = async (profileData: Partial<UserProfile>) => {
-    setIsLoading(true);
-    try {
-      // API call would go here
-      console.log("Updating profile:", profileData);
-      setUser((prev) => ({ ...prev, ...profileData }));
-    } catch (error) {
-      console.error("Failed to update profile:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  // Local state for user profile (only used for ProfileProgress and AccountInfo)
+  const [user, setUser] = useState<UserProfile | null>(null);
 
-  const handleAddressUpdate = async (
-    addressId: string,
-    updatedAddress: Address
-  ) => {
-    setIsLoading(true);
-    try {
-      // API call would go here
-      setUser((prev) => ({
-        ...prev,
-        addresses: prev.addresses.map((addr) =>
-          addr.id === addressId ? updatedAddress : addr
-        ),
-      }));
-    } catch (error) {
-      console.error("Failed to update address:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleAddressCreate = async (newAddress: Omit<Address, "id">) => {
-    setIsLoading(true);
-    try {
-      // API call would go here
-      const createdAddress: Address = {
-        ...newAddress,
-        id: `addr${Date.now()}`,
+  // Update local state when API data changes
+  useEffect(() => {
+    if (buyerData) {
+      // Ensure all required fields are present with defaults
+      const processedData: UserProfile = {
+        id: buyerData.id,
+        email: buyerData.email,
+        firstName: buyerData.firstName || undefined,
+        lastName: buyerData.lastName || undefined,
+        phone: buyerData.phone || undefined,
+        avatar: buyerData.avatar || undefined,
+        dateOfBirth: buyerData.dateOfBirth || undefined,
+        gender: buyerData.gender || undefined,
+        addresses: buyerData.addresses || [],
+        createdAt: buyerData.createdAt,
+        updatedAt: buyerData.updatedAt || buyerData.createdAt,
       };
-
-      setUser((prev) => ({
-        ...prev,
-        addresses: [...prev.addresses, createdAddress],
-      }));
-    } catch (error) {
-      console.error("Failed to create address:", error);
-    } finally {
-      setIsLoading(false);
+      setUser(processedData);
     }
+  }, [buyerData]);
+
+  const handleRetry = () => {
+    refetch();
   };
 
-  const handleAddressDelete = async (addressId: string) => {
-    setIsLoading(true);
-    try {
-      // API call would go here
-      setUser((prev) => ({
-        ...prev,
-        addresses: prev.addresses.filter((addr) => addr.id !== addressId),
-      }));
-    } catch (error) {
-      console.error("Failed to delete address:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  // Error state
+  if (isError && !user) {
+    return (
+      <main className="pt-24 pb-16">
+        <div className="container mx-auto px-4 max-w-4xl">
+          <div className="mb-8">
+            <h1 className="text-3xl font-light text-stone-900 mb-2">
+              My Profile
+            </h1>
+            <p className="text-stone-600">
+              Manage your account information and preferences
+            </p>
+          </div>
 
-  const handleSetDefaultAddress = async (addressId: string) => {
-    setIsLoading(true);
-    try {
-      // API call would go here
-      setUser((prev) => ({
-        ...prev,
-        addresses: prev.addresses.map((addr) => ({
-          ...addr,
-          isDefault: addr.id === addressId,
-        })),
-      }));
-    } catch (error) {
-      console.error("Failed to set default address:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+          <div className="flex flex-col items-center justify-center min-h-[400px] text-center">
+            <div className="text-red-600 mb-6">
+              <p className="text-lg font-medium mb-2">Failed to load profile</p>
+              <p className="text-sm">
+                {error && "status" in error && (
+                  <span className="block">
+                    Error {error.status}:{" "}
+                    {typeof error.data === "object" &&
+                    error.data &&
+                    "message" in error.data
+                      ? (error.data as { message: string }).message
+                      : "Unknown error"}
+                  </span>
+                )}
+                {!error && "Network error occurred"}
+              </p>
+            </div>
+            <button
+              onClick={handleRetry}
+              className="bg-terracotta-600 hover:bg-terracotta-700 text-white px-6 py-3 font-medium transition-colors"
+            >
+              Try Again
+            </button>
+          </div>
+        </div>
+      </main>
+    );
+  }
 
-  const handlePasswordChange = async (passwords: {
-    current: string;
-    new: string;
-    confirm: string;
-  }) => {
-    setIsLoading(true);
-    try {
-      // API call would go here
-      console.log("Changing password");
-    } catch (error) {
-      console.error("Failed to change password:", error);
-      throw error;
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  // Loading state
+  if (isFetching && !user) {
+    return (
+      <main className="pt-24 pb-16">
+        <div className="container mx-auto px-4 max-w-4xl">
+          <div className="mb-8">
+            <LoadingSkeleton height="h-8" className="mb-2 w-48" />
+            <LoadingSkeleton height="h-5" className="w-80" />
+          </div>
+
+          <div className="space-y-8">
+            {/* Profile Progress Loading */}
+            <div className="bg-white border border-stone-200 shadow-sm">
+              <div className="p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <LoadingSkeleton height="h-6" className="mb-2 w-40" />
+                    <LoadingSkeleton height="h-4" className="w-32" />
+                  </div>
+                  <LoadingSkeleton height="h-8" className="w-16" />
+                </div>
+                <LoadingSkeleton height="h-3" className="w-full mb-4" />
+                <LoadingSkeleton lines={3} className="w-full" />
+              </div>
+            </div>
+
+            {/* Account Details Loading */}
+            <div className="bg-white border border-stone-200 shadow-sm">
+              <div className="p-6 border-b border-stone-200">
+                <div className="flex justify-between items-center">
+                  <LoadingSkeleton height="h-6" className="w-40" />
+                  <LoadingSkeleton height="h-10" className="w-32" />
+                </div>
+              </div>
+              <div className="p-6">
+                <div className="flex items-center space-x-6 mb-6">
+                  <LoadingSkeleton height="h-20" className="w-20 rounded" />
+                  <LoadingSkeleton height="h-8" className="w-32" />
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {Array.from({ length: 6 }).map((_, index) => (
+                    <div key={index}>
+                      <LoadingSkeleton height="h-4" className="mb-2 w-24" />
+                      <LoadingSkeleton height="h-10" />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Additional sections loading */}
+            {Array.from({ length: 3 }).map((_, index) => (
+              <div
+                key={index}
+                className="bg-white border border-stone-200 shadow-sm"
+              >
+                <div className="p-6 border-b border-stone-200">
+                  <LoadingSkeleton height="h-6" className="w-48" />
+                </div>
+                <div className="p-6">
+                  <LoadingSkeleton lines={4} />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </main>
+    );
+  }
+
+  // No user data
+  if (!user) {
+    return (
+      <main className="pt-24 pb-16">
+        <div className="container mx-auto px-4 max-w-4xl">
+          <div className="mb-8">
+            <h1 className="text-3xl font-light text-stone-900 mb-2">
+              My Profile
+            </h1>
+            <p className="text-stone-600">
+              Manage your account information and preferences
+            </p>
+          </div>
+
+          <div className="flex items-center justify-center min-h-[400px]">
+            <div className="text-center">
+              <p className="text-stone-600 text-lg">
+                No profile data available
+              </p>
+              <button
+                onClick={handleRetry}
+                className="mt-4 bg-terracotta-600 hover:bg-terracotta-700 text-white px-4 py-2 font-medium transition-colors"
+              >
+                Reload Profile
+              </button>
+            </div>
+          </div>
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main className="pt-24 pb-16">
@@ -196,33 +239,35 @@ export default function BuyerProfilePage() {
         </div>
 
         <div className="space-y-8">
-          {/* Profile Progress */}
-          <ProfileProgress user={user} />
-
-          {/* Account Details */}
-          <AccountDetails
-            user={user}
-            onUpdate={handleProfileUpdate}
-            isLoading={isLoading}
+          {/* Profile Progress - still needs user data for progress calculation */}
+          <ProfileProgress
+            user={{
+              ...user,
+              firstName: user.firstName ?? "",
+              lastName: user.lastName ?? "",
+              dateOfBirth: user.dateOfBirth
+                ? formatDateForDisplay(user.dateOfBirth)
+                : "",
+              // Map addresses to expected shape for ProfileProgress
+              addresses: user.addresses.map((addr) => ({
+                id: addr.id,
+                firstName: addr.firstName,
+                lastName: addr.lastName,
+                addressLine1: addr.street || addr.addressLine1,
+                city: addr.city,
+                state: addr.state,
+                postalCode: addr.postalCode,
+                country: addr.country,
+                phone: addr.phone,
+                isDefault: addr.isDefault,
+              })),
+            }}
           />
 
-          {/* Shipping Addresses */}
-          <ShippingAddresses
-            addresses={user.addresses}
-            onUpdate={handleAddressUpdate}
-            onCreate={handleAddressCreate}
-            onDelete={handleAddressDelete}
-            onSetDefault={handleSetDefaultAddress}
-            isLoading={isLoading}
-          />
-
-          {/* Security Settings */}
-          <SecuritySettings
-            onPasswordChange={handlePasswordChange}
-            isLoading={isLoading}
-          />
-
-          {/* Account Info */}
+          {/* Each component now manages its own data */}
+          <AccountDetails />
+          <ShippingAddresses />
+          <SecuritySettings />
           <AccountInfo user={user} />
         </div>
       </div>

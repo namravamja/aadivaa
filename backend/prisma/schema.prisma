@@ -29,21 +29,23 @@ model Buyer {
 }
 
 model Address {
-  id          Int      @id @default(autoincrement())
-  firstName   String
-  lastName    String
-  company     String? // Optional
-  street      String
-  apartment   String? // Optional
-  city        String
-  state       String
-  postalCode  String
-  country     String
-  phoneNumber String
-  buyer       Buyer    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId      String
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id         Int     @id @default(autoincrement())
+  firstName  String
+  lastName   String
+  company    String? // Optional
+  street     String?
+  apartment  String? // Optional
+  city       String
+  state      String
+  postalCode String
+  country    String
+  phone      String?
+  buyer      Buyer   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId     String
+  isDefault  Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@map("buyer_addresses")
 }
@@ -99,7 +101,6 @@ model Artist {
   verifyToken           String?   @unique
   verifyExpires         DateTime?
   isVerified            Boolean   @default(false)
-
 }
 
 model BusinessAddress {
