@@ -12,11 +12,15 @@ import {
   User,
   Mail,
   Lock,
-  Users,
+  Store,
+  Phone,
   ChevronLeft,
-  Palette,
-  FileText,
+  Building,
+  Loader2,
 } from "lucide-react";
+
+// Import your RTK Query hook - adjust the import path based on your file structure
+import { useSignupArtistMutation } from "@/services/api/authApi"; // Adjust path as needed
 
 export default function ArtistSignupPage() {
   const router = useRouter();
@@ -28,122 +32,125 @@ export default function ArtistSignupPage() {
     email: "",
     password: "",
     // Artist-specific fields
-    tribe: "",
-    craft: "",
-    bio: "",
+    storeName: "",
+    mobile: "",
+    businessType: "",
   });
 
-  // Animation state
-  const [animate, setAnimate] = useState(false);
-
-  useEffect(() => {
-    setAnimate(true);
-    return () => setAnimate(false);
-  }, [step]);
+  // RTK Query mutation hook
+  const [signupArtist, { isLoading, error, isSuccess }] =
+    useSignupArtistMutation();
 
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    >
   ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
     if (step === 1) {
-      setAnimate(false);
-      setTimeout(() => {
-        setStep(2);
-        setAnimate(true);
-      }, 300);
+      setStep(2);
       return;
     }
 
-    // In a real app, this would register with a backend
-    console.log("Artist Signup attempt:", formData);
+    try {
+      // Prepare data according to your Prisma schema
+      const artistData = {
+        fullName: `${formData.firstName} ${formData.lastName}`.trim(),
+        email: formData.email,
+        password: formData.password,
+        storeName: formData.storeName,
+        mobile: formData.mobile,
+        businessType: formData.businessType,
+        termsAgreed: true, // Since they checked the terms checkbox
+      };
 
-    // Simulate successful registration and redirect
-    router.push("/Artist/dashboard");
+      // Send data using RTK Query mutation
+      const result = await signupArtist(artistData).unwrap();
+
+      console.log("Artist signup successful:", result);
+
+      // Redirect to dashboard on success
+      router.push("/Artist/login");
+    } catch (err) {
+      console.error("Artist signup failed:", err);
+      // Error handling is managed by RTK Query state
+    }
   };
 
   const goBack = () => {
-    setAnimate(false);
-    setTimeout(() => {
-      setStep(1);
-      setAnimate(true);
-    }, 300);
+    setStep(1);
   };
 
+  // Handle success state change
+  useEffect(() => {
+    if (isSuccess) {
+      router.push("/Artist/login");
+    }
+  }, [isSuccess, router]);
+
   return (
-    <div className="min-h-screen flex items-center justify-center relative overflow-hidden bg-clay-50">
-      {/* Decorative background elements */}
-      <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute -top-24 -right-24 w-96 h-96 rounded-full bg-sage-200 opacity-30 blur-3xl"></div>
-        <div className="absolute top-1/3 -left-24 w-80 h-80 rounded-full bg-sage-200 opacity-30 blur-3xl"></div>
-        <div className="absolute bottom-0 right-1/3 w-full h-1/2 bg-clay-200 opacity-20 blur-3xl"></div>
-
-        {/* Decorative pattern */}
-        <div
-          className="absolute inset-0 opacity-5"
-          style={{
-            backgroundImage: `url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm56-76c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM12 86c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm28-65c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm23-11c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-6 60c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm29 22c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zM32 63c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm57-13c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-9-21c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM60 91c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM35 41c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM12 60c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2z' fill='%23cb4f30' fillOpacity='1' fillRule='evenodd'/%3E%3C/svg%3E")`,
-          }}
-        ></div>
-      </div>
-
-      <div className="w-full max-w-md px-4 relative z-10">
-        <div className="bg-white rounded-2xl shadow-xl overflow-hidden flex flex-col transform transition-all hover:shadow-2xl">
-          {/* Decorative top accent */}
-          <div className="h-2 bg-gradient-to-r from-sage-400 via-sage-600 to-sage-500"></div>
-
-          {/* Header with brand */}
-          <div className="bg-sage-600 text-white py-8 px-8 relative overflow-hidden">
-            <div className="absolute inset-0 opacity-10">
-              <div className="absolute -right-8 -top-8 w-32 h-32 rounded-full border-8 border-sage-400 opacity-30"></div>
-              <div className="absolute -left-4 bottom-0 w-24 h-24 rounded-full border-4 border-sage-400 opacity-20"></div>
+    <div className="min-h-screen bg-gray-50 flex">
+      {/* Left side - Signup Form */}
+      <div className="flex-1 flex flex-col justify-center px-4 sm:px-6 lg:px-8">
+        <div className="mx-auto w-full max-w-md">
+          <div className="bg-white py-8 px-6 shadow-sm border border-gray-200">
+            <div className="text-center mb-8">
+              <div className="flex items-center justify-center mb-4">
+                {step === 2 && (
+                  <button
+                    onClick={goBack}
+                    className="mr-3 p-1 rounded hover:bg-gray-100 transition-colors duration-200"
+                    aria-label="Go back"
+                    disabled={isLoading}
+                  >
+                    <ChevronLeft size={20} />
+                  </button>
+                )}
+                <h2 className="text-3xl font-bold text-gray-900">
+                  {step === 1
+                    ? "Create artist account"
+                    : "Complete your profile"}
+                </h2>
+              </div>
+              <p className="mt-2 text-gray-600">
+                {step === 1
+                  ? "Join AADIVAEARTH as an artist today"
+                  : "Complete your business information"}
+              </p>
             </div>
 
-            <div className="flex items-center">
-              {step === 2 && (
-                <button
-                  onClick={goBack}
-                  className="mr-3 p-1 rounded-full hover:bg-sage-500 transition-colors duration-200"
-                  aria-label="Go back"
-                >
-                  <ChevronLeft size={20} />
-                </button>
-              )}
-              <div>
-                <h1 className="text-3xl font-light mb-2 relative">
-                  Join{" "}
-                  <span className="font-medium">
-                    AADIVA<span className="font-bold">EARTH</span>
-                  </span>
-                </h1>
-                <p className="text-sage-100 text-sm">
-                  {step === 1
-                    ? "Create your artist account"
-                    : "Complete your artist profile"}
+            {/* Display error message if signup fails */}
+            {error && (
+              <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-md">
+                <p className="text-sm text-red-600">
+                  {"data" in (error as object) && (error as any).data?.message
+                    ? (error as any).data.message
+                    : "Signup failed. Please try again."}
                 </p>
               </div>
-            </div>
-          </div>
+            )}
 
-          <div className="p-8">
-            <form onSubmit={handleSubmit} className="space-y-5">
-              <div
-                className={`transition-all duration-300 ${
-                  animate
-                    ? "opacity-100 translate-x-0"
-                    : "opacity-0 -translate-x-4"
-                }`}
-              >
-                {step === 1 ? (
-                  <>
-                    <div className="grid grid-cols-2 gap-4 mb-5">
-                      <div className="relative group">
-                        <div className="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-stone-400 group-focus-within:text-sage-500 transition-colors duration-200">
-                          <User size={18} />
+            <form onSubmit={handleSubmit} className="space-y-6">
+              {step === 1 ? (
+                <>
+                  {/* Name fields */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label
+                        htmlFor="firstName"
+                        className="block text-sm font-medium text-gray-700 mb-1"
+                      >
+                        First name
+                      </label>
+                      <div className="relative">
+                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                          <User className="h-5 w-5 text-gray-400" />
                         </div>
                         <input
                           id="firstName"
@@ -152,27 +159,45 @@ export default function ArtistSignupPage() {
                           required
                           value={formData.firstName}
                           onChange={handleChange}
-                          className="w-full pl-11 pr-4 py-3.5 bg-stone-50 border border-stone-200 rounded-xl focus:border-sage-500 focus:outline-none focus:ring-2 focus:ring-sage-100 transition-all duration-200"
-                          placeholder="First Name"
-                        />
-                      </div>
-                      <div className="relative group">
-                        <input
-                          id="lastName"
-                          name="lastName"
-                          type="text"
-                          required
-                          value={formData.lastName}
-                          onChange={handleChange}
-                          className="w-full px-4 py-3.5 bg-stone-50 border border-stone-200 rounded-xl focus:border-sage-500 focus:outline-none focus:ring-2 focus:ring-sage-100 transition-all duration-200"
-                          placeholder="Last Name"
+                          disabled={isLoading}
+                          className="block w-full pl-10 pr-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-2 focus:ring-sage-500 focus:border-sage-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                          placeholder="First name"
                         />
                       </div>
                     </div>
 
-                    <div className="relative group mb-5">
-                      <div className="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-stone-400 group-focus-within:text-sage-500 transition-colors duration-200">
-                        <Mail size={18} />
+                    <div>
+                      <label
+                        htmlFor="lastName"
+                        className="block text-sm font-medium text-gray-700 mb-1"
+                      >
+                        Last name
+                      </label>
+                      <input
+                        id="lastName"
+                        name="lastName"
+                        type="text"
+                        required
+                        value={formData.lastName}
+                        onChange={handleChange}
+                        disabled={isLoading}
+                        className="block w-full px-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-2 focus:ring-sage-500 focus:border-sage-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                        placeholder="Last name"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Email */}
+                  <div>
+                    <label
+                      htmlFor="email"
+                      className="block text-sm font-medium text-gray-700 mb-1"
+                    >
+                      Email address
+                    </label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <Mail className="h-5 w-5 text-gray-400" />
                       </div>
                       <input
                         id="email"
@@ -181,14 +206,24 @@ export default function ArtistSignupPage() {
                         required
                         value={formData.email}
                         onChange={handleChange}
-                        className="w-full pl-11 pr-4 py-3.5 bg-stone-50 border border-stone-200 rounded-xl focus:border-sage-500 focus:outline-none focus:ring-2 focus:ring-sage-100 transition-all duration-200"
-                        placeholder="Email address"
+                        disabled={isLoading}
+                        className="block w-full pl-10 pr-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-2 focus:ring-sage-500 focus:border-sage-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                        placeholder="Enter your email"
                       />
                     </div>
+                  </div>
 
-                    <div className="relative group mb-2">
-                      <div className="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-stone-400 group-focus-within:text-sage-500 transition-colors duration-200">
-                        <Lock size={18} />
+                  {/* Password */}
+                  <div>
+                    <label
+                      htmlFor="password"
+                      className="block text-sm font-medium text-gray-700 mb-1"
+                    >
+                      Password
+                    </label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <Lock className="h-5 w-5 text-gray-400" />
                       </div>
                       <input
                         id="password"
@@ -197,16 +232,15 @@ export default function ArtistSignupPage() {
                         required
                         value={formData.password}
                         onChange={handleChange}
-                        className="w-full pl-11 pr-11 py-3.5 bg-stone-50 border border-stone-200 rounded-xl focus:border-sage-500 focus:outline-none focus:ring-2 focus:ring-sage-100 transition-all duration-200"
-                        placeholder="Password"
+                        disabled={isLoading}
+                        className="block w-full pl-10 pr-10 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-2 focus:ring-sage-500 focus:border-sage-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                        placeholder="Create a password"
                       />
                       <button
                         type="button"
                         onClick={() => setIsPasswordVisible(!isPasswordVisible)}
-                        className="absolute right-3.5 top-1/2 -translate-y-1/2 text-stone-400 hover:text-sage-600 transition-colors duration-200"
-                        aria-label={
-                          isPasswordVisible ? "Hide password" : "Show password"
-                        }
+                        disabled={isLoading}
+                        className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 cursor-pointer disabled:cursor-not-allowed"
                       >
                         {isPasswordVisible ? (
                           <EyeOff className="h-5 w-5" />
@@ -215,127 +249,217 @@ export default function ArtistSignupPage() {
                         )}
                       </button>
                     </div>
-                    <p className="text-xs text-stone-500 mb-5">
-                      Password must be at least 8 characters long
+                    <p className="mt-1 text-xs text-gray-500">
+                      Must be at least 8 characters
                     </p>
-                  </>
-                ) : (
-                  <>
-                    <div className="relative group mb-5">
-                      <div className="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-stone-400 group-focus-within:text-sage-500 transition-colors duration-200">
-                        <Users size={18} />
+                  </div>
+
+                  {/* Terms checkbox */}
+                  <div className="flex items-start">
+                    <input
+                      id="terms"
+                      name="terms"
+                      type="checkbox"
+                      required
+                      disabled={isLoading}
+                      className="h-4 w-4 mt-1 text-sage-600 focus:ring-sage-500 border-gray-300 cursor-pointer disabled:cursor-not-allowed"
+                    />
+                    <label
+                      htmlFor="terms"
+                      className="ml-2 block text-sm text-gray-700 cursor-pointer"
+                    >
+                      I agree to the{" "}
+                      <Link
+                        href="/terms"
+                        className="text-sage-600 hover:text-sage-500 font-medium cursor-pointer"
+                      >
+                        Terms of Service
+                      </Link>{" "}
+                      and{" "}
+                      <Link
+                        href="/privacy"
+                        className="text-sage-600 hover:text-sage-500 font-medium cursor-pointer"
+                      >
+                        Privacy Policy
+                      </Link>
+                    </label>
+                  </div>
+                </>
+              ) : (
+                <>
+                  {/* Artist-specific fields for step 2 */}
+                  <div>
+                    <label
+                      htmlFor="storeName"
+                      className="block text-sm font-medium text-gray-700 mb-1"
+                    >
+                      Store Name
+                    </label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <Store className="h-5 w-5 text-gray-400" />
                       </div>
                       <input
-                        id="tribe"
-                        name="tribe"
+                        id="storeName"
+                        name="storeName"
                         type="text"
-                        value={formData.tribe}
+                        required
+                        value={formData.storeName}
                         onChange={handleChange}
-                        className="w-full pl-11 pr-4 py-3.5 bg-stone-50 border border-stone-200 rounded-xl focus:border-sage-500 focus:outline-none focus:ring-2 focus:ring-sage-100 transition-all duration-200"
-                        placeholder="Tribe / Cultural Affiliation"
+                        disabled={isLoading}
+                        className="block w-full pl-10 pr-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-2 focus:ring-sage-500 focus:border-sage-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                        placeholder="Enter your store name"
                       />
                     </div>
+                  </div>
 
-                    <div className="relative group mb-5">
-                      <div className="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-stone-400 group-focus-within:text-sage-500 transition-colors duration-200">
-                        <Palette size={18} />
+                  <div>
+                    <label
+                      htmlFor="mobile"
+                      className="block text-sm font-medium text-gray-700 mb-1"
+                    >
+                      Mobile Number
+                    </label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <Phone className="h-5 w-5 text-gray-400" />
                       </div>
                       <input
-                        id="craft"
-                        name="craft"
-                        type="text"
-                        value={formData.craft}
+                        id="mobile"
+                        name="mobile"
+                        type="tel"
+                        required
+                        value={formData.mobile}
                         onChange={handleChange}
-                        className="w-full pl-11 pr-4 py-3.5 bg-stone-50 border border-stone-200 rounded-xl focus:border-sage-500 focus:outline-none focus:ring-2 focus:ring-sage-100 transition-all duration-200"
-                        placeholder="Craft Specialization (e.g., Pottery, Weaving)"
+                        disabled={isLoading}
+                        className="block w-full pl-10 pr-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-2 focus:ring-sage-500 focus:border-sage-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                        placeholder="Enter your mobile number"
                       />
                     </div>
+                  </div>
 
-                    <div className="relative group mb-5">
-                      <div className="absolute top-3.5 left-3.5 flex items-start pointer-events-none text-stone-400 group-focus-within:text-sage-500 transition-colors duration-200">
-                        <FileText size={18} />
+                  <div>
+                    <label
+                      htmlFor="businessType"
+                      className="block text-sm font-medium text-gray-700 mb-1"
+                    >
+                      Business Type
+                    </label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <Building className="h-5 w-5 text-gray-400" />
                       </div>
-                      <textarea
-                        id="bio"
-                        name="bio"
-                        rows={3}
-                        value={formData.bio}
+                      <select
+                        id="businessType"
+                        name="businessType"
+                        required
+                        value={formData.businessType}
                         onChange={handleChange}
-                        className="w-full pl-11 pr-4 py-3.5 bg-stone-50 border border-stone-200 rounded-xl focus:border-sage-500 focus:outline-none focus:ring-2 focus:ring-sage-100 transition-all duration-200"
-                        placeholder="Tell us about yourself and your craft..."
-                      />
+                        disabled={isLoading}
+                        className="block w-full pl-10 pr-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-2 focus:ring-sage-500 focus:border-sage-500 appearance-none disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        <option value="">Select business type</option>
+                        <option value="individual">Individual Artist</option>
+                        <option value="cooperative">Artist Cooperative</option>
+                        <option value="family_business">Family Business</option>
+                        <option value="small_enterprise">
+                          Small Enterprise
+                        </option>
+                        <option value="other">Other</option>
+                      </select>
                     </div>
-                  </>
-                )}
-              </div>
-
-              {step === 1 && (
-                <div className="flex items-center">
-                  <input
-                    id="terms"
-                    name="terms"
-                    type="checkbox"
-                    required
-                    className="h-4 w-4 rounded border-stone-300 text-sage-600 focus:ring-sage-500"
-                  />
-                  <label
-                    htmlFor="terms"
-                    className="ml-2 block text-xs text-stone-600"
-                  >
-                    I agree to the{" "}
-                    <Link
-                      href="/terms"
-                      className="text-sage-600 hover:text-sage-700 transition-colors duration-200"
-                    >
-                      Terms of Service
-                    </Link>{" "}
-                    and{" "}
-                    <Link
-                      href="/privacy"
-                      className="text-sage-600 hover:text-sage-700 transition-colors duration-200"
-                    >
-                      Privacy Policy
-                    </Link>
-                  </label>
-                </div>
+                  </div>
+                </>
               )}
 
-              <div className="flex gap-3 pt-2">
+              {/* Submit button */}
+              <div className="flex gap-3">
                 {step === 2 && (
                   <button
                     type="button"
                     onClick={goBack}
-                    className="flex-1 border border-sage-600 text-sage-600 py-3.5 px-4 rounded-xl font-medium hover:bg-sage-50 transition-all duration-300 flex items-center justify-center"
+                    disabled={isLoading}
+                    className="flex-1 flex justify-center py-3 px-4 border border-sage-600 text-sm font-medium text-sage-600 bg-white hover:bg-sage-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sage-500 cursor-pointer transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    <ChevronLeft className="mr-2 h-4 w-4" /> Back
+                    <ChevronLeft className="mr-2 h-4 w-4" />
+                    Back
                   </button>
                 )}
                 <button
                   type="submit"
-                  className="flex-1 bg-sage-600 text-white py-3.5 px-4 rounded-xl font-medium hover:bg-sage-700 flex items-center justify-center shadow-md hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-300"
+                  disabled={isLoading}
+                  className="flex-1 flex justify-center items-center py-3 px-4 border border-transparent text-sm font-medium text-white bg-sage-600 hover:bg-sage-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sage-500 cursor-pointer transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {step === 1 ? "Next" : "Create Account"}
-                  <ArrowRight className="ml-2 h-4 w-4 animate-pulse-slow" />
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      {step === 1 ? "Next" : "Creating Account..."}
+                    </>
+                  ) : (
+                    <>
+                      {step === 1 ? "Next" : "Create Account"}
+                      <ArrowRight className="ml-2 h-4 w-4" />
+                    </>
+                  )}
                 </button>
               </div>
             </form>
 
-            <div className="mt-8 text-center">
-              <p className="text-sm text-stone-500">
-                Already have an account?{" "}
+            <div className="mt-6">
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-gray-300" />
+                </div>
+                <div className="relative flex justify-center text-sm">
+                  <span className="px-2 bg-white text-gray-500">
+                    Already have an account?
+                  </span>
+                </div>
+              </div>
+
+              <div className="mt-6 text-center">
                 <Link
                   href="/Artist/login"
-                  className="text-sage-600 hover:text-sage-700 font-medium transition-colors duration-200"
+                  className="font-medium text-sage-600 hover:text-sage-500 cursor-pointer"
                 >
-                  Artist Login
+                  Sign in to your artist account
                 </Link>
-              </p>
+              </div>
             </div>
           </div>
         </div>
+      </div>
 
-        {/* Decorative bottom element */}
-        <div className="w-24 h-1.5 bg-sage-400 rounded-full mx-auto mt-8 opacity-50"></div>
+      {/* Right side - Branding */}
+      <div className="hidden lg:flex lg:w-3/5 bg-sage-800 relative overflow-hidden">
+        <div className="absolute inset-0 bg-sage-700 opacity-10"></div>
+        <div className="relative z-10 flex flex-col justify-center px-12 text-white">
+          <div className="max-w-md">
+            <h1 className="text-4xl font-bold mb-4">
+              AADIVAA<span className="font-light">EARTH</span>
+            </h1>
+            <p className="text-xl text-sage-100 mb-8">
+              Share your authentic crafts with the world
+            </p>
+            <div className="space-y-4 text-sage-100">
+              <div className="flex items-center">
+                <div className="w-2 h-2 bg-terracotta-300 mr-3"></div>
+                <span>Showcase your traditional crafts</span>
+              </div>
+              <div className="flex items-center">
+                <div className="w-2 h-2 bg-clay-300 mr-3"></div>
+                <span>Connect with global customers</span>
+              </div>
+              <div className="flex items-center">
+                <div className="w-2 h-2 bg-sage-300 mr-3"></div>
+                <span>Preserve cultural heritage</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        {/* Decorative elements */}
+        <div className="absolute bottom-0 left-0 w-32 h-32 bg-terracotta-500 opacity-20"></div>
+        <div className="absolute top-1/4 left-8 w-16 h-16 bg-clay-400 opacity-30"></div>
       </div>
     </div>
   );

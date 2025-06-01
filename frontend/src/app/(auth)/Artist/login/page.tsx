@@ -2,10 +2,13 @@
 
 import type React from "react";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Eye, EyeOff, ArrowRight, User, Lock } from "lucide-react";
+import { Eye, EyeOff, Mail, Lock, Loader2 } from "lucide-react";
+
+// Import your RTK Query hook - adjust the import path based on your file structure
+import { useLoginArtistMutation } from "@/services/api/authApi"; // Adjust path as needed
 
 export default function ArtistLoginPage() {
   const router = useRouter();
@@ -13,66 +16,186 @@ export default function ArtistLoginPage() {
   const [formData, setFormData] = useState({
     email: "",
     password: "",
+    rememberMe: false,
   });
 
+  // RTK Query mutation hook
+  const [loginArtist, { isLoading, error, isSuccess, data }] =
+    useLoginArtistMutation();
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    const { name, value, type, checked } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: type === "checkbox" ? checked : value,
+    }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // In a real app, this would authenticate with a backend
-    console.log("Artist Login attempt:", formData);
 
-    // Simulate successful login and redirect
-    router.push("/Artist");
+    try {
+      // Send login credentials using RTK Query mutation
+      const credentials = {
+        email: formData.email,
+        password: formData.password,
+      };
+
+      const result = await loginArtist(credentials).unwrap();
+
+      console.log("Artist login successful:", result);
+
+      // Store token if provided (adjust based on your API response)
+      if (result.token) {
+        localStorage.setItem("artistToken", result.token);
+      }
+
+      // Redirect to dashboard on success
+      router.push("/Artist");
+    } catch (err) {
+      console.error("Artist login failed:", err);
+      // Error handling is managed by RTK Query state
+    }
   };
+
+  // Handle success state change
+  useEffect(() => {
+    if (isSuccess && data) {
+      // Store token if provided
+      if (data.token) {
+        localStorage.setItem("artistToken", data.token);
+      }
+      router.push("/Artist");
+    }
+  }, [isSuccess, data, router]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center relative overflow-hidden bg-clay-50">
-      {/* Decorative background elements */}
-      <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute -top-24 -left-24 w-96 h-96 rounded-full bg-sage-200 opacity-20 blur-3xl"></div>
-        <div className="absolute top-1/4 -right-24 w-80 h-80 rounded-full bg-sage-300 opacity-20 blur-3xl"></div>
-        <div className="absolute bottom-0 left-1/3 w-full h-1/2 bg-clay-200 opacity-20 blur-3xl"></div>
+    <div className="min-h-screen bg-gray-50 flex">
+      {/* Left side - Branding */}
+      <div className="hidden lg:flex lg:w-3/5 bg-terracotta-700 relative overflow-hidden">
+        <div className="absolute inset-0 bg-terracotta-700 opacity-10"></div>
+        <div className="relative z-10 flex flex-col justify-center px-12 text-white">
+          <div className="max-w-lg">
+            {/* Brand section with lines */}
+            <div className="mb-10">
+              <div className="flex items-center mb-6">
+                <div className="w-12 h-1 bg-sage-300 mr-4"></div>
+                <div className="w-6 h-1 bg-clay-300 mr-2"></div>
+                <div className="w-3 h-1 bg-terracotta-300"></div>
+              </div>
 
-        {/* Decorative pattern */}
-        <div
-          className="absolute inset-0 opacity-5"
-          style={{
-            backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fillRule='evenodd'%3E%3Cg fill='%23cb4f30' fillOpacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
-          }}
-        ></div>
-      </div>
+              <h1 className="text-5xl font-bold mb-3 leading-tight">
+                AADIVAA
+                <span className="font-light text-terracotta-200">EARTH</span>
+              </h1>
 
-      <div className="w-full max-w-md px-4 relative z-10">
-        <div className="bg-white rounded-2xl shadow-xl overflow-hidden flex flex-col transform transition-all hover:shadow-2xl">
-          {/* Decorative top accent */}
-          <div className="h-2 bg-gradient-to-r from-sage-400 via-sage-600 to-sage-500"></div>
-
-          {/* Header with brand */}
-          <div className="bg-sage-600 text-white py-8 px-8 relative overflow-hidden">
-            <div className="absolute inset-0 opacity-10">
-              <div className="absolute -right-8 -top-8 w-32 h-32 rounded-full border-8 border-sage-400 opacity-30"></div>
-              <div className="absolute -left-4 bottom-0 w-24 h-24 rounded-full border-4 border-sage-400 opacity-20"></div>
+              <div className="flex items-center mt-4">
+                <div className="w-8 h-1 bg-sage-300 mr-2"></div>
+                <div className="w-12 h-1 bg-clay-300 mr-2"></div>
+                <div className="w-6 h-1 bg-terracotta-300"></div>
+              </div>
             </div>
 
-            <h1 className="text-3xl font-light mb-2 relative">
-              Welcome to{" "}
-              <span className="font-medium">
-                AADIVAA<span className="font-bold">EARTH</span>
-              </span>
-            </h1>
-            <p className="text-sage-100 text-sm">Artist / Artist Login</p>
-          </div>
+            <p className="text-2xl text-terracotta-100 mb-12 leading-relaxed font-light">
+              Welcome to the artist portal - showcase your creative work and
+              connect with art enthusiasts
+            </p>
 
-          <div className="p-8">
-            <form onSubmit={handleSubmit} className="space-y-5">
+            {/* Features with enhanced design */}
+            <div className="space-y-6 text-terracotta-100 mb-12">
+              <div className="flex items-center group cursor-pointer">
+                <div className="relative mr-4">
+                  <div className="w-4 h-4 bg-sage-300 transform group-hover:scale-110 transition-all duration-300"></div>
+                  <div className="absolute -top-1 -left-1 w-6 h-6 border border-sage-300 opacity-30 group-hover:opacity-60 transition-opacity"></div>
+                </div>
+                <span className="text-lg group-hover:text-white transition-colors">
+                  Showcase your artwork
+                </span>
+                <div className="ml-auto w-8 h-px bg-sage-300 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+              </div>
+
+              <div className="flex items-center group cursor-pointer">
+                <div className="relative mr-4">
+                  <div className="w-4 h-4 bg-clay-300 transform group-hover:scale-110 transition-all duration-300"></div>
+                  <div className="absolute -top-1 -left-1 w-6 h-6 border border-clay-300 opacity-30 group-hover:opacity-60 transition-opacity"></div>
+                </div>
+                <span className="text-lg group-hover:text-white transition-colors">
+                  Connect with buyers
+                </span>
+                <div className="ml-auto w-8 h-px bg-clay-300 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+              </div>
+
+              <div className="flex items-center group cursor-pointer">
+                <div className="relative mr-4">
+                  <div className="w-4 h-4 bg-terracotta-300 transform group-hover:scale-110 transition-all duration-300"></div>
+                  <div className="absolute -top-1 -left-1 w-6 h-6 border border-terracotta-300 opacity-30 group-hover:opacity-60 transition-opacity"></div>
+                </div>
+                <span className="text-lg group-hover:text-white transition-colors">
+                  Manage your portfolio
+                </span>
+                <div className="ml-auto w-8 h-px bg-terracotta-300 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+              </div>
+
+              <div className="flex items-center group cursor-pointer">
+                <div className="relative mr-4">
+                  <div className="w-4 h-4 bg-sage-400 transform group-hover:scale-110 transition-all duration-300"></div>
+                  <div className="absolute -top-1 -left-1 w-6 h-6 border border-sage-400 opacity-30 group-hover:opacity-60 transition-opacity"></div>
+                </div>
+                <span className="text-lg group-hover:text-white transition-colors">
+                  Track your sales
+                </span>
+                <div className="ml-auto w-8 h-px bg-sage-400 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+              </div>
+            </div>
+
+            {/* Bottom decorative lines */}
+            <div className="flex items-center space-x-3">
+              <div className="w-16 h-1 bg-sage-300"></div>
+              <div className="w-12 h-1 bg-clay-300"></div>
+              <div className="w-20 h-1 bg-terracotta-300"></div>
+            </div>
+          </div>
+        </div>
+        {/* Decorative elements */}
+        <div className="absolute bottom-0 right-0 w-32 h-32 bg-sage-500 opacity-20"></div>
+        <div className="absolute top-1/4 right-8 w-16 h-16 bg-clay-400 opacity-30"></div>
+      </div>
+
+      {/* Right side - Login Form */}
+      <div className="flex-1 flex flex-col justify-center px-4 sm:px-6 lg:px-8">
+        <div className="mx-auto w-full max-w-md">
+          <div className="bg-white py-8 px-6 shadow-sm border border-gray-200">
+            <div className="text-center mb-8">
+              <h2 className="text-3xl font-bold text-gray-900">Welcome back</h2>
+              <p className="mt-2 text-gray-600">Artist Login</p>
+            </div>
+
+            {/* Display error message if login fails */}
+            {error && (
+              <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-md">
+                <p className="text-sm text-red-600">
+                  {"data" in error &&
+                  typeof error.data === "object" &&
+                  error.data &&
+                  "message" in error.data
+                    ? (error.data as { message?: string }).message
+                    : "Login failed. Please check your credentials and try again."}
+                </p>
+              </div>
+            )}
+
+            <form onSubmit={handleSubmit} className="space-y-6">
+              {/* Email */}
               <div>
-                <div className="relative group">
-                  <div className="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-stone-400 group-focus-within:text-sage-500 transition-colors duration-200">
-                    <User size={18} />
+                <label
+                  htmlFor="email"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
+                  Email address
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <Mail className="h-5 w-5 text-gray-400" />
                   </div>
                   <input
                     id="email"
@@ -81,16 +204,24 @@ export default function ArtistLoginPage() {
                     required
                     value={formData.email}
                     onChange={handleChange}
-                    className="w-full pl-11 pr-4 py-3.5 bg-stone-50 border border-stone-200 rounded-xl focus:border-sage-500 focus:outline-none focus:ring-2 focus:ring-sage-100 transition-all duration-200"
-                    placeholder="Email address"
+                    disabled={isLoading}
+                    className="block w-full pl-10 pr-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-2 focus:ring-terracotta-500 focus:border-terracotta-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                    placeholder="Enter your email"
                   />
                 </div>
               </div>
 
+              {/* Password */}
               <div>
-                <div className="relative group">
-                  <div className="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-stone-400 group-focus-within:text-sage-500 transition-colors duration-200">
-                    <Lock size={18} />
+                <label
+                  htmlFor="password"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
+                  Password
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <Lock className="h-5 w-5 text-gray-400" />
                   </div>
                   <input
                     id="password"
@@ -99,16 +230,15 @@ export default function ArtistLoginPage() {
                     required
                     value={formData.password}
                     onChange={handleChange}
-                    className="w-full pl-11 pr-11 py-3.5 bg-stone-50 border border-stone-200 rounded-xl focus:border-sage-500 focus:outline-none focus:ring-2 focus:ring-sage-100 transition-all duration-200"
-                    placeholder="Password"
+                    disabled={isLoading}
+                    className="block w-full pl-10 pr-10 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-2 focus:ring-terracotta-500 focus:border-terracotta-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                    placeholder="Enter your password"
                   />
                   <button
                     type="button"
                     onClick={() => setIsPasswordVisible(!isPasswordVisible)}
-                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-stone-400 hover:text-sage-600 transition-colors duration-200"
-                    aria-label={
-                      isPasswordVisible ? "Hide password" : "Show password"
-                    }
+                    disabled={isLoading}
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 cursor-pointer disabled:cursor-not-allowed"
                   >
                     {isPasswordVisible ? (
                       <EyeOff className="h-5 w-5" />
@@ -119,57 +249,73 @@ export default function ArtistLoginPage() {
                 </div>
               </div>
 
+              {/* Remember me and Forgot password */}
               <div className="flex items-center justify-between">
                 <div className="flex items-center">
                   <input
-                    id="remember-me"
-                    name="remember-me"
+                    id="rememberMe"
+                    name="rememberMe"
                     type="checkbox"
-                    className="h-4 w-4 rounded border-stone-300 text-sage-600 focus:ring-sage-500"
+                    checked={formData.rememberMe}
+                    onChange={handleChange}
+                    disabled={isLoading}
+                    className="h-4 w-4 text-terracotta-600 focus:ring-terracotta-500 border-gray-300 cursor-pointer disabled:cursor-not-allowed"
                   />
                   <label
-                    htmlFor="remember-me"
-                    className="ml-2 block text-sm text-stone-600"
+                    htmlFor="rememberMe"
+                    className="ml-2 block text-sm text-gray-700 cursor-pointer"
                   >
                     Remember me
                   </label>
                 </div>
-
-                <div className="text-sm">
-                  <Link
-                    href="/forgot-password"
-                    className="text-sage-600 hover:text-sage-700 font-medium transition-colors duration-200"
-                  >
-                    Forgot password?
-                  </Link>
-                </div>
+                <Link
+                  href="/forgot-password"
+                  className="text-sm text-terracotta-600 hover:text-terracotta-500 font-medium cursor-pointer"
+                >
+                  Forgot password?
+                </Link>
               </div>
 
+              {/* Submit button */}
               <button
                 type="submit"
-                className="w-full bg-sage-600 text-white py-3.5 px-4 rounded-xl font-medium hover:bg-sage-700 flex items-center justify-center shadow-md hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-300"
+                disabled={isLoading}
+                className="w-full flex justify-center items-center py-3 px-4 border border-transparent text-sm font-medium text-white bg-terracotta-600 hover:bg-terracotta-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-terracotta-500 cursor-pointer transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Sign in{" "}
-                <ArrowRight className="ml-2 h-4 w-4 animate-pulse-slow" />
+                {isLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Signing in...
+                  </>
+                ) : (
+                  "Sign in"
+                )}
               </button>
             </form>
 
-            <div className="mt-8 text-center">
-              <p className="text-sm text-stone-500">
-                Don&apos;t have an account?{" "}
+            <div className="mt-6">
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-gray-300" />
+                </div>
+                <div className="relative flex justify-center text-sm">
+                  <span className="px-2 bg-white text-gray-500">
+                    New to AADIVAEARTH?
+                  </span>
+                </div>
+              </div>
+
+              <div className="mt-6 text-center">
                 <Link
                   href="/Artist/signup"
-                  className="text-sage-600 hover:text-sage-700 font-medium transition-colors duration-200"
+                  className="font-medium text-terracotta-600 hover:text-terracotta-500 cursor-pointer"
                 >
-                  Artist Sign up
+                  Create your artist account
                 </Link>
-              </p>
+              </div>
             </div>
           </div>
         </div>
-
-        {/* Decorative bottom element */}
-        <div className="w-24 h-1.5 bg-sage-400 rounded-full mx-auto mt-8 opacity-50"></div>
       </div>
     </div>
   );
