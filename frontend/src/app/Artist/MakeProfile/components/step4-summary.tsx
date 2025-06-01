@@ -48,6 +48,28 @@ interface Step4Props {
 }
 
 export default function Step4Summary({ data }: Step4Props) {
+  const formatAddress = (address: any) => {
+    if (!address) return "Not provided";
+    const parts = [
+      address.street,
+      address.city,
+      address.state,
+      address.country,
+      address.pinCode,
+    ].filter(Boolean);
+    return parts.length > 0 ? parts.join(", ") : "Not provided";
+  };
+
+  const formatArray = (arr: string[] | undefined) => {
+    if (!Array.isArray(arr) || arr.length === 0) return "None provided";
+    return arr.join(", ");
+  };
+
+  const maskAccountNumber = (accountNumber: string | undefined) => {
+    if (!accountNumber) return "Not provided";
+    return "XXXX" + accountNumber.slice(-4);
+  };
+
   return (
     <div>
       <h2 className="text-xl sm:text-2xl font-light text-stone-900 mb-4 sm:mb-6">
@@ -63,37 +85,35 @@ export default function Step4Summary({ data }: Step4Props) {
             <span className="font-medium text-stone-700">
               Full Name / Business Name:
             </span>{" "}
-            {data.fullName || "Not provided"}
+            {data?.fullName || "Not provided"}
           </div>
           <div>
             <span className="font-medium text-stone-700">Store Name:</span>{" "}
-            {data.storeName || "Not provided"}
+            {data?.storeName || "Not provided"}
           </div>
           <div>
             <span className="font-medium text-stone-700">Email:</span>{" "}
-            {data.email || "Not provided"}
+            {data?.email || "Not provided"}
           </div>
           <div>
             <span className="font-medium text-stone-700">Mobile:</span>{" "}
-            {data.mobile || "Not provided"}
+            {data?.mobile || "Not provided"}
           </div>
           <div>
             <span className="font-medium text-stone-700">Business Type:</span>{" "}
-            {data.businessType || "Not provided"}
+            {data?.businessType || "Not provided"}
           </div>
           <div>
             <span className="font-medium text-stone-700">
               Business Registration Number:
             </span>{" "}
-            {data.businessRegistrationNumber || "Not provided"}
+            {data?.businessRegistrationNumber || "Not provided"}
           </div>
           <div className="md:col-span-2">
             <span className="font-medium text-stone-700">
               Product Categories:
             </span>{" "}
-            {data.productCategories.length > 0
-              ? data.productCategories.join(", ")
-              : "None provided"}
+            {formatArray(data?.productCategories)}
           </div>
         </div>
       </div>
@@ -107,47 +127,41 @@ export default function Step4Summary({ data }: Step4Props) {
             <span className="font-medium text-stone-700">
               Business Address:
             </span>{" "}
-            {data.businessAddress.street
-              ? `${data.businessAddress.street}, ${data.businessAddress.city}, ${data.businessAddress.state}, ${data.businessAddress.country}, ${data.businessAddress.pinCode}`
-              : "Not provided"}
+            {formatAddress(data?.businessAddress)}
           </div>
           <div className="md:col-span-2">
             <span className="font-medium text-stone-700">
               Warehouse Address:
             </span>{" "}
-            {data.warehouseAddress.sameAsBusiness
+            {data?.warehouseAddress?.sameAsBusiness
               ? "Same as Business Address"
-              : data.warehouseAddress.street
-              ? `${data.warehouseAddress.street}, ${data.warehouseAddress.city}, ${data.warehouseAddress.state}, ${data.warehouseAddress.country}, ${data.warehouseAddress.pinCode}`
-              : "Not provided"}
+              : formatAddress(data?.warehouseAddress)}
           </div>
           <div>
             <span className="font-medium text-stone-700">
               Bank Account Name:
             </span>{" "}
-            {data.bankAccountName || "Not provided"}
+            {data?.bankAccountName || "Not provided"}
           </div>
           <div>
             <span className="font-medium text-stone-700">Bank Name:</span>{" "}
-            {data.bankName || "Not provided"}
+            {data?.bankName || "Not provided"}
           </div>
           <div>
             <span className="font-medium text-stone-700">Account Number:</span>{" "}
-            {data.accountNumber
-              ? "XXXX" + data.accountNumber.slice(-4)
-              : "Not provided"}
+            {maskAccountNumber(data?.accountNumber)}
           </div>
           <div>
             <span className="font-medium text-stone-700">IFSC Code:</span>{" "}
-            {data.ifscCode || "Not provided"}
+            {data?.ifscCode || "Not provided"}
           </div>
           <div>
             <span className="font-medium text-stone-700">GST Number:</span>{" "}
-            {data.gstNumber || "Not provided"}
+            {data?.gstNumber || "Not provided"}
           </div>
           <div>
             <span className="font-medium text-stone-700">PAN Number:</span>{" "}
-            {data.panNumber || "Not provided"}
+            {data?.panNumber || "Not provided"}
           </div>
         </div>
       </div>
@@ -159,37 +173,35 @@ export default function Step4Summary({ data }: Step4Props) {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 text-xs sm:text-sm">
           <div>
             <span className="font-medium text-stone-700">Shipping Type:</span>{" "}
-            {data.shippingType || "Not provided"}
+            {data?.shippingType || "Not provided"}
           </div>
           <div>
             <span className="font-medium text-stone-700">
               Inventory Volume:
             </span>{" "}
-            {data.inventoryVolume || "Not provided"}
+            {data?.inventoryVolume || "Not provided"}
           </div>
           <div>
             <span className="font-medium text-stone-700">Support Contact:</span>{" "}
-            {data.supportContact || "Not provided"}
+            {data?.supportContact || "Not provided"}
           </div>
           <div>
             <span className="font-medium text-stone-700">Working Hours:</span>{" "}
-            {data.workingHours || "Not provided"}
+            {data?.workingHours || "Not provided"}
           </div>
           <div className="md:col-span-2">
             <span className="font-medium text-stone-700">Service Areas:</span>{" "}
-            {data.serviceAreas.length > 0
-              ? data.serviceAreas.join(", ")
-              : "None provided"}
+            {formatArray(data?.serviceAreas)}
           </div>
           <div className="md:col-span-2">
             <span className="font-medium text-stone-700">Return Policy:</span>{" "}
-            {data.returnPolicy || "Not provided"}
+            {data?.returnPolicy || "Not provided"}
           </div>
           <div className="md:col-span-2">
             <span className="font-medium text-stone-700">
               Terms & Conditions:
             </span>{" "}
-            {data.termsAgreed ? "Agreed" : "Not agreed"}
+            {data?.termsAgreed ? "Agreed" : "Not agreed"}
           </div>
         </div>
       </div>

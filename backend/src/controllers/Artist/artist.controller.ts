@@ -39,6 +39,8 @@ export const updateArtist = async (
     // If an image was uploaded, add the Cloudinary URL to update data
     if (req.file) {
       updateData.avatar = req.file.path; // Cloudinary URL is stored in file.path
+      updateData.businessLogo = req.file.path; // Assuming businessLogo is also an image
+      updateData.digitalSignature = req.file.path; // Assuming digitalSignature is also an image
     }
 
     const artist = await artistService.updateArtist(userId, updateData);

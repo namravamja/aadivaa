@@ -11,6 +11,7 @@ import Step2AddressBanking from "./components/step2-address-banking";
 import Step3PreferencesLogistics from "./components/step3-preferences-logistics";
 import Step4Summary from "./components/step4-summary";
 import ProfileProgress from "./components/ProfileProgress";
+import toast from "react-hot-toast";
 
 // Define the complete profile data structure
 interface ProfileData {
@@ -69,10 +70,17 @@ export default function MakeProfile() {
   const formRef = useRef<HTMLDivElement>(null);
 
   // RTK Query hooks
-  const { data: artistData, isLoading, error } = useGetartistQuery(undefined);
+  const {
+    data: artistData,
+    isLoading,
+    error: fetchError,
+    refetch,
+  } = useGetartistQuery(undefined);
   const [updateArtist, { isLoading: isUpdating }] = useUpdateartistMutation();
 
-  // Centralized profile data state
+  console.log(artistData);
+
+  // Centralized profile data state (local only, no API calls on change)
   const [profileData, setProfileData] = useState<ProfileData>({
     // Step 1: Seller Account & Business Basics
     fullName: "",
@@ -124,99 +132,153 @@ export default function MakeProfile() {
     termsAgreed: false,
   });
 
-  // Load existing artist data when available
+  // Load existing artist data when available (only once)
   useEffect(() => {
     if (artistData) {
-      setProfileData({
-        fullName: artistData.fullName || "",
-        storeName: artistData.storeName || "",
-        email: artistData.email || "",
-        mobile: artistData.mobile || "",
-        businessType: artistData.businessType || "",
-        businessRegistrationNumber: artistData.businessRegistrationNumber || "",
-        productCategories: artistData.productCategories || [],
-        businessLogo: artistData.businessLogo || "",
-        businessAddress: artistData.businessAddress || {
-          street: "",
-          city: "",
-          state: "",
-          country: "",
-          pinCode: "",
-        },
-        warehouseAddress: artistData.warehouseAddress || {
-          sameAsBusiness: true,
-          street: "",
-          city: "",
-          state: "",
-          country: "",
-          pinCode: "",
-        },
-        bankAccountName: artistData.bankAccountName || "",
-        bankName: artistData.bankName || "",
-        accountNumber: artistData.accountNumber || "",
-        ifscCode: artistData.ifscCode || "",
-        upiId: artistData.upiId || "",
-        gstNumber: artistData.gstNumber || "",
-        panNumber: artistData.panNumber || "",
-        shippingType: artistData.shippingType || "",
-        inventoryVolume: artistData.inventoryVolume || "",
-        supportContact: artistData.supportContact || "",
-        workingHours: artistData.workingHours || "",
-        serviceAreas: artistData.serviceAreas || [],
-        returnPolicy: artistData.returnPolicy || "",
-        socialLinks: artistData.socialLinks || {
-          website: "",
-          instagram: "",
-          facebook: "",
-          twitter: "",
-        },
-        termsAgreed: artistData.termsAgreed || false,
-      });
+      try {
+        setProfileData({
+          fullName: artistData.fullName || "",
+          storeName: artistData.storeName || "",
+          email: artistData.email || "",
+          mobile: artistData.mobile || "",
+          businessType: artistData.businessType || "",
+          businessRegistrationNumber:
+            artistData.businessRegistrationNumber || "",
+          productCategories: Array.isArray(artistData.productCategories)
+            ? artistData.productCategories
+            : [],
+          businessLogo: artistData.businessLogo || "",
+          businessAddress: {
+            street: artistData.businessAddress?.street || "",
+            city: artistData.businessAddress?.city || "",
+            state: artistData.businessAddress?.state || "",
+            country: artistData.businessAddress?.country || "",
+            pinCode: artistData.businessAddress?.pinCode || "",
+          },
+          warehouseAddress: {
+            sameAsBusiness: artistData.warehouseAddress?.sameAsBusiness ?? true,
+            street: artistData.warehouseAddress?.street || "",
+            city: artistData.warehouseAddress?.city || "",
+            state: artistData.warehouseAddress?.state || "",
+            country: artistData.warehouseAddress?.country || "",
+            pinCode: artistData.warehouseAddress?.pinCode || "",
+          },
+          bankAccountName: artistData.bankAccountName || "",
+          bankName: artistData.bankName || "",
+          accountNumber: artistData.accountNumber || "",
+          ifscCode: artistData.ifscCode || "",
+          upiId: artistData.upiId || "",
+          gstNumber: artistData.gstNumber || "",
+          panNumber: artistData.panNumber || "",
+          shippingType: artistData.shippingType || "",
+          inventoryVolume: artistData.inventoryVolume || "",
+          supportContact: artistData.supportContact || "",
+          workingHours: artistData.workingHours || "",
+          serviceAreas: Array.isArray(artistData.serviceAreas)
+            ? artistData.serviceAreas
+            : [],
+          returnPolicy: artistData.returnPolicy || "",
+          socialLinks: {
+            website: artistData.socialLinks?.website || "",
+            instagram: artistData.socialLinks?.instagram || "",
+            facebook: artistData.socialLinks?.facebook || "",
+            twitter: artistData.socialLinks?.twitter || "",
+          },
+          termsAgreed: artistData.termsAgreed || false,
+        });
+      } catch (err) {
+        console.error("Error loading artist data:", err);
+        toast.error("Failed to load profile data. Please refresh the page.");
+      }
     }
   }, [artistData]);
 
-  // Function to update profile data and sync with API
-  const updateProfileData = async (updates: Partial<ProfileData>) => {
-    const newData = { ...profileData, ...updates };
-    setProfileData(newData);
+  // Function to prepare data for API update
+  const prepareUpdateData = (updates: ProfileData) => {
+    const updatePayload: any = {};
 
-    // Update the artist data via API
+    // Handle simple fields
+    Object.keys(updates).forEach((key) => {
+      if (
+        key !== "businessAddress" &&
+        key !== "warehouseAddress" &&
+        key !== "socialLinks"
+      ) {
+        updatePayload[key] = updates[key as keyof ProfileData];
+      }
+    });
+
+    // Handle address relations
+    if (updates.businessAddress) {
+      updatePayload.businessAddress = {
+        upsert: {
+          create: updates.businessAddress,
+          update: updates.businessAddress,
+        },
+      };
+    }
+
+    if (updates.warehouseAddress) {
+      updatePayload.warehouseAddress = {
+        upsert: {
+          create: updates.warehouseAddress,
+          update: updates.warehouseAddress,
+        },
+      };
+    }
+
+    // Handle social links relation
+    if (updates.socialLinks) {
+      updatePayload.socialLinks = {
+        upsert: {
+          create: updates.socialLinks,
+          update: updates.socialLinks,
+        },
+      };
+    }
+
+    return updatePayload;
+  };
+
+  // Function to update profile data locally only (no API call)
+  const updateProfileData = (updates: Partial<ProfileData>) => {
     try {
-      await updateArtist(updates).unwrap();
+      setProfileData((prev) => ({ ...prev, ...updates }));
     } catch (error) {
-      console.error("Failed to update artist data:", error);
+      console.error("Failed to update profile data:", error);
+      toast.error("Failed to update profile data");
     }
   };
 
-  // Function to update nested fields
-  const updateNestedField = async (
+  // Function to update nested fields locally only (no API call)
+  const updateNestedField = (
     parent: keyof ProfileData,
     field: string,
     value: any
   ) => {
-    const updates = {
-      [parent]: {
-        ...(profileData[parent] as Record<string, any>),
-        [field]: value,
-      } as any,
-    };
-
-    setProfileData((prev) => ({
-      ...prev,
-      ...updates,
-    }));
-
-    // Update the artist data via API
     try {
-      await updateArtist(updates).unwrap();
+      const updates = {
+        [parent]: {
+          ...(profileData[parent] as Record<string, any>),
+          [field]: value,
+        } as any,
+      };
+
+      setProfileData((prev) => ({
+        ...prev,
+        ...updates,
+      }));
     } catch (error) {
-      console.error("Failed to update artist data:", error);
+      console.error(`Failed to update ${parent}.${field}:`, error);
+      toast.error(`Failed to update ${field}`);
     }
   };
 
-  // Function to add to array fields
-  const addToArray = async (field: keyof ProfileData, value: string) => {
-    if (value.trim()) {
+  // Function to add to array fields locally only (no API call)
+  const addToArray = (field: keyof ProfileData, value: string) => {
+    if (!value?.trim()) return;
+
+    try {
       const updates = {
         [field]: [...(profileData[field] as string[]), value.trim()],
       };
@@ -225,42 +287,40 @@ export default function MakeProfile() {
         ...prev,
         ...updates,
       }));
-
-      // Update the artist data via API
-      try {
-        await updateArtist(updates).unwrap();
-      } catch (error) {
-        console.error("Failed to update artist data:", error);
-      }
-    }
-  };
-
-  // Function to remove from array fields
-  const removeFromArray = async (field: keyof ProfileData, index: number) => {
-    const updates = {
-      [field]: (profileData[field] as string[]).filter((_, i) => i !== index),
-    };
-
-    setProfileData((prev) => ({
-      ...prev,
-      ...updates,
-    }));
-
-    // Update the artist data via API
-    try {
-      await updateArtist(updates).unwrap();
     } catch (error) {
-      console.error("Failed to update artist data:", error);
+      console.error("Failed to add item:", error);
+      toast.error("Failed to add item");
     }
   };
 
+  // Function to remove from array fields locally only (no API call)
+  const removeFromArray = (field: keyof ProfileData, index: number) => {
+    try {
+      const updates = {
+        [field]: (profileData[field] as string[]).filter((_, i) => i !== index),
+      };
+
+      setProfileData((prev) => ({
+        ...prev,
+        ...updates,
+      }));
+    } catch (error) {
+      console.error("Failed to remove item:", error);
+      toast.error("Failed to remove item");
+    }
+  };
+
+  // Final submit function - only API call happens here
   const handleSubmit = async () => {
     try {
-      await updateArtist(profileData).unwrap();
-      alert("Profile created successfully!");
-    } catch (error) {
-      console.error("Failed to submit profile:", error);
-      alert("Failed to submit profile. Please try again.");
+      const updatePayload = prepareUpdateData(profileData);
+      await updateArtist(updatePayload).unwrap();
+      toast.success("Profile submitted successfully!");
+    } catch (err: any) {
+      console.error("Failed to submit profile:", err);
+      toast.error(
+        err?.data?.message || "Failed to submit profile. Please try again."
+      );
     }
   };
 
@@ -311,11 +371,20 @@ export default function MakeProfile() {
     );
   }
 
-  if (error) {
+  if (fetchError) {
     return (
       <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8">
-        <div className="flex items-center justify-center h-64">
+        <div className="flex flex-col items-center justify-center h-64 space-y-4">
           <div className="text-lg text-red-600">Error loading profile data</div>
+          <button
+            onClick={() => {
+              refetch();
+              toast.error("Please refresh the page or contact support.");
+            }}
+            className="px-4 py-2 bg-terracotta-600 text-white rounded-md hover:bg-terracotta-700 transition-colors"
+          >
+            Retry
+          </button>
         </div>
       </div>
     );

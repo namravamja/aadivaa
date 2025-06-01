@@ -1,6 +1,10 @@
 "use client";
 
-import { Upload, X, Plus } from "lucide-react";
+import type React from "react";
+
+import { Upload, X, Plus, FileImage } from "lucide-react";
+import { useState, useRef } from "react";
+import toast from "react-hot-toast";
 
 interface ProfileData {
   shippingType: string;
@@ -30,6 +34,12 @@ interface Step3Props {
   removeFromArray: (field: keyof ProfileData, index: number) => void;
 }
 
+interface UploadedFile {
+  file: File;
+  preview: string;
+  name: string;
+}
+
 export default function Step3PreferencesLogistics({
   data,
   updateData,
@@ -37,8 +47,81 @@ export default function Step3PreferencesLogistics({
   addToArray,
   removeFromArray,
 }: Step3Props) {
+  const [serviceAreaInput, setServiceAreaInput] = useState("");
+  const [uploadedSignature, setUploadedSignature] =
+    useState<UploadedFile | null>(null);
+  const signatureInputRef = useRef<HTMLInputElement>(null);
+
   const handleInputChange = (field: keyof ProfileData, value: any) => {
     updateData({ [field]: value });
+  };
+
+  const handleNestedFieldChange = (
+    parent: keyof ProfileData,
+    field: string,
+    value: any
+  ) => {
+    updateNestedField(parent, field, value);
+  };
+
+  const handleAddServiceArea = () => {
+    if (serviceAreaInput.trim()) {
+      addToArray("serviceAreas", serviceAreaInput.trim());
+      setServiceAreaInput("");
+    }
+  };
+
+  const handleRemoveServiceArea = (index: number) => {
+    removeFromArray("serviceAreas", index);
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      handleAddServiceArea();
+    }
+  };
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // Validate file type
+      if (!file.type.startsWith("image/")) {
+        toast.error("Please upload an image file");
+        return;
+      }
+
+      // Validate file size (2MB limit)
+      if (file.size > 2 * 1024 * 1024) {
+        toast.error("File size must be less than 2MB");
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const result = e.target?.result as string;
+        setUploadedSignature({
+          file,
+          preview: result,
+          name: file.name,
+        });
+      };
+      reader.readAsDataURL(file);
+
+      toast.success(`Digital signature uploaded: ${file.name}`);
+    }
+  };
+
+  const removeSignature = () => {
+    setUploadedSignature(null);
+    if (signatureInputRef.current) {
+      signatureInputRef.current.value = "";
+    }
+    toast.success("Digital signature removed");
+  };
+
+  const triggerFileUpload = () => {
+    signatureInputRef.current?.click();
   };
 
   return (
@@ -53,7 +136,7 @@ export default function Step3PreferencesLogistics({
             Preferred Shipping Type <span className="text-red-500">*</span>
           </label>
           <select
-            value={data.shippingType}
+            value={data?.shippingType || ""}
             onChange={(e) => handleInputChange("shippingType", e.target.value)}
             className="w-full px-4 py-3 border border-stone-300 rounded-md focus:border-terracotta-500 focus:outline-none focus:ring-1 focus:ring-terracotta-500"
             required
@@ -69,7 +152,7 @@ export default function Step3PreferencesLogistics({
             Estimated Inventory Volume <span className="text-red-500">*</span>
           </label>
           <select
-            value={data.inventoryVolume}
+            value={data?.inventoryVolume || ""}
             onChange={(e) =>
               handleInputChange("inventoryVolume", e.target.value)
             }
@@ -90,7 +173,7 @@ export default function Step3PreferencesLogistics({
           </label>
           <input
             type="text"
-            value={data.supportContact}
+            value={data?.supportContact || ""}
             onChange={(e) =>
               handleInputChange("supportContact", e.target.value)
             }
@@ -105,7 +188,7 @@ export default function Step3PreferencesLogistics({
           </label>
           <input
             type="text"
-            value={data.workingHours}
+            value={data?.workingHours || ""}
             onChange={(e) => handleInputChange("workingHours", e.target.value)}
             className="w-full px-4 py-3 border border-stone-300 rounded-md focus:border-terracotta-500 focus:outline-none focus:ring-1 focus:ring-terracotta-500"
             placeholder="e.g., Mon-Fri: 9AM-5PM"
@@ -118,44 +201,35 @@ export default function Step3PreferencesLogistics({
           Service Areas <span className="text-red-500">*</span>
         </label>
         <div className="flex flex-wrap gap-2 mb-3">
-          {data.serviceAreas.map((area, index) => (
-            <span
-              key={index}
-              className="bg-sage-100 text-sage-700 px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm flex items-center"
-            >
-              {area}
-              <button
-                onClick={() => removeFromArray("serviceAreas", index)}
-                className="ml-1 sm:ml-2 text-sage-500 hover:text-sage-700"
+          {Array.isArray(data?.serviceAreas) &&
+            data.serviceAreas.map((area, index) => (
+              <span
+                key={index}
+                className="bg-sage-100 text-sage-700 px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm flex items-center"
               >
-                <X className="w-3 h-3" />
-              </button>
-            </span>
-          ))}
+                {area}
+                <button
+                  onClick={() => handleRemoveServiceArea(index)}
+                  className="ml-1 sm:ml-2 text-sage-500 hover:text-sage-700"
+                  type="button"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              </span>
+            ))}
         </div>
         <div className="flex flex-col sm:flex-row gap-2 sm:gap-0">
           <input
             type="text"
             placeholder="Add a service area (e.g., Local, National, International, or specific regions)"
+            value={serviceAreaInput}
+            onChange={(e) => setServiceAreaInput(e.target.value)}
+            onKeyPress={handleKeyPress}
             className="flex-1 px-3 sm:px-4 py-2 sm:py-3 border border-stone-300 rounded-md focus:border-terracotta-500 focus:outline-none focus:ring-1 focus:ring-terracotta-500"
-            onKeyPress={(e) => {
-              if (e.key === "Enter") {
-                e.preventDefault();
-                addToArray(
-                  "serviceAreas",
-                  (e.target as HTMLInputElement).value
-                );
-                (e.target as HTMLInputElement).value = "";
-              }
-            }}
           />
           <button
-            onClick={(e) => {
-              const input = e.currentTarget
-                .previousElementSibling as HTMLInputElement;
-              addToArray("serviceAreas", input.value);
-              input.value = "";
-            }}
+            onClick={handleAddServiceArea}
+            type="button"
             className="sm:ml-2 bg-sage-600 text-white px-4 py-2 sm:py-3 rounded-md hover:bg-sage-700 transition-colors"
           >
             <Plus className="w-4 h-4 mx-auto" />
@@ -168,7 +242,7 @@ export default function Step3PreferencesLogistics({
           Return Handling Policy (optional)
         </label>
         <textarea
-          value={data.returnPolicy}
+          value={data?.returnPolicy || ""}
           onChange={(e) => handleInputChange("returnPolicy", e.target.value)}
           rows={4}
           className="w-full px-4 py-3 border border-stone-300 rounded-md focus:border-terracotta-500 focus:outline-none focus:ring-1 focus:ring-terracotta-500"
@@ -187,9 +261,13 @@ export default function Step3PreferencesLogistics({
             </label>
             <input
               type="url"
-              value={data.socialLinks.website}
+              value={data?.socialLinks?.website || ""}
               onChange={(e) =>
-                updateNestedField("socialLinks", "website", e.target.value)
+                handleNestedFieldChange(
+                  "socialLinks",
+                  "website",
+                  e.target.value
+                )
               }
               className="w-full px-4 py-3 border border-stone-300 rounded-md focus:border-terracotta-500 focus:outline-none focus:ring-1 focus:ring-terracotta-500"
               placeholder="https://your-website.com"
@@ -201,9 +279,13 @@ export default function Step3PreferencesLogistics({
             </label>
             <input
               type="text"
-              value={data.socialLinks.instagram}
+              value={data?.socialLinks?.instagram || ""}
               onChange={(e) =>
-                updateNestedField("socialLinks", "instagram", e.target.value)
+                handleNestedFieldChange(
+                  "socialLinks",
+                  "instagram",
+                  e.target.value
+                )
               }
               className="w-full px-4 py-3 border border-stone-300 rounded-md focus:border-terracotta-500 focus:outline-none focus:ring-1 focus:ring-terracotta-500"
               placeholder="@username"
@@ -215,9 +297,13 @@ export default function Step3PreferencesLogistics({
             </label>
             <input
               type="text"
-              value={data.socialLinks.facebook}
+              value={data?.socialLinks?.facebook || ""}
               onChange={(e) =>
-                updateNestedField("socialLinks", "facebook", e.target.value)
+                handleNestedFieldChange(
+                  "socialLinks",
+                  "facebook",
+                  e.target.value
+                )
               }
               className="w-full px-4 py-3 border border-stone-300 rounded-md focus:border-terracotta-500 focus:outline-none focus:ring-1 focus:ring-terracotta-500"
               placeholder="Page name or URL"
@@ -229,9 +315,13 @@ export default function Step3PreferencesLogistics({
             </label>
             <input
               type="text"
-              value={data.socialLinks.twitter}
+              value={data?.socialLinks?.twitter || ""}
               onChange={(e) =>
-                updateNestedField("socialLinks", "twitter", e.target.value)
+                handleNestedFieldChange(
+                  "socialLinks",
+                  "twitter",
+                  e.target.value
+                )
               }
               className="w-full px-4 py-3 border border-stone-300 rounded-md focus:border-terracotta-500 focus:outline-none focus:ring-1 focus:ring-terracotta-500"
               placeholder="@username"
@@ -246,7 +336,7 @@ export default function Step3PreferencesLogistics({
             id="terms"
             name="terms"
             type="checkbox"
-            checked={data.termsAgreed}
+            checked={data?.termsAgreed || false}
             onChange={(e) => handleInputChange("termsAgreed", e.target.checked)}
             className="h-4 w-4 text-terracotta-600 focus:ring-terracotta-500 border-stone-300 rounded"
             required
@@ -274,27 +364,56 @@ export default function Step3PreferencesLogistics({
         <label className="block text-sm font-medium text-stone-700 mb-2">
           Digital Signature (optional)
         </label>
-        <div className="mt-1 flex justify-center px-3 sm:px-6 pt-3 sm:pt-5 pb-3 sm:pb-6 border-2 border-dashed border-stone-300 rounded-md">
-          <div className="space-y-1 text-center">
-            <Upload className="mx-auto h-6 sm:h-8 w-6 sm:w-8 text-stone-400" />
-            <div className="flex flex-col sm:flex-row text-sm text-stone-600 justify-center">
-              <label
-                htmlFor="signature-upload"
-                className="relative cursor-pointer rounded-md font-medium text-terracotta-600 hover:text-terracotta-500"
+
+        {/* Hidden file input */}
+        <input
+          ref={signatureInputRef}
+          type="file"
+          accept="image/*"
+          onChange={handleFileUpload}
+          className="hidden"
+        />
+
+        {uploadedSignature ? (
+          <div className="mt-1 p-3 border-2 border-dashed border-stone-300 rounded-md">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                <FileImage className="w-8 h-8 text-terracotta-600" />
+                <div>
+                  <p className="text-sm font-medium text-stone-700">
+                    {uploadedSignature.name}
+                  </p>
+                  <p className="text-xs text-stone-500">
+                    {(uploadedSignature.file.size / 1024).toFixed(1)} KB
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={removeSignature}
+                className="text-red-500 hover:text-red-700 p-1"
+                type="button"
               >
-                <span>Upload a file</span>
-                <input
-                  id="signature-upload"
-                  name="signature-upload"
-                  type="file"
-                  className="sr-only"
-                />
-              </label>
-              <p className="sm:pl-1">or drag and drop</p>
+                <X className="w-4 h-4" />
+              </button>
             </div>
-            <p className="text-xs text-stone-500">PNG, JPG up to 2MB</p>
           </div>
-        </div>
+        ) : (
+          <div
+            onClick={triggerFileUpload}
+            className="mt-1 flex justify-center px-3 sm:px-6 pt-3 sm:pt-5 pb-3 sm:pb-6 border-2 border-dashed border-stone-300 rounded-md hover:border-terracotta-400 transition-colors cursor-pointer"
+          >
+            <div className="space-y-1 text-center">
+              <Upload className="mx-auto h-6 sm:h-8 w-6 sm:w-8 text-stone-400" />
+              <div className="flex flex-col sm:flex-row text-sm text-stone-600 justify-center">
+                <span className="font-medium text-terracotta-600 hover:text-terracotta-500">
+                  Upload a file
+                </span>
+                <p className="sm:pl-1">or drag and drop</p>
+              </div>
+              <p className="text-xs text-stone-500">PNG, JPG up to 2MB</p>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -1,8 +1,5 @@
 "use client";
 
-import { useUpdateartistMutation } from "@/services/api/artistApi";
-import { useEffect } from "react";
-
 interface ProfileData {
   // Step 1: Seller Account & Business Basics
   fullName: string;
@@ -59,50 +56,56 @@ interface ProfileProgressProps {
 }
 
 export default function ProfileProgress({ profileData }: ProfileProgressProps) {
-  const [updateArtist] = useUpdateartistMutation();
-
   const calculateProgress = () => {
-    let completed = 0;
-    const total = 23; // Total required fields across all steps
+    try {
+      let completed = 0;
+      const total = 23; // Total required fields across all steps
 
-    // Step 1: Seller Account & Business Basics (9 fields)
-    if (profileData.fullName) completed++;
-    if (profileData.storeName) completed++;
-    if (profileData.email) completed++;
-    if (profileData.mobile) completed++;
-    if (profileData.businessType) completed++;
-    if (profileData.businessRegistrationNumber) completed++;
-    if (profileData.productCategories.length > 0) completed++;
+      // Step 1: Seller Account & Business Basics (9 fields)
+      if (profileData?.fullName?.trim()) completed++;
+      if (profileData?.storeName?.trim()) completed++;
+      if (profileData?.email?.trim()) completed++;
+      if (profileData?.mobile?.trim()) completed++;
+      if (profileData?.businessType?.trim()) completed++;
+      if (profileData?.businessRegistrationNumber?.trim()) completed++;
+      if (
+        Array.isArray(profileData?.productCategories) &&
+        profileData.productCategories.length > 0
+      )
+        completed++;
 
-    // Step 2: Address, Banking & Tax Details (11 fields)
-    if (profileData.businessAddress.street) completed++;
-    if (profileData.businessAddress.city) completed++;
-    if (profileData.businessAddress.state) completed++;
-    if (profileData.businessAddress.country) completed++;
-    if (profileData.businessAddress.pinCode) completed++;
-    if (profileData.bankAccountName) completed++;
-    if (profileData.bankName) completed++;
-    if (profileData.accountNumber) completed++;
-    if (profileData.ifscCode) completed++;
-    if (profileData.gstNumber) completed++;
-    if (profileData.panNumber) completed++;
+      // Step 2: Address, Banking & Tax Details (11 fields)
+      if (profileData?.businessAddress?.street?.trim()) completed++;
+      if (profileData?.businessAddress?.city?.trim()) completed++;
+      if (profileData?.businessAddress?.state?.trim()) completed++;
+      if (profileData?.businessAddress?.country?.trim()) completed++;
+      if (profileData?.businessAddress?.pinCode?.trim()) completed++;
+      if (profileData?.bankAccountName?.trim()) completed++;
+      if (profileData?.bankName?.trim()) completed++;
+      if (profileData?.accountNumber?.trim()) completed++;
+      if (profileData?.ifscCode?.trim()) completed++;
+      if (profileData?.gstNumber?.trim()) completed++;
+      if (profileData?.panNumber?.trim()) completed++;
 
-    // Step 3: Preferences, Logistics & Agreement (5 fields)
-    if (profileData.shippingType) completed++;
-    if (profileData.serviceAreas.length > 0) completed++;
-    if (profileData.inventoryVolume) completed++;
-    if (profileData.returnPolicy) completed++;
-    if (profileData.termsAgreed) completed++;
+      // Step 3: Preferences, Logistics & Agreement (5 fields)
+      if (profileData?.shippingType?.trim()) completed++;
+      if (
+        Array.isArray(profileData?.serviceAreas) &&
+        profileData.serviceAreas.length > 0
+      )
+        completed++;
+      if (profileData?.inventoryVolume?.trim()) completed++;
+      if (profileData?.returnPolicy?.trim()) completed++;
+      if (profileData?.termsAgreed) completed++;
 
-    return Math.round((completed / total) * 100);
+      return Math.round((completed / total) * 100);
+    } catch (error) {
+      console.error("Error calculating progress:", error);
+      return 0;
+    }
   };
 
   const progress = calculateProgress();
-
-  // Update progress in the artist model whenever it changes
-  useEffect(() => {
-    updateArtist({ profileProgress: progress });
-  }, [progress, updateArtist]);
 
   const getProgressColor = () => {
     if (progress >= 80) return "bg-sage-500";
@@ -118,46 +121,66 @@ export default function ProfileProgress({ profileData }: ProfileProgressProps) {
   };
 
   const getMissingFields = () => {
-    const missing = [];
+    try {
+      const missing = [];
 
-    // Step 1 missing fields
-    if (!profileData.fullName) missing.push("• Add your full name");
-    if (!profileData.storeName) missing.push("• Add your store name");
-    if (!profileData.email) missing.push("• Add your email address");
-    if (!profileData.mobile) missing.push("• Add your mobile number");
-    if (!profileData.businessType) missing.push("• Select business type");
-    if (!profileData.businessRegistrationNumber)
-      missing.push("• Add business registration number");
-    if (profileData.productCategories.length === 0)
-      missing.push("• Add product categories");
+      // Step 1 missing fields
+      if (!profileData?.fullName?.trim()) missing.push("• Add your full name");
+      if (!profileData?.storeName?.trim())
+        missing.push("• Add your store name");
+      if (!profileData?.email?.trim()) missing.push("• Add your email address");
+      if (!profileData?.mobile?.trim())
+        missing.push("• Add your mobile number");
+      if (!profileData?.businessType?.trim())
+        missing.push("• Select business type");
+      if (!profileData?.businessRegistrationNumber?.trim())
+        missing.push("• Add business registration number");
+      if (
+        !Array.isArray(profileData?.productCategories) ||
+        profileData.productCategories.length === 0
+      )
+        missing.push("• Add product categories");
 
-    // Step 2 missing fields
-    if (!profileData.businessAddress.street)
-      missing.push("• Add business street address");
-    if (!profileData.businessAddress.city) missing.push("• Add business city");
-    if (!profileData.businessAddress.state)
-      missing.push("• Add business state");
-    if (!profileData.businessAddress.country)
-      missing.push("• Add business country");
-    if (!profileData.businessAddress.pinCode)
-      missing.push("• Add business pin code");
-    if (!profileData.bankAccountName) missing.push("• Add bank account name");
-    if (!profileData.bankName) missing.push("• Add bank name");
-    if (!profileData.accountNumber) missing.push("• Add account number");
-    if (!profileData.ifscCode) missing.push("• Add IFSC code");
-    if (!profileData.gstNumber) missing.push("• Add GST number");
-    if (!profileData.panNumber) missing.push("• Add PAN number");
+      // Step 2 missing fields
+      if (!profileData?.businessAddress?.street?.trim())
+        missing.push("• Add business street address");
+      if (!profileData?.businessAddress?.city?.trim())
+        missing.push("• Add business city");
+      if (!profileData?.businessAddress?.state?.trim())
+        missing.push("• Add business state");
+      if (!profileData?.businessAddress?.country?.trim())
+        missing.push("• Add business country");
+      if (!profileData?.businessAddress?.pinCode?.trim())
+        missing.push("• Add business pin code");
+      if (!profileData?.bankAccountName?.trim())
+        missing.push("• Add bank account name");
+      if (!profileData?.bankName?.trim()) missing.push("• Add bank name");
+      if (!profileData?.accountNumber?.trim())
+        missing.push("• Add account number");
+      if (!profileData?.ifscCode?.trim()) missing.push("• Add IFSC code");
+      if (!profileData?.gstNumber?.trim()) missing.push("• Add GST number");
+      if (!profileData?.panNumber?.trim()) missing.push("• Add PAN number");
 
-    // Step 3 missing fields
-    if (!profileData.shippingType) missing.push("• Select shipping type");
-    if (profileData.serviceAreas.length === 0)
-      missing.push("• Add service areas");
-    if (!profileData.inventoryVolume) missing.push("• Add inventory volume");
-    if (!profileData.returnPolicy) missing.push("• Add return policy");
-    if (!profileData.termsAgreed)
-      missing.push("• Agree to terms and conditions");
+      // Step 3 missing fields
+      if (!profileData?.shippingType?.trim())
+        missing.push("• Select shipping type");
+      if (
+        !Array.isArray(profileData?.serviceAreas) ||
+        profileData.serviceAreas.length === 0
+      )
+        missing.push("• Add service areas");
+      if (!profileData?.inventoryVolume?.trim())
+        missing.push("• Add inventory volume");
+      if (!profileData?.returnPolicy?.trim())
+        missing.push("• Add return policy");
+      if (!profileData?.termsAgreed)
+        missing.push("• Agree to terms and conditions");
 
-    return missing;
+      return missing;
+    } catch (error) {
+      console.error("Error getting missing fields:", error);
+      return ["• Error calculating missing fields"];
+    }
   };
 
   return (

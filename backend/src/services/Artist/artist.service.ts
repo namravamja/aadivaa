@@ -4,28 +4,40 @@ import { hashPassword } from "../../utils/jwt";
 const prisma = new PrismaClient();
 
 export interface ArtistUpdateData {
-  fullName?: string;
-  mobile?: string;
+  id: string;
+  fullName: string;
+  avatar?: string;
+  profileProgress?: number;
   storeName?: string;
+  email?: string;
+  mobile?: string;
+  password?: string;
+  confirmPassword?: string;
   businessType?: string;
   businessRegistrationNumber?: string;
-  gstNumber?: string;
-  panNumber?: string;
+  productCategories?: string[];
+  businessLogo?: string;
+  businessAddressId?: string | null;
+  warehouseAddressId?: string | null;
+  bankAccountName?: string;
   bankName?: string;
   accountNumber?: string;
   ifscCode?: string;
   upiId?: string;
+  gstNumber?: string;
+  panNumber?: string;
+  documentsId?: string | null;
   shippingType?: string;
-  inventoryVolume?: number;
-  returnPolicy?: string;
+  serviceAreas?: string[];
+  inventoryVolume?: string;
   supportContact?: string;
+  returnPolicy?: string;
   workingHours?: string;
-  businessLogo?: string;
-  digitalSignature?: string;
+  socialLinksId?: string | null;
   termsAgreed?: boolean;
+  digitalSignature?: string;
   isAuthenticated?: boolean;
   isVerified?: boolean;
-  // Add more optional fields as per your schema
 }
 
 export const createArtist = async (data: {
@@ -91,6 +103,8 @@ export const getArtistById = async (id: string) => {
       accountNumber: true,
       ifscCode: true,
       upiId: true,
+      businessAddress: true,
+      warehouseAddress: true,
       shippingType: true,
       inventoryVolume: true,
       returnPolicy: true,

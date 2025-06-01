@@ -1,6 +1,8 @@
 "use client";
 
-import { Upload } from "lucide-react";
+import { Upload, X, FileImage } from "lucide-react";
+import { useState, useRef } from "react";
+import toast from "react-hot-toast";
 
 interface ProfileData {
   businessAddress: {
@@ -37,13 +39,149 @@ interface Step2Props {
   ) => void;
 }
 
+interface UploadedFile {
+  file: File;
+  preview: string;
+  name: string;
+}
+
 export default function Step2AddressBanking({
   data,
   updateData,
   updateNestedField,
 }: Step2Props) {
+  const [uploadedDocuments, setUploadedDocuments] = useState<
+    Record<string, UploadedFile>
+  >({});
+  const fileInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
+
   const handleInputChange = (field: keyof ProfileData, value: any) => {
     updateData({ [field]: value });
+  };
+
+  const handleNestedFieldChange = (
+    parent: keyof ProfileData,
+    field: string,
+    value: any
+  ) => {
+    updateNestedField(parent, field, value);
+  };
+
+  const handleFileUpload = (inputId: string, file: File | null) => {
+    if (file) {
+      // Validate file type
+      if (!file.type.startsWith("image/")) {
+        toast.error("Please upload an image file");
+        return;
+      }
+
+      // Validate file size (5MB limit)
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error("File size must be less than 5MB");
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const result = e.target?.result as string;
+        setUploadedDocuments((prev) => ({
+          ...prev,
+          [inputId]: {
+            file,
+            preview: result,
+            name: file.name,
+          },
+        }));
+      };
+      reader.readAsDataURL(file);
+
+      toast.success(`Document uploaded: ${file.name}`);
+    }
+  };
+
+  const removeDocument = (inputId: string) => {
+    setUploadedDocuments((prev) => {
+      const newDocs = { ...prev };
+      delete newDocs[inputId];
+      return newDocs;
+    });
+
+    // Clear the file input
+    if (fileInputRefs.current[inputId]) {
+      fileInputRefs.current[inputId]!.value = "";
+    }
+
+    toast.success("Document removed");
+  };
+
+  const triggerFileUpload = (inputId: string) => {
+    fileInputRefs.current[inputId]?.click();
+  };
+
+  const renderFileUpload = (doc: {
+    id: string;
+    label: string;
+    required: boolean;
+  }) => {
+    const uploadedDoc = uploadedDocuments[doc.id];
+
+    return (
+      <div>
+        {/* Hidden file input */}
+        <input
+          ref={(el) => {
+            fileInputRefs.current[doc.id] = el;
+          }}
+          type="file"
+          accept="image/*"
+          onChange={(e) =>
+            handleFileUpload(doc.id, e.target.files?.[0] || null)
+          }
+          className="hidden"
+        />
+
+        {uploadedDoc ? (
+          <div className="mt-1 p-3 border-2 border-dashed border-stone-300 rounded-md">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                <FileImage className="w-8 h-8 text-terracotta-600" />
+                <div>
+                  <p className="text-sm font-medium text-stone-700">
+                    {uploadedDoc.name}
+                  </p>
+                  <p className="text-xs text-stone-500">
+                    {(uploadedDoc.file.size / 1024).toFixed(1)} KB
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => removeDocument(doc.id)}
+                className="text-red-500 hover:text-red-700 p-1"
+                type="button"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div
+            onClick={() => triggerFileUpload(doc.id)}
+            className="mt-1 flex justify-center px-3 sm:px-6 pt-3 sm:pt-5 pb-3 sm:pb-6 border-2 border-dashed border-stone-300 rounded-md hover:border-terracotta-400 transition-colors cursor-pointer"
+          >
+            <div className="space-y-1 text-center">
+              <Upload className="mx-auto h-6 sm:h-8 w-6 sm:w-8 text-stone-400" />
+              <div className="flex flex-col sm:flex-row text-sm text-stone-600 justify-center">
+                <span className="font-medium text-terracotta-600 hover:text-terracotta-500">
+                  Upload a photo
+                </span>
+                <p className="sm:pl-1">or drag and drop</p>
+              </div>
+              <p className="text-xs text-stone-500">PNG, JPG up to 5MB</p>
+            </div>
+          </div>
+        )}
+      </div>
+    );
   };
 
   return (
@@ -63,9 +201,13 @@ export default function Step2AddressBanking({
             </label>
             <input
               type="text"
-              value={data.businessAddress.street}
+              value={data?.businessAddress?.street || ""}
               onChange={(e) =>
-                updateNestedField("businessAddress", "street", e.target.value)
+                handleNestedFieldChange(
+                  "businessAddress",
+                  "street",
+                  e.target.value
+                )
               }
               className="w-full px-4 py-3 border border-stone-300 rounded-md focus:border-terracotta-500 focus:outline-none focus:ring-1 focus:ring-terracotta-500"
               required
@@ -77,9 +219,13 @@ export default function Step2AddressBanking({
             </label>
             <input
               type="text"
-              value={data.businessAddress.city}
+              value={data?.businessAddress?.city || ""}
               onChange={(e) =>
-                updateNestedField("businessAddress", "city", e.target.value)
+                handleNestedFieldChange(
+                  "businessAddress",
+                  "city",
+                  e.target.value
+                )
               }
               className="w-full px-4 py-3 border border-stone-300 rounded-md focus:border-terracotta-500 focus:outline-none focus:ring-1 focus:ring-terracotta-500"
               required
@@ -91,9 +237,13 @@ export default function Step2AddressBanking({
             </label>
             <input
               type="text"
-              value={data.businessAddress.state}
+              value={data?.businessAddress?.state || ""}
               onChange={(e) =>
-                updateNestedField("businessAddress", "state", e.target.value)
+                handleNestedFieldChange(
+                  "businessAddress",
+                  "state",
+                  e.target.value
+                )
               }
               className="w-full px-4 py-3 border border-stone-300 rounded-md focus:border-terracotta-500 focus:outline-none focus:ring-1 focus:ring-terracotta-500"
               required
@@ -105,9 +255,13 @@ export default function Step2AddressBanking({
             </label>
             <input
               type="text"
-              value={data.businessAddress.country}
+              value={data?.businessAddress?.country || ""}
               onChange={(e) =>
-                updateNestedField("businessAddress", "country", e.target.value)
+                handleNestedFieldChange(
+                  "businessAddress",
+                  "country",
+                  e.target.value
+                )
               }
               className="w-full px-4 py-3 border border-stone-300 rounded-md focus:border-terracotta-500 focus:outline-none focus:ring-1 focus:ring-terracotta-500"
               required
@@ -119,9 +273,13 @@ export default function Step2AddressBanking({
             </label>
             <input
               type="text"
-              value={data.businessAddress.pinCode}
+              value={data?.businessAddress?.pinCode || ""}
               onChange={(e) =>
-                updateNestedField("businessAddress", "pinCode", e.target.value)
+                handleNestedFieldChange(
+                  "businessAddress",
+                  "pinCode",
+                  e.target.value
+                )
               }
               className="w-full px-4 py-3 border border-stone-300 rounded-md focus:border-terracotta-500 focus:outline-none focus:ring-1 focus:ring-terracotta-500"
               required
@@ -139,9 +297,9 @@ export default function Step2AddressBanking({
             <input
               type="checkbox"
               id="sameAsBusiness"
-              checked={data.warehouseAddress.sameAsBusiness}
+              checked={data?.warehouseAddress?.sameAsBusiness ?? true}
               onChange={(e) =>
-                updateNestedField(
+                handleNestedFieldChange(
                   "warehouseAddress",
                   "sameAsBusiness",
                   e.target.checked
@@ -158,7 +316,7 @@ export default function Step2AddressBanking({
           </div>
         </div>
 
-        {!data.warehouseAddress.sameAsBusiness && (
+        {!data?.warehouseAddress?.sameAsBusiness && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="md:col-span-2">
               <label className="block text-sm font-medium text-stone-700 mb-2">
@@ -166,9 +324,9 @@ export default function Step2AddressBanking({
               </label>
               <input
                 type="text"
-                value={data.warehouseAddress.street}
+                value={data?.warehouseAddress?.street || ""}
                 onChange={(e) =>
-                  updateNestedField(
+                  handleNestedFieldChange(
                     "warehouseAddress",
                     "street",
                     e.target.value
@@ -183,9 +341,13 @@ export default function Step2AddressBanking({
               </label>
               <input
                 type="text"
-                value={data.warehouseAddress.city}
+                value={data?.warehouseAddress?.city || ""}
                 onChange={(e) =>
-                  updateNestedField("warehouseAddress", "city", e.target.value)
+                  handleNestedFieldChange(
+                    "warehouseAddress",
+                    "city",
+                    e.target.value
+                  )
                 }
                 className="w-full px-4 py-3 border border-stone-300 rounded-md focus:border-terracotta-500 focus:outline-none focus:ring-1 focus:ring-terracotta-500"
               />
@@ -196,9 +358,13 @@ export default function Step2AddressBanking({
               </label>
               <input
                 type="text"
-                value={data.warehouseAddress.state}
+                value={data?.warehouseAddress?.state || ""}
                 onChange={(e) =>
-                  updateNestedField("warehouseAddress", "state", e.target.value)
+                  handleNestedFieldChange(
+                    "warehouseAddress",
+                    "state",
+                    e.target.value
+                  )
                 }
                 className="w-full px-4 py-3 border border-stone-300 rounded-md focus:border-terracotta-500 focus:outline-none focus:ring-1 focus:ring-terracotta-500"
               />
@@ -209,9 +375,9 @@ export default function Step2AddressBanking({
               </label>
               <input
                 type="text"
-                value={data.warehouseAddress.country}
+                value={data?.warehouseAddress?.country || ""}
                 onChange={(e) =>
-                  updateNestedField(
+                  handleNestedFieldChange(
                     "warehouseAddress",
                     "country",
                     e.target.value
@@ -226,9 +392,9 @@ export default function Step2AddressBanking({
               </label>
               <input
                 type="text"
-                value={data.warehouseAddress.pinCode}
+                value={data?.warehouseAddress?.pinCode || ""}
                 onChange={(e) =>
-                  updateNestedField(
+                  handleNestedFieldChange(
                     "warehouseAddress",
                     "pinCode",
                     e.target.value
@@ -252,7 +418,7 @@ export default function Step2AddressBanking({
             </label>
             <input
               type="text"
-              value={data.bankAccountName}
+              value={data?.bankAccountName || ""}
               onChange={(e) =>
                 handleInputChange("bankAccountName", e.target.value)
               }
@@ -266,7 +432,7 @@ export default function Step2AddressBanking({
             </label>
             <input
               type="text"
-              value={data.bankName}
+              value={data?.bankName || ""}
               onChange={(e) => handleInputChange("bankName", e.target.value)}
               className="w-full px-4 py-3 border border-stone-300 rounded-md focus:border-terracotta-500 focus:outline-none focus:ring-1 focus:ring-terracotta-500"
               required
@@ -278,7 +444,7 @@ export default function Step2AddressBanking({
             </label>
             <input
               type="text"
-              value={data.accountNumber}
+              value={data?.accountNumber || ""}
               onChange={(e) =>
                 handleInputChange("accountNumber", e.target.value)
               }
@@ -292,7 +458,7 @@ export default function Step2AddressBanking({
             </label>
             <input
               type="text"
-              value={data.ifscCode}
+              value={data?.ifscCode || ""}
               onChange={(e) => handleInputChange("ifscCode", e.target.value)}
               className="w-full px-4 py-3 border border-stone-300 rounded-md focus:border-terracotta-500 focus:outline-none focus:ring-1 focus:ring-terracotta-500"
               required
@@ -304,7 +470,7 @@ export default function Step2AddressBanking({
             </label>
             <input
               type="text"
-              value={data.upiId}
+              value={data?.upiId || ""}
               onChange={(e) => handleInputChange("upiId", e.target.value)}
               className="w-full px-4 py-3 border border-stone-300 rounded-md focus:border-terracotta-500 focus:outline-none focus:ring-1 focus:ring-terracotta-500"
             />
@@ -321,7 +487,7 @@ export default function Step2AddressBanking({
             </label>
             <input
               type="text"
-              value={data.gstNumber}
+              value={data?.gstNumber || ""}
               onChange={(e) => handleInputChange("gstNumber", e.target.value)}
               className="w-full px-4 py-3 border border-stone-300 rounded-md focus:border-terracotta-500 focus:outline-none focus:ring-1 focus:ring-terracotta-500"
             />
@@ -332,7 +498,7 @@ export default function Step2AddressBanking({
             </label>
             <input
               type="text"
-              value={data.panNumber}
+              value={data?.panNumber || ""}
               onChange={(e) => handleInputChange("panNumber", e.target.value)}
               className="w-full px-4 py-3 border border-stone-300 rounded-md focus:border-terracotta-500 focus:outline-none focus:ring-1 focus:ring-terracotta-500"
               required
@@ -346,116 +512,32 @@ export default function Step2AddressBanking({
           Upload Documents
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <label className="block text-sm font-medium text-stone-700 mb-2">
-              GST Certificate (if applicable)
-            </label>
-            <div className="mt-1 flex justify-center px-3 sm:px-6 pt-3 sm:pt-5 pb-3 sm:pb-6 border-2 border-dashed border-stone-300 rounded-md">
-              <div className="space-y-1 text-center">
-                <Upload className="mx-auto h-6 sm:h-8 w-6 sm:w-8 text-stone-400" />
-                <div className="flex flex-col sm:flex-row text-sm text-stone-600 justify-center">
-                  <label
-                    htmlFor="gst-upload"
-                    className="relative cursor-pointer rounded-md font-medium text-terracotta-600 hover:text-terracotta-500"
-                  >
-                    <span>Upload a photo</span>
-                    <input
-                      id="gst-upload"
-                      name="gst-upload"
-                      type="file"
-                      accept="image/*"
-                      className="sr-only"
-                    />
-                  </label>
-                  <p className="sm:pl-1">or drag and drop</p>
-                </div>
-                <p className="text-xs text-stone-500">PNG, JPG up to 5MB</p>
-              </div>
+          {[
+            {
+              id: "gst-upload",
+              label: "GST Certificate (if applicable)",
+              required: false,
+            },
+            { id: "pan-upload", label: "PAN Card", required: true },
+            {
+              id: "license-upload",
+              label: "Business License / Incorporation Certificate",
+              required: true,
+            },
+            {
+              id: "cheque-upload",
+              label: "Canceled Cheque or Passbook",
+              required: true,
+            },
+          ].map((doc) => (
+            <div key={doc.id}>
+              <label className="block text-sm font-medium text-stone-700 mb-2">
+                {doc.label}{" "}
+                {doc.required && <span className="text-red-500">*</span>}
+              </label>
+              {renderFileUpload(doc)}
             </div>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-stone-700 mb-2">
-              PAN Card <span className="text-red-500">*</span>
-            </label>
-            <div className="mt-1 flex justify-center px-3 sm:px-6 pt-3 sm:pt-5 pb-3 sm:pb-6 border-2 border-dashed border-stone-300 rounded-md">
-              <div className="space-y-1 text-center">
-                <Upload className="mx-auto h-6 sm:h-8 w-6 sm:w-8 text-stone-400" />
-                <div className="flex flex-col sm:flex-row text-sm text-stone-600 justify-center">
-                  <label
-                    htmlFor="pan-upload"
-                    className="relative cursor-pointer rounded-md font-medium text-terracotta-600 hover:text-terracotta-500"
-                  >
-                    <span>Upload a photo</span>
-                    <input
-                      id="pan-upload"
-                      name="pan-upload"
-                      type="file"
-                      accept="image/*"
-                      className="sr-only"
-                    />
-                  </label>
-                  <p className="sm:pl-1">or drag and drop</p>
-                </div>
-                <p className="text-xs text-stone-500">PNG, JPG up to 5MB</p>
-              </div>
-            </div>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-stone-700 mb-2">
-              Business License / Incorporation Certificate{" "}
-              <span className="text-red-500">*</span>
-            </label>
-            <div className="mt-1 flex justify-center px-3 sm:px-6 pt-3 sm:pt-5 pb-3 sm:pb-6 border-2 border-dashed border-stone-300 rounded-md">
-              <div className="space-y-1 text-center">
-                <Upload className="mx-auto h-6 sm:h-8 w-6 sm:w-8 text-stone-400" />
-                <div className="flex flex-col sm:flex-row text-sm text-stone-600 justify-center">
-                  <label
-                    htmlFor="license-upload"
-                    className="relative cursor-pointer rounded-md font-medium text-terracotta-600 hover:text-terracotta-500"
-                  >
-                    <span>Upload a photo</span>
-                    <input
-                      id="license-upload"
-                      name="license-upload"
-                      type="file"
-                      accept="image/*"
-                      className="sr-only"
-                    />
-                  </label>
-                  <p className="sm:pl-1">or drag and drop</p>
-                </div>
-                <p className="text-xs text-stone-500">PNG, JPG up to 5MB</p>
-              </div>
-            </div>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-stone-700 mb-2">
-              Canceled Cheque or Passbook{" "}
-              <span className="text-red-500">*</span>
-            </label>
-            <div className="mt-1 flex justify-center px-3 sm:px-6 pt-3 sm:pt-5 pb-3 sm:pb-6 border-2 border-dashed border-stone-300 rounded-md">
-              <div className="space-y-1 text-center">
-                <Upload className="mx-auto h-6 sm:h-8 w-6 sm:w-8 text-stone-400" />
-                <div className="flex flex-col sm:flex-row text-sm text-stone-600 justify-center">
-                  <label
-                    htmlFor="cheque-upload"
-                    className="relative cursor-pointer rounded-md font-medium text-terracotta-600 hover:text-terracotta-500"
-                  >
-                    <span>Upload a photo</span>
-                    <input
-                      id="cheque-upload"
-                      name="cheque-upload"
-                      type="file"
-                      accept="image/*"
-                      className="sr-only"
-                    />
-                  </label>
-                  <p className="sm:pl-1">or drag and drop</p>
-                </div>
-                <p className="text-xs text-stone-500">PNG, JPG up to 5MB</p>
-              </div>
-            </div>
-          </div>
+          ))}
         </div>
       </div>
     </div>
