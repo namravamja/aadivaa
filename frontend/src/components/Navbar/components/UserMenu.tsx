@@ -74,6 +74,7 @@ export default function UserMenu({ isMobile = false, onClose }: UserMenuProps) {
     isLoading,
     isError,
     error,
+    refetch,
   } = useGetBuyerQuery(undefined);
 
   // Handle logout mutation
@@ -149,8 +150,10 @@ export default function UserMenu({ isMobile = false, onClose }: UserMenuProps) {
       // Redirect using Next.js router after a short delay
       setTimeout(() => {
         router.push("/");
-        window.location.reload();
+        // window.location.reload();
       }, 600);
+
+      refetch();
     } catch (err: any) {
       console.error("Logout failed:", err);
 

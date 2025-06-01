@@ -6,10 +6,12 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Eye, EyeOff, Mail, Lock } from "lucide-react";
 import { useLoginBuyerMutation } from "@/services/api/authApi";
+import { useGetBuyerQuery } from "@/services/api/buyerApi";
 
 export default function LoginPage() {
   const router = useRouter();
   const [loginBuyer, { isLoading, error }] = useLoginBuyerMutation();
+  const { refetch } = useGetBuyerQuery(undefined);
 
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const [formData, setFormData] = useState({
@@ -41,6 +43,8 @@ export default function LoginPage() {
     } catch (err) {
       console.error("Login failed:", err);
     }
+
+    refetch();
   };
 
   return (
