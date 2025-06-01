@@ -148,10 +148,7 @@ export default function UserMenu({ isMobile = false, onClose }: UserMenuProps) {
       }
 
       // Redirect using Next.js router after a short delay
-      setTimeout(() => {
-        router.push("/");
-        // window.location.reload();
-      }, 600);
+      router.push("/");
 
       refetch();
     } catch (err: any) {
