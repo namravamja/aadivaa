@@ -164,7 +164,7 @@ const AddressForm = React.memo<{
               <button
                 onClick={() => setShowSaveConfirm(false)}
                 disabled={isLoading}
-                className="flex-1 border border-stone-300 text-stone-700 hover:bg-stone-50 disabled:opacity-50 px-4 py-2 font-medium transition-colors rounded-md"
+                className="flex-1 border border-stone-300 text-stone-700 hover:bg-stone-50 disabled:opacity-50 px-4 py-2 font-medium transition-colors rounded-md cursor-pointer"
               >
                 Cancel
               </button>
@@ -186,13 +186,13 @@ const AddressForm = React.memo<{
             <div className="flex space-x-3">
               <button
                 onClick={confirmCancel}
-                className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 font-medium transition-colors rounded-md flex-1"
+                className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 font-medium transition-colors rounded-md flex-1 cursor-pointer"
               >
                 Discard Changes
               </button>
               <button
                 onClick={() => setShowCancelConfirm(false)}
-                className="flex-1 border border-stone-300 text-stone-700 hover:bg-stone-50 px-4 py-2 font-medium transition-colors rounded-md"
+                className="flex-1 border border-stone-300 text-stone-700 hover:bg-stone-50 px-4 py-2 font-medium transition-colors rounded-md cursor-pointer"
               >
                 Keep Editing
               </button>
@@ -385,7 +385,7 @@ const AddressForm = React.memo<{
         <button
           onClick={handleCancel}
           disabled={isLoading}
-          className="border border-stone-300 text-stone-700 hover:bg-stone-50 disabled:opacity-50 disabled:cursor-not-allowed px-6 py-2 font-medium transition-colors rounded-md"
+          className="border border-stone-300 text-stone-700 hover:bg-stone-50 disabled:opacity-50 disabled:cursor-not-allowed px-6 py-2 font-medium transition-colors rounded-md cursor-pointer"
         >
           Cancel
         </button>
@@ -730,7 +730,7 @@ export default function ShippingAddresses() {
               <button
                 onClick={() => handleStartEdit(address)}
                 disabled={isUpdating}
-                className="p-2 text-stone-500 hover:text-stone-700 hover:bg-stone-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed rounded-md"
+                className="p-2 text-stone-500 hover:text-stone-700 hover:bg-stone-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed rounded-md cursor-pointer"
                 title="Edit address"
               >
                 <Edit className="w-4 h-4" />
@@ -747,7 +747,7 @@ export default function ShippingAddresses() {
                       })
                     }
                     disabled={isUpdating}
-                    className="px-3 py-1 text-xs font-medium text-stone-600 border border-stone-300 hover:bg-stone-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed rounded-md"
+                    className="px-3 py-1 text-xs font-medium text-stone-600 border border-stone-300 hover:bg-stone-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed rounded-md cursor-pointer"
                   >
                     Set Default
                   </button>
@@ -760,7 +760,7 @@ export default function ShippingAddresses() {
                       })
                     }
                     disabled={isUpdating}
-                    className="p-2 text-red-500 hover:text-red-700 hover:bg-red-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed rounded-md"
+                    className="p-2 text-red-500 hover:text-red-700 hover:bg-red-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed rounded-md cursor-pointer"
                     title="Delete address"
                   >
                     <Trash2 className="w-4 h-4" />
@@ -877,7 +877,7 @@ export default function ShippingAddresses() {
           <button
             onClick={handleShowNewForm}
             disabled={isLoading || showNewForm}
-            className="inline-flex items-center px-4 py-2 border border-stone-300 text-stone-700 hover:bg-stone-50 font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="inline-flex items-center px-4 py-2 border border-stone-300 text-stone-700 hover:bg-stone-50 font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
           >
             <Plus className="w-4 h-4 mr-2" />
             Add Address
@@ -902,7 +902,7 @@ export default function ShippingAddresses() {
                 <button
                   onClick={() => handleDelete(deleteConfirm.addressId)}
                   disabled={isLoading}
-                  className="flex-1 bg-red-600 hover:bg-red-700 disabled:bg-red-300 text-white px-4 py-2 font-medium transition-colors rounded-md"
+                  className="flex-1 bg-red-600 hover:bg-red-700 disabled:bg-red-300 text-white px-4 py-2 font-medium transition-colors rounded-md cursor-pointer"
                 >
                   {isLoading ? "Deleting..." : "Delete Address"}
                 </button>
@@ -915,7 +915,7 @@ export default function ShippingAddresses() {
                     })
                   }
                   disabled={isLoading}
-                  className="flex-1 border border-stone-300 text-stone-700 hover:bg-stone-50 disabled:opacity-50 px-4 py-2 font-medium transition-colors rounded-md"
+                  className="flex-1 border border-stone-300 text-stone-700 hover:bg-stone-50 disabled:opacity-50 px-4 py-2 font-medium transition-colors rounded-md cursor-pointer"
                 >
                   Cancel
                 </button>
@@ -939,7 +939,7 @@ export default function ShippingAddresses() {
                 <button
                   onClick={() => handleSetDefault(defaultConfirm.addressId)}
                   disabled={isLoading}
-                  className="bg-terracotta-500 hover:bg-terracotta-600 disabled:bg-terracotta-300 disabled:cursor-not-allowed text-white px-4 py-2 font-medium transition-colors rounded-md flex-1"
+                  className="bg-terracotta-500 hover:bg-terracotta-600 disabled:bg-terracotta-300 disabled:cursor-not-allowed text-white px-4 py-2 font-medium transition-colors rounded-md flex-1 cursor-pointer"
                 >
                   {isLoading ? "Setting..." : "Set as Default"}
                 </button>
@@ -952,7 +952,7 @@ export default function ShippingAddresses() {
                     })
                   }
                   disabled={isLoading}
-                  className="flex-1 border border-stone-300 text-stone-700 hover:bg-stone-50 disabled:opacity-50 px-4 py-2 font-medium transition-colors rounded-md"
+                  className="flex-1 border border-stone-300 text-stone-700 hover:bg-stone-50 disabled:opacity-50 px-4 py-2 font-medium transition-colors rounded-md cursor-pointer"
                 >
                   Cancel
                 </button>

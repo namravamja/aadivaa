@@ -196,7 +196,7 @@ export default function SecuritySettings() {
               </div>
               <button
                 onClick={() => setShowPasswordChange(true)}
-                className="inline-flex items-center px-4 py-2 border border-stone-300 text-stone-700 hover:bg-stone-50 font-medium transition-colors"
+                className="inline-flex items-center px-4 py-2 border border-stone-300 text-stone-700 hover:bg-stone-50 font-medium transition-colors cursor-pointer"
               >
                 <Lock className="w-4 h-4 mr-2" />
                 Change Password
@@ -252,7 +252,7 @@ export default function SecuritySettings() {
                     <button
                       onClick={() => setShowChangeConfirm(false)}
                       disabled={isLoading}
-                      className="flex-1 border border-stone-300 text-stone-700 hover:bg-stone-50 disabled:opacity-50 px-4 py-2 font-medium transition-colors"
+                      className="flex-1 border border-stone-300 text-stone-700 hover:bg-stone-50 disabled:opacity-50 px-4 py-2 font-medium transition-colors cursor-pointer"
                     >
                       Cancel
                     </button>
@@ -275,13 +275,13 @@ export default function SecuritySettings() {
                   <div className="flex space-x-3">
                     <button
                       onClick={performCancel}
-                      className="flex-1 bg-red-600 hover:bg-red-700 text-white px-4 py-2 font-medium transition-colors"
+                      className="flex-1 bg-red-600 hover:bg-red-700 text-white px-4 py-2 font-medium transition-colors cursor-pointer"
                     >
                       Discard Changes
                     </button>
                     <button
                       onClick={() => setShowCancelConfirm(false)}
-                      className="flex-1 border border-stone-300 text-stone-700 hover:bg-stone-50 px-4 py-2 font-medium transition-colors"
+                      className="flex-1 border border-stone-300 text-stone-700 hover:bg-stone-50 px-4 py-2 font-medium transition-colors cursor-pointer"
                     >
                       Keep Editing
                     </button>
@@ -299,7 +299,7 @@ export default function SecuritySettings() {
                   type="button"
                   onClick={handleCancel}
                   disabled={isLoading}
-                  className="p-2 text-stone-400 hover:text-stone-600 transition-colors disabled:opacity-50"
+                  className="p-2 text-stone-400 hover:text-stone-600 transition-colors disabled:opacity-50 cursor-pointer"
                 >
                   <X className="w-5 h-5" />
                 </button>
@@ -336,7 +336,7 @@ export default function SecuritySettings() {
                     type="button"
                     onClick={() => togglePasswordVisibility("current")}
                     disabled={isLoading}
-                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-stone-400 hover:text-stone-600 disabled:opacity-50"
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-stone-400 hover:text-stone-600 disabled:opacity-50 cursor-pointer"
                   >
                     <Eye className="w-4 h-4" />
                   </button>
@@ -377,7 +377,7 @@ export default function SecuritySettings() {
                     type="button"
                     onClick={() => togglePasswordVisibility("new")}
                     disabled={isLoading}
-                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-stone-400 hover:text-stone-600 disabled:opacity-50"
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-stone-400 hover:text-stone-600 disabled:opacity-50 cursor-pointer"
                   >
                     <Eye className="w-4 h-4" />
                   </button>
@@ -535,7 +535,7 @@ export default function SecuritySettings() {
                     type="button"
                     onClick={() => togglePasswordVisibility("confirm")}
                     disabled={isLoading}
-                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-stone-400 hover:text-stone-600 disabled:opacity-50"
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-stone-400 hover:text-stone-600 disabled:opacity-50 cursor-pointer"
                   >
                     <Eye className="w-4 h-4" />
                   </button>
@@ -576,7 +576,7 @@ export default function SecuritySettings() {
                   type="button"
                   onClick={handleCancel}
                   disabled={isLoading}
-                  className="border border-stone-300 text-stone-700 hover:bg-stone-50 disabled:opacity-50 disabled:cursor-not-allowed px-6 py-2 font-medium transition-colors"
+                  className="border border-stone-300 text-stone-700 hover:bg-stone-50 disabled:opacity-50 disabled:cursor-not-allowed px-6 py-2 font-medium transition-colors cursor-pointer"
                 >
                   Cancel
                 </button>

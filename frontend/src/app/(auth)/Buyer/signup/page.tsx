@@ -1,12 +1,11 @@
 "use client";
 
 import type React from "react";
-
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Eye, EyeOff, ArrowRight, User, Mail, Lock } from "lucide-react";
-import { useSignupBuyerMutation } from "@/services/api/authApi"; // Update this path
+import { Eye, EyeOff, User, Mail, Lock } from "lucide-react";
+import { useSignupBuyerMutation } from "@/services/api/authApi";
 
 export default function SignupPage() {
   const router = useRouter();
@@ -29,99 +28,71 @@ export default function SignupPage() {
     e.preventDefault();
 
     try {
-      // Send data to API using RTK Query
       const result = await signupBuyer(formData).unwrap();
-
-      // Handle successful signup
       console.log("Signup successful:", result);
-
-      // You might want to store user data or token here
-      // localStorage.setItem('token', result.token); // if your API returns a token
-
-      // Redirect to login or dashboard
-      router.push("/Buyer/login"); // or wherever you want to redirect
+      router.push("/Buyer/login");
     } catch (err) {
-      // Error is already handled by RTK Query state
       console.error("Signup failed:", err);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center relative overflow-hidden bg-clay-50">
-      {/* Decorative background elements */}
-      <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute -top-24 -right-24 w-96 h-96 rounded-full bg-sage-200 opacity-30 blur-3xl"></div>
-        <div className="absolute top-1/3 -left-24 w-80 h-80 rounded-full bg-terracotta-200 opacity-30 blur-3xl"></div>
-        <div className="absolute bottom-0 right-1/3 w-full h-1/2 bg-clay-200 opacity-20 blur-3xl"></div>
-
-        {/* Decorative pattern */}
-        <div
-          className="absolute inset-0 opacity-5"
-          style={{
-            backgroundImage: `url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm56-76c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM12 86c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm28-65c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm23-11c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-6 60c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm29 22c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zM32 63c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm57-13c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-9-21c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM60 91c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM35 41c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM12 60c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2z' fill='%23cb4f30' fillOpacity='1' fillRule='evenodd'/%3E%3C/svg%3E")`,
-          }}
-        ></div>
-      </div>
-
-      <div className="w-full max-w-md px-4 relative z-10">
-        <div className="bg-white rounded-2xl shadow-xl overflow-hidden flex flex-col transform transition-all hover:shadow-2xl">
-          {/* Decorative top accent */}
-          <div className="h-2 bg-gradient-to-r from-terracotta-400 via-terracotta-600 to-terracotta-500"></div>
-
-          {/* Header with brand */}
-          <div className="bg-terracotta-600 text-white py-8 px-8 relative overflow-hidden">
-            <div className="absolute inset-0 opacity-10">
-              <div className="absolute -right-8 -top-8 w-32 h-32 rounded-full border-8 border-terracotta-400 opacity-30"></div>
-              <div className="absolute -left-4 bottom-0 w-24 h-24 rounded-full border-4 border-terracotta-400 opacity-20"></div>
+    <div className="min-h-screen bg-gray-50 flex">
+      {/* Left side - Signup Form */}
+      <div className="flex-1 flex flex-col justify-center px-4 sm:px-6 lg:px-8">
+        <div className="mx-auto w-full max-w-md">
+          <div className="bg-white py-8 px-6 shadow-sm border border-gray-200">
+            <div className="text-center mb-8">
+              <h2 className="text-3xl font-bold text-gray-900">
+                Create account
+              </h2>
+              <p className="mt-2 text-gray-600">Join AADIVAEARTH today</p>
             </div>
-
-            <div className="flex items-center">
-              <div>
-                <h1 className="text-3xl font-light mb-2 relative">
-                  Join{" "}
-                  <span className="font-medium">
-                    AADIVA<span className="font-bold">EARTH</span>
-                  </span>
-                </h1>
-                <p className="text-terracotta-100 text-sm">
-                  Create your customer account
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div className="p-8">
             {/* Error display */}
             {isError && (
-              <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
-                <p className="text-red-600 text-sm">
-                  {error && "data" in error
-                    ? (error.data as any)?.message ||
-                      "Signup failed. Please try again."
-                    : "An error occurred. Please try again."}
-                </p>
+              <div className="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 text-sm">
+                {error && "data" in error
+                  ? (error.data as any)?.message ||
+                    "Signup failed. Please try again."
+                  : "An error occurred. Please try again."}
               </div>
             )}
 
-            <form onSubmit={handleSubmit} className="space-y-5">
-              <div className="grid grid-cols-2 gap-4 mb-5">
-                <div className="relative group">
-                  <div className="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-stone-400 group-focus-within:text-terracotta-500 transition-colors duration-200">
-                    <User size={18} />
+            <form onSubmit={handleSubmit} className="space-y-6">
+              {/* Name fields */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label
+                    htmlFor="firstName"
+                    className="block text-sm font-medium text-gray-700 mb-1"
+                  >
+                    First name
+                  </label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <User className="h-5 w-5 text-gray-400" />
+                    </div>
+                    <input
+                      id="firstName"
+                      name="firstName"
+                      type="text"
+                      required
+                      value={formData.firstName}
+                      onChange={handleChange}
+                      disabled={isLoading}
+                      className="block w-full pl-10 pr-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-2 focus:ring-sage-500 focus:border-sage-500 disabled:bg-gray-50 disabled:text-gray-500"
+                      placeholder="First name"
+                    />
                   </div>
-                  <input
-                    id="firstName"
-                    name="firstName"
-                    type="text"
-                    required
-                    value={formData.firstName}
-                    onChange={handleChange}
-                    disabled={isLoading}
-                    className="w-full pl-11 pr-4 py-3.5 bg-stone-50 border border-stone-200 rounded-xl focus:border-terracotta-500 focus:outline-none focus:ring-2 focus:ring-terracotta-100 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                    placeholder="First Name"
-                  />
                 </div>
-                <div className="relative group">
+
+                <div>
+                  <label
+                    htmlFor="lastName"
+                    className="block text-sm font-medium text-gray-700 mb-1"
+                  >
+                    Last name
+                  </label>
                   <input
                     id="lastName"
                     name="lastName"
@@ -130,129 +101,182 @@ export default function SignupPage() {
                     value={formData.lastName}
                     onChange={handleChange}
                     disabled={isLoading}
-                    className="w-full px-4 py-3.5 bg-stone-50 border border-stone-200 rounded-xl focus:border-terracotta-500 focus:outline-none focus:ring-2 focus:ring-terracotta-100 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                    placeholder="Last Name"
+                    className="block w-full px-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-2 focus:ring-sage-500 focus:border-sage-500 disabled:bg-gray-50 disabled:text-gray-500"
+                    placeholder="Last name"
                   />
                 </div>
               </div>
 
-              <div className="relative group mb-5">
-                <div className="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-stone-400 group-focus-within:text-terracotta-500 transition-colors duration-200">
-                  <Mail size={18} />
-                </div>
-                <input
-                  id="email"
-                  name="email"
-                  type="email"
-                  required
-                  value={formData.email}
-                  onChange={handleChange}
-                  disabled={isLoading}
-                  className="w-full pl-11 pr-4 py-3.5 bg-stone-50 border border-stone-200 rounded-xl focus:border-terracotta-500 focus:outline-none focus:ring-2 focus:ring-terracotta-100 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                  placeholder="Email address"
-                />
-              </div>
-
-              <div className="relative group mb-2">
-                <div className="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-stone-400 group-focus-within:text-terracotta-500 transition-colors duration-200">
-                  <Lock size={18} />
-                </div>
-                <input
-                  id="password"
-                  name="password"
-                  type={isPasswordVisible ? "text" : "password"}
-                  required
-                  value={formData.password}
-                  onChange={handleChange}
-                  disabled={isLoading}
-                  className="w-full pl-11 pr-11 py-3.5 bg-stone-50 border border-stone-200 rounded-xl focus:border-terracotta-500 focus:outline-none focus:ring-2 focus:ring-terracotta-100 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                  placeholder="Password"
-                />
-                <button
-                  type="button"
-                  onClick={() => setIsPasswordVisible(!isPasswordVisible)}
-                  disabled={isLoading}
-                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-stone-400 hover:text-terracotta-600 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                  aria-label={
-                    isPasswordVisible ? "Hide password" : "Show password"
-                  }
+              {/* Email */}
+              <div>
+                <label
+                  htmlFor="email"
+                  className="block text-sm font-medium text-gray-700 mb-1"
                 >
-                  {isPasswordVisible ? (
-                    <EyeOff className="h-5 w-5" />
-                  ) : (
-                    <Eye className="h-5 w-5" />
-                  )}
-                </button>
+                  Email address
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <Mail className="h-5 w-5 text-gray-400" />
+                  </div>
+                  <input
+                    id="email"
+                    name="email"
+                    type="email"
+                    required
+                    value={formData.email}
+                    onChange={handleChange}
+                    disabled={isLoading}
+                    className="block w-full pl-10 pr-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-2 focus:ring-sage-500 focus:border-sage-500 disabled:bg-gray-50 disabled:text-gray-500"
+                    placeholder="Enter your email"
+                  />
+                </div>
               </div>
-              <p className="text-xs text-stone-500 mb-5">
-                Password must be at least 8 characters long
-              </p>
 
-              <div className="flex items-center">
+              {/* Password */}
+              <div>
+                <label
+                  htmlFor="password"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
+                  Password
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <Lock className="h-5 w-5 text-gray-400" />
+                  </div>
+                  <input
+                    id="password"
+                    name="password"
+                    type={isPasswordVisible ? "text" : "password"}
+                    required
+                    value={formData.password}
+                    onChange={handleChange}
+                    disabled={isLoading}
+                    className="block w-full pl-10 pr-10 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-2 focus:ring-sage-500 focus:border-sage-500 disabled:bg-gray-50 disabled:text-gray-500"
+                    placeholder="Create a password"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setIsPasswordVisible(!isPasswordVisible)}
+                    disabled={isLoading}
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 cursor-pointer"
+                  >
+                    {isPasswordVisible ? (
+                      <EyeOff className="h-5 w-5" />
+                    ) : (
+                      <Eye className="h-5 w-5" />
+                    )}
+                  </button>
+                </div>
+                <p className="mt-1 text-xs text-gray-500">
+                  Must be at least 8 characters
+                </p>
+              </div>
+
+              {/* Terms checkbox */}
+              <div className="flex items-start">
                 <input
                   id="terms"
                   name="terms"
                   type="checkbox"
                   required
                   disabled={isLoading}
-                  className="h-4 w-4 rounded border-stone-300 text-terracotta-600 focus:ring-terracotta-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="h-4 w-4 mt-1 text-sage-600 focus:ring-sage-500 border-gray-300 cursor-pointer"
                 />
                 <label
                   htmlFor="terms"
-                  className="ml-2 block text-xs text-stone-600"
+                  className="ml-2 block text-sm text-gray-700 cursor-pointer"
                 >
                   I agree to the{" "}
                   <Link
                     href="/terms"
-                    className="text-terracotta-600 hover:text-terracotta-700 transition-colors duration-200"
+                    className="text-sage-600 hover:text-sage-500 font-medium cursor-pointer"
                   >
                     Terms of Service
                   </Link>{" "}
                   and{" "}
                   <Link
                     href="/privacy"
-                    className="text-terracotta-600 hover:text-terracotta-700 transition-colors duration-200"
+                    className="text-sage-600 hover:text-sage-500 font-medium cursor-pointer"
                   >
                     Privacy Policy
                   </Link>
                 </label>
               </div>
 
+              {/* Submit button */}
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full bg-terracotta-600 text-white py-3.5 px-4 rounded-xl font-medium hover:bg-terracotta-700 flex items-center justify-center shadow-md hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                className="w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium text-white bg-sage-600 hover:bg-sage-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sage-500 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer transition-colors"
               >
                 {isLoading ? (
-                  <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent mr-2"></div>
-                    Creating Account...
-                  </>
+                  <div className="flex items-center">
+                    <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent mr-2"></div>
+                    Creating account...
+                  </div>
                 ) : (
-                  <>
-                    Create Account
-                    <ArrowRight className="ml-2 h-4 w-4 animate-pulse-slow" />
-                  </>
+                  "Create account"
                 )}
               </button>
             </form>
 
-            <div className="mt-8 text-center">
-              <p className="text-sm text-stone-500">
-                Already have an account?{" "}
+            <div className="mt-6">
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-gray-300" />
+                </div>
+                <div className="relative flex justify-center text-sm">
+                  <span className="px-2 bg-white text-gray-500">
+                    Already have an account?
+                  </span>
+                </div>
+              </div>
+
+              <div className="mt-6 text-center">
                 <Link
                   href="/Buyer/login"
-                  className="text-terracotta-600 hover:text-terracotta-700 font-medium transition-colors duration-200"
+                  className="font-medium text-sage-600 hover:text-sage-500 cursor-pointer"
                 >
-                  Login
+                  Sign in to your account
                 </Link>
-              </p>
+              </div>
             </div>
           </div>
         </div>
+      </div>
 
-        {/* Decorative bottom element */}
-        <div className="w-24 h-1.5 bg-terracotta-400 rounded-full mx-auto mt-8 opacity-50"></div>
+      {/* Right side - Branding */}
+      <div className="hidden lg:flex lg:w-3/5 bg-sage-800 relative overflow-hidden">
+        <div className="absolute inset-0 bg-sage-700 opacity-10"></div>
+        <div className="relative z-10 flex flex-col justify-center px-12 text-white">
+          <div className="max-w-md">
+            <h1 className="text-4xl font-bold mb-4">
+              AADIVAA<span className="font-light">EARTH</span>
+            </h1>
+            <p className="text-xl text-sage-100 mb-8">
+              Start your journey with sustainable, premium products
+            </p>
+            <div className="space-y-4 text-sage-100">
+              <div className="flex items-center">
+                <div className="w-2 h-2 bg-terracotta-300 mr-3"></div>
+                <span>Exclusive member benefits</span>
+              </div>
+              <div className="flex items-center">
+                <div className="w-2 h-2 bg-clay-300 mr-3"></div>
+                <span>Early access to new products</span>
+              </div>
+              <div className="flex items-center">
+                <div className="w-2 h-2 bg-sage-300 mr-3"></div>
+                <span>Personalized recommendations</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        {/* Decorative elements */}
+        <div className="absolute bottom-0 left-0 w-32 h-32 bg-terracotta-500 opacity-20"></div>
+        <div className="absolute top-1/4 left-8 w-16 h-16 bg-clay-400 opacity-30"></div>
       </div>
     </div>
   );

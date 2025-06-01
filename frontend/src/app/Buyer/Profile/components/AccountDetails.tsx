@@ -280,7 +280,7 @@ export default function AccountDetails() {
             </div>
             <button
               onClick={handleRetry}
-              className="bg-terracotta-500 hover:bg-terracotta-600 text-white px-4 py-2 font-medium transition-colors hover:opacity-80"
+              className="bg-terracotta-500 hover:bg-terracotta-600 text-white px-4 py-2 font-medium transition-colors hover:opacity-80 cursor-pointer"
             >
               Try Again
             </button>
@@ -342,7 +342,7 @@ export default function AccountDetails() {
               }
             }}
             disabled={isUpdating}
-            className="border border-stone-300 text-stone-700 hover:bg-stone-50 px-4 py-2 font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed hover:opacity-80"
+            className="border border-stone-300 text-stone-700 hover:bg-stone-50 px-4 py-2 font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed hover:opacity-80 cursor-pointer"
           >
             {isUpdating ? (
               <>
@@ -385,7 +385,7 @@ export default function AccountDetails() {
                 <button
                   onClick={() => setShowSaveConfirm(false)}
                   disabled={isUpdating}
-                  className="flex-1 border border-stone-300 text-stone-700 hover:bg-stone-50 disabled:opacity-50 px-4 py-2 font-medium transition-colors hover:opacity-80"
+                  className="flex-1 border border-stone-300 text-stone-700 hover:bg-stone-50 disabled:opacity-50 px-4 py-2 font-medium transition-colors hover:opacity-80 cursor-pointer"
                 >
                   Cancel
                 </button>
@@ -406,13 +406,13 @@ export default function AccountDetails() {
               <div className="flex space-x-3">
                 <button
                   onClick={performCancel}
-                  className="flex-1 bg-red-600 hover:bg-red-700 text-white px-4 py-2 font-medium transition-colors hover:opacity-80"
+                  className="flex-1 bg-red-600 hover:bg-red-700 text-white px-4 py-2 font-medium transition-colors hover:opacity-80 cursor-pointer"
                 >
                   Discard Changes
                 </button>
                 <button
                   onClick={() => setShowCancelConfirm(false)}
-                  className="flex-1 border border-stone-300 text-stone-700 hover:bg-stone-50 px-4 py-2 font-medium transition-colors hover:opacity-80"
+                  className="flex-1 border border-stone-300 text-stone-700 hover:bg-stone-50 px-4 py-2 font-medium transition-colors hover:opacity-80 cursor-pointer"
                 >
                   Keep Editing
                 </button>
@@ -597,7 +597,7 @@ export default function AccountDetails() {
             <button
               onClick={handleCancel}
               disabled={isUpdating}
-              className="border border-stone-300 text-stone-700 hover:bg-stone-50 disabled:opacity-50 disabled:cursor-not-allowed px-4 py-2 font-medium transition-colors hover:opacity-80"
+              className="border border-stone-300 text-stone-700 hover:bg-stone-50 disabled:opacity-50 disabled:cursor-not-allowed px-4 py-2 font-medium transition-colors hover:opacity-80 cursor-pointer"
             >
               <X className="w-4 h-4 mr-2 inline" />
               Cancel
