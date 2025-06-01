@@ -1,21 +1,35 @@
 "use client";
 
 import { Upload, X, Plus } from "lucide-react";
-import type { ProfileData } from "../page";
+
+interface ProfileData {
+  fullName: string;
+  storeName: string;
+  email: string;
+  mobile: string;
+  businessType: string;
+  businessRegistrationNumber: string;
+  productCategories: string[];
+  businessLogo: string;
+}
 
 interface Step1Props {
-  profileData: ProfileData;
-  handleInputChange: (field: string, value: any) => void;
-  handleArrayAdd: (field: keyof ProfileData, value: string) => void;
-  handleArrayRemove: (field: keyof ProfileData, index: number) => void;
+  data: ProfileData;
+  updateData: (updates: Partial<ProfileData>) => void;
+  addToArray: (field: keyof ProfileData, value: string) => void;
+  removeFromArray: (field: keyof ProfileData, index: number) => void;
 }
 
 export default function Step1BusinessBasics({
-  profileData,
-  handleInputChange,
-  handleArrayAdd,
-  handleArrayRemove,
+  data,
+  updateData,
+  addToArray,
+  removeFromArray,
 }: Step1Props) {
+  const handleInputChange = (field: keyof ProfileData, value: string) => {
+    updateData({ [field]: value });
+  };
+
   return (
     <div>
       <h2 className="text-xl sm:text-2xl font-light text-stone-900 mb-4 sm:mb-6">
@@ -29,7 +43,7 @@ export default function Step1BusinessBasics({
           </label>
           <input
             type="text"
-            value={profileData.fullName}
+            value={data.fullName}
             onChange={(e) => handleInputChange("fullName", e.target.value)}
             className="w-full px-4 py-3 border border-stone-300 rounded-md focus:border-terracotta-500 focus:outline-none focus:ring-1 focus:ring-terracotta-500"
             required
@@ -41,7 +55,7 @@ export default function Step1BusinessBasics({
           </label>
           <input
             type="text"
-            value={profileData.storeName}
+            value={data.storeName}
             onChange={(e) => handleInputChange("storeName", e.target.value)}
             className="w-full px-4 py-3 border border-stone-300 rounded-md focus:border-terracotta-500 focus:outline-none focus:ring-1 focus:ring-terracotta-500"
             required
@@ -53,7 +67,7 @@ export default function Step1BusinessBasics({
           </label>
           <input
             type="email"
-            value={profileData.email}
+            value={data.email}
             onChange={(e) => handleInputChange("email", e.target.value)}
             className="w-full px-4 py-3 border border-stone-300 rounded-md focus:border-terracotta-500 focus:outline-none focus:ring-1 focus:ring-terracotta-500"
             required
@@ -65,44 +79,19 @@ export default function Step1BusinessBasics({
           </label>
           <input
             type="tel"
-            value={profileData.mobile}
+            value={data.mobile}
             onChange={(e) => handleInputChange("mobile", e.target.value)}
             className="w-full px-4 py-3 border border-stone-300 rounded-md focus:border-terracotta-500 focus:outline-none focus:ring-1 focus:ring-terracotta-500"
             required
           />
         </div>
-        <div>
-          <label className="block text-sm font-medium text-stone-700 mb-2">
-            Create Password <span className="text-red-500">*</span>
-          </label>
-          <input
-            type="password"
-            value={profileData.password}
-            onChange={(e) => handleInputChange("password", e.target.value)}
-            className="w-full px-4 py-3 border border-stone-300 rounded-md focus:border-terracotta-500 focus:outline-none focus:ring-1 focus:ring-terracotta-500"
-            required
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-stone-700 mb-2">
-            Confirm Password <span className="text-red-500">*</span>
-          </label>
-          <input
-            type="password"
-            value={profileData.confirmPassword}
-            onChange={(e) =>
-              handleInputChange("confirmPassword", e.target.value)
-            }
-            className="w-full px-4 py-3 border border-stone-300 rounded-md focus:border-terracotta-500 focus:outline-none focus:ring-1 focus:ring-terracotta-500"
-            required
-          />
-        </div>
+
         <div>
           <label className="block text-sm font-medium text-stone-700 mb-2">
             Business Type <span className="text-red-500">*</span>
           </label>
           <select
-            value={profileData.businessType}
+            value={data.businessType}
             onChange={(e) => handleInputChange("businessType", e.target.value)}
             className="w-full px-4 py-3 border border-stone-300 rounded-md focus:border-terracotta-500 focus:outline-none focus:ring-1 focus:ring-terracotta-500"
             required
@@ -121,7 +110,7 @@ export default function Step1BusinessBasics({
           </label>
           <input
             type="text"
-            value={profileData.businessRegistrationNumber}
+            value={data.businessRegistrationNumber}
             onChange={(e) =>
               handleInputChange("businessRegistrationNumber", e.target.value)
             }
@@ -137,14 +126,14 @@ export default function Step1BusinessBasics({
           <span className="text-red-500">*</span>
         </label>
         <div className="flex flex-wrap gap-2 mb-3">
-          {profileData.productCategories.map((category, index) => (
+          {data.productCategories.map((category, index) => (
             <span
               key={index}
               className="bg-terracotta-100 text-terracotta-700 px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm flex items-center"
             >
               {category}
               <button
-                onClick={() => handleArrayRemove("productCategories", index)}
+                onClick={() => removeFromArray("productCategories", index)}
                 className="ml-1 sm:ml-2 text-terracotta-500 hover:text-terracotta-700"
               >
                 <X className="w-3 h-3" />
@@ -160,7 +149,7 @@ export default function Step1BusinessBasics({
             onKeyPress={(e) => {
               if (e.key === "Enter") {
                 e.preventDefault();
-                handleArrayAdd(
+                addToArray(
                   "productCategories",
                   (e.target as HTMLInputElement).value
                 );
@@ -172,7 +161,7 @@ export default function Step1BusinessBasics({
             onClick={(e) => {
               const input = e.currentTarget
                 .previousElementSibling as HTMLInputElement;
-              handleArrayAdd("productCategories", input.value);
+              addToArray("productCategories", input.value);
               input.value = "";
             }}
             className="sm:ml-2 bg-terracotta-600 text-white px-4 py-2 sm:py-3 rounded-md hover:bg-terracotta-700 transition-colors"
@@ -196,11 +185,12 @@ export default function Step1BusinessBasics({
                 htmlFor="file-upload"
                 className="relative cursor-pointer rounded-md font-medium text-terracotta-600 hover:text-terracotta-500"
               >
-                <span>Upload a file</span>
+                <span>Upload a photo</span>
                 <input
                   id="file-upload"
                   name="file-upload"
                   type="file"
+                  accept="image/*"
                   className="sr-only"
                 />
               </label>

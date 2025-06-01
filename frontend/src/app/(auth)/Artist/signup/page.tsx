@@ -37,6 +37,22 @@ export default function ArtistSignupPage() {
     businessType: "",
   });
 
+  const [formErrors, setFormErrors] = useState({
+    firstName: "",
+    lastName: "",
+    email: "",
+    password: "",
+    storeName: "",
+    mobile: "",
+    businessType: "",
+  });
+  const [passwordStrength, setPasswordStrength] = useState({
+    length: false,
+    uppercase: false,
+    lowercase: false,
+    number: false,
+  });
+
   // RTK Query mutation hook
   const [signupArtist, { isLoading, error, isSuccess }] =
     useSignupArtistMutation();
@@ -48,24 +64,135 @@ export default function ArtistSignupPage() {
   ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+
+    // Real-time validation
+    const newErrors = { ...formErrors };
+
+    switch (name) {
+      case "firstName":
+      case "lastName":
+        newErrors[name] =
+          value.trim().length < 2
+            ? `${
+                name === "firstName" ? "First" : "Last"
+              } name must be at least 2 characters`
+            : "";
+        break;
+      case "email":
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        newErrors.email = !emailRegex.test(value)
+          ? "Please enter a valid email address"
+          : "";
+        break;
+      case "password":
+        const strength = {
+          length: value.length >= 8,
+          uppercase: /[A-Z]/.test(value),
+          lowercase: /[a-z]/.test(value),
+          number: /\d/.test(value),
+        };
+        setPasswordStrength(strength);
+        const missingRequirements = [];
+        if (!strength.length) missingRequirements.push("8 characters");
+        if (!strength.uppercase) missingRequirements.push("uppercase letter");
+        if (!strength.lowercase) missingRequirements.push("lowercase letter");
+        if (!strength.number) missingRequirements.push("number");
+        newErrors.password =
+          missingRequirements.length > 0
+            ? `Password must contain: ${missingRequirements.join(", ")}`
+            : "";
+        break;
+      case "storeName":
+        newErrors.storeName =
+          value.trim().length < 2
+            ? "Store name must be at least 2 characters"
+            : "";
+        break;
+      case "mobile":
+        const phoneRegex = /^\+?[\d\s-()]{10,}$/;
+        newErrors.mobile = !phoneRegex.test(value)
+          ? "Please enter a valid mobile number"
+          : "";
+        break;
+      case "businessType":
+        newErrors.businessType = !value ? "Please select a business type" : "";
+        break;
+    }
+
+    setFormErrors(newErrors);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (step === 1) {
+      // Validate step 1 fields
+      const hasErrors =
+        formErrors.firstName ||
+        formErrors.lastName ||
+        formErrors.email ||
+        formErrors.password ||
+        !formData.firstName.trim() ||
+        !formData.lastName.trim() ||
+        !formData.email.trim() ||
+        !formData.password ||
+        !passwordStrength.length ||
+        !passwordStrength.uppercase ||
+        !passwordStrength.lowercase ||
+        !passwordStrength.number;
+
+      if (hasErrors) {
+        // Trigger validation display
+        setFormErrors((prev) => ({
+          ...prev,
+          firstName: !formData.firstName.trim()
+            ? "First name is required"
+            : prev.firstName,
+          lastName: !formData.lastName.trim()
+            ? "Last name is required"
+            : prev.lastName,
+          email: !formData.email.trim() ? "Email is required" : prev.email,
+          password: !formData.password ? "Password is required" : prev.password,
+        }));
+        return;
+      }
       setStep(2);
+      return;
+    }
+
+    // Validate step 2 fields
+    const hasStep2Errors =
+      formErrors.storeName ||
+      formErrors.mobile ||
+      formErrors.businessType ||
+      !formData.storeName.trim() ||
+      !formData.mobile.trim() ||
+      !formData.businessType;
+
+    if (hasStep2Errors) {
+      setFormErrors((prev) => ({
+        ...prev,
+        storeName: !formData.storeName.trim()
+          ? "Store name is required"
+          : prev.storeName,
+        mobile: !formData.mobile.trim()
+          ? "Mobile number is required"
+          : prev.mobile,
+        businessType: !formData.businessType
+          ? "Business type is required"
+          : prev.businessType,
+      }));
       return;
     }
 
     try {
       // Prepare data according to your Prisma schema
       const artistData = {
-        fullName: `${formData.firstName} ${formData.lastName}`.trim(),
-        email: formData.email,
+        fullName: `${formData.firstName.trim()} ${formData.lastName.trim()}`,
+        email: formData.email.trim().toLowerCase(),
         password: formData.password,
-        storeName: formData.storeName,
-        mobile: formData.mobile,
+        storeName: formData.storeName.trim(),
+        mobile: formData.mobile.trim(),
         businessType: formData.businessType,
         termsAgreed: true, // Since they checked the terms checkbox
       };
@@ -73,12 +200,9 @@ export default function ArtistSignupPage() {
       // Send data using RTK Query mutation
       const result = await signupArtist(artistData).unwrap();
 
-      console.log("Artist signup successful:", result);
-
-      // Redirect to dashboard on success
+      // Redirect to login on success
       router.push("/Artist/login");
     } catch (err) {
-      console.error("Artist signup failed:", err);
       // Error handling is managed by RTK Query state
     }
   };
@@ -129,9 +253,40 @@ export default function ArtistSignupPage() {
             {error && (
               <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-md">
                 <p className="text-sm text-red-600">
-                  {"data" in (error as object) && (error as any).data?.message
-                    ? (error as any).data.message
-                    : "Signup failed. Please try again."}
+                  {(() => {
+                    if ("status" in error) {
+                      if (error.status === 409) {
+                        return "An account with this email already exists. Please use a different email or try logging in.";
+                      }
+                      if (error.status === 400) {
+                        return "Invalid information provided. Please check your details and try again.";
+                      }
+                      if (error.status === 429) {
+                        return "Too many signup attempts. Please wait a few minutes before trying again.";
+                      }
+                      if (error.status === 500) {
+                        return "Server error. Please try again later.";
+                      }
+                      if (error.status === "FETCH_ERROR") {
+                        return "Network error. Please check your internet connection and try again.";
+                      }
+                      if (error.status === "TIMEOUT_ERROR") {
+                        return "Request timed out. Please try again.";
+                      }
+                    }
+                    if (
+                      "data" in error &&
+                      typeof error.data === "object" &&
+                      error.data &&
+                      "message" in error.data
+                    ) {
+                      return (
+                        (error.data as { message?: string }).message ||
+                        "Signup failed. Please try again."
+                      );
+                    }
+                    return "Signup failed. Please try again.";
+                  })()}
                 </p>
               </div>
             )}
@@ -160,10 +315,21 @@ export default function ArtistSignupPage() {
                           value={formData.firstName}
                           onChange={handleChange}
                           disabled={isLoading}
-                          className="block w-full pl-10 pr-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-2 focus:ring-sage-500 focus:border-sage-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                          className={`block w-full pl-10 pr-3 py-3 border placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-2 focus:ring-sage-500 focus:border-sage-500 disabled:opacity-50 disabled:cursor-not-allowed ${
+                            formErrors.firstName
+                              ? "border-red-300 bg-red-50"
+                              : error
+                              ? "border-red-300 bg-red-50"
+                              : "border-gray-300"
+                          }`}
                           placeholder="First name"
                         />
                       </div>
+                      {formErrors.firstName && (
+                        <p className="mt-1 text-xs text-red-600">
+                          {formErrors.firstName}
+                        </p>
+                      )}
                     </div>
 
                     <div>
@@ -181,9 +347,20 @@ export default function ArtistSignupPage() {
                         value={formData.lastName}
                         onChange={handleChange}
                         disabled={isLoading}
-                        className="block w-full px-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-2 focus:ring-sage-500 focus:border-sage-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className={`block w-full px-3 py-3 border placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-2 focus:ring-sage-500 focus:border-sage-500 disabled:opacity-50 disabled:cursor-not-allowed ${
+                          formErrors.lastName
+                            ? "border-red-300 bg-red-50"
+                            : error
+                            ? "border-red-300 bg-red-50"
+                            : "border-gray-300"
+                        }`}
                         placeholder="Last name"
                       />
+                      {formErrors.lastName && (
+                        <p className="mt-1 text-xs text-red-600">
+                          {formErrors.lastName}
+                        </p>
+                      )}
                     </div>
                   </div>
 
@@ -207,10 +384,21 @@ export default function ArtistSignupPage() {
                         value={formData.email}
                         onChange={handleChange}
                         disabled={isLoading}
-                        className="block w-full pl-10 pr-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-2 focus:ring-sage-500 focus:border-sage-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className={`block w-full pl-10 pr-3 py-3 border placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-2 focus:ring-sage-500 focus:border-sage-500 disabled:opacity-50 disabled:cursor-not-allowed ${
+                          formErrors.email
+                            ? "border-red-300 bg-red-50"
+                            : error
+                            ? "border-red-300 bg-red-50"
+                            : "border-gray-300"
+                        }`}
                         placeholder="Enter your email"
                       />
                     </div>
+                    {formErrors.email && (
+                      <p className="mt-1 text-xs text-red-600">
+                        {formErrors.email}
+                      </p>
+                    )}
                   </div>
 
                   {/* Password */}
@@ -233,7 +421,13 @@ export default function ArtistSignupPage() {
                         value={formData.password}
                         onChange={handleChange}
                         disabled={isLoading}
-                        className="block w-full pl-10 pr-10 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-2 focus:ring-sage-500 focus:border-sage-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className={`block w-full pl-10 pr-10 py-3 border placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-2 focus:ring-sage-500 focus:border-sage-500 disabled:opacity-50 disabled:cursor-not-allowed ${
+                          formErrors.password
+                            ? "border-red-300 bg-red-50"
+                            : error
+                            ? "border-red-300 bg-red-50"
+                            : "border-gray-300"
+                        }`}
                         placeholder="Create a password"
                       />
                       <button
@@ -249,9 +443,98 @@ export default function ArtistSignupPage() {
                         )}
                       </button>
                     </div>
-                    <p className="mt-1 text-xs text-gray-500">
-                      Must be at least 8 characters
-                    </p>
+
+                    {/* Password strength indicator */}
+                    {formData.password && (
+                      <div className="mt-2 space-y-1">
+                        <div className="flex space-x-1">
+                          <div
+                            className={`h-1 flex-1 rounded ${
+                              passwordStrength.length
+                                ? "bg-green-500"
+                                : "bg-gray-200"
+                            }`}
+                          ></div>
+                          <div
+                            className={`h-1 flex-1 rounded ${
+                              passwordStrength.uppercase
+                                ? "bg-green-500"
+                                : "bg-gray-200"
+                            }`}
+                          ></div>
+                          <div
+                            className={`h-1 flex-1 rounded ${
+                              passwordStrength.lowercase
+                                ? "bg-green-500"
+                                : "bg-gray-200"
+                            }`}
+                          ></div>
+                          <div
+                            className={`h-1 flex-1 rounded ${
+                              passwordStrength.number
+                                ? "bg-green-500"
+                                : "bg-gray-200"
+                            }`}
+                          ></div>
+                        </div>
+                        <div className="text-xs space-y-1">
+                          <div
+                            className={`flex items-center ${
+                              passwordStrength.length
+                                ? "text-green-600"
+                                : "text-gray-500"
+                            }`}
+                          >
+                            <span className="mr-1">
+                              {passwordStrength.length ? "✓" : "○"}
+                            </span>
+                            At least 8 characters
+                          </div>
+                          <div
+                            className={`flex items-center ${
+                              passwordStrength.uppercase
+                                ? "text-green-600"
+                                : "text-gray-500"
+                            }`}
+                          >
+                            <span className="mr-1">
+                              {passwordStrength.uppercase ? "✓" : "○"}
+                            </span>
+                            One uppercase letter
+                          </div>
+                          <div
+                            className={`flex items-center ${
+                              passwordStrength.lowercase
+                                ? "text-green-600"
+                                : "text-gray-500"
+                            }`}
+                          >
+                            <span className="mr-1">
+                              {passwordStrength.lowercase ? "✓" : "○"}
+                            </span>
+                            One lowercase letter
+                          </div>
+                          <div
+                            className={`flex items-center ${
+                              passwordStrength.number
+                                ? "text-green-600"
+                                : "text-gray-500"
+                            }`}
+                          >
+                            <span className="mr-1">
+                              {passwordStrength.number ? "✓" : "○"}
+                            </span>
+                            One number
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {formErrors.password && (
+                      <p className="mt-1 text-xs text-red-600">
+                        {formErrors.password}
+                      </p>
+                    )}
                   </div>
 
                   {/* Terms checkbox */}
@@ -307,10 +590,21 @@ export default function ArtistSignupPage() {
                         value={formData.storeName}
                         onChange={handleChange}
                         disabled={isLoading}
-                        className="block w-full pl-10 pr-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-2 focus:ring-sage-500 focus:border-sage-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className={`block w-full pl-10 pr-3 py-3 border placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-2 focus:ring-sage-500 focus:border-sage-500 disabled:opacity-50 disabled:cursor-not-allowed ${
+                          formErrors.storeName
+                            ? "border-red-300 bg-red-50"
+                            : error
+                            ? "border-red-300 bg-red-50"
+                            : "border-gray-300"
+                        }`}
                         placeholder="Enter your store name"
                       />
                     </div>
+                    {formErrors.storeName && (
+                      <p className="mt-1 text-xs text-red-600">
+                        {formErrors.storeName}
+                      </p>
+                    )}
                   </div>
 
                   <div>
@@ -332,10 +626,21 @@ export default function ArtistSignupPage() {
                         value={formData.mobile}
                         onChange={handleChange}
                         disabled={isLoading}
-                        className="block w-full pl-10 pr-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-2 focus:ring-sage-500 focus:border-sage-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className={`block w-full pl-10 pr-3 py-3 border placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-2 focus:ring-sage-500 focus:border-sage-500 disabled:opacity-50 disabled:cursor-not-allowed ${
+                          formErrors.mobile
+                            ? "border-red-300 bg-red-50"
+                            : error
+                            ? "border-red-300 bg-red-50"
+                            : "border-gray-300"
+                        }`}
                         placeholder="Enter your mobile number"
                       />
                     </div>
+                    {formErrors.mobile && (
+                      <p className="mt-1 text-xs text-red-600">
+                        {formErrors.mobile}
+                      </p>
+                    )}
                   </div>
 
                   <div>
@@ -356,7 +661,13 @@ export default function ArtistSignupPage() {
                         value={formData.businessType}
                         onChange={handleChange}
                         disabled={isLoading}
-                        className="block w-full pl-10 pr-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-2 focus:ring-sage-500 focus:border-sage-500 appearance-none disabled:opacity-50 disabled:cursor-not-allowed"
+                        className={`block w-full pl-10 pr-3 py-3 border placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-2 focus:ring-sage-500 focus:border-sage-500 appearance-none disabled:opacity-50 disabled:cursor-not-allowed ${
+                          formErrors.businessType
+                            ? "border-red-300 bg-red-50"
+                            : error
+                            ? "border-red-300 bg-red-50"
+                            : "border-gray-300"
+                        }`}
                       >
                         <option value="">Select business type</option>
                         <option value="individual">Individual Artist</option>
@@ -368,6 +679,11 @@ export default function ArtistSignupPage() {
                         <option value="other">Other</option>
                       </select>
                     </div>
+                    {formErrors.businessType && (
+                      <p className="mt-1 text-xs text-red-600">
+                        {formErrors.businessType}
+                      </p>
+                    )}
                   </div>
                 </>
               )}

@@ -1,22 +1,24 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Save, Check, FileText, MapPin, Settings } from "lucide-react";
+import {
+  useGetartistQuery,
+  useUpdateartistMutation,
+} from "@/services/api/artistApi";
 import Step1BusinessBasics from "./components/step1-business-basics";
 import Step2AddressBanking from "./components/step2-address-banking";
 import Step3PreferencesLogistics from "./components/step3-preferences-logistics";
 import Step4Summary from "./components/step4-summary";
 import ProfileProgress from "./components/ProfileProgress";
 
-// Define the profile data type
-export interface ProfileData {
+// Define the complete profile data structure
+interface ProfileData {
   // Step 1: Seller Account & Business Basics
   fullName: string;
   storeName: string;
   email: string;
   mobile: string;
-  password: string;
-  confirmPassword: string;
   businessType: string;
   businessRegistrationNumber: string;
   productCategories: string[];
@@ -45,20 +47,14 @@ export interface ProfileData {
   upiId: string;
   gstNumber: string;
   panNumber: string;
-  documents: {
-    gstCertificate: string;
-    panCard: string;
-    businessLicense: string;
-    canceledCheque: string;
-  };
 
   // Step 3: Preferences, Logistics & Agreement
   shippingType: string;
-  serviceAreas: string[];
   inventoryVolume: string;
   supportContact: string;
-  returnPolicy: string;
   workingHours: string;
+  serviceAreas: string[];
+  returnPolicy: string;
   socialLinks: {
     website: string;
     instagram: string;
@@ -66,19 +62,23 @@ export interface ProfileData {
     twitter: string;
   };
   termsAgreed: boolean;
-  digitalSignature: string;
 }
 
 export default function MakeProfile() {
   const [step, setStep] = useState(1);
+  const formRef = useRef<HTMLDivElement>(null);
+
+  // RTK Query hooks
+  const { data: artistData, isLoading, error } = useGetartistQuery(undefined);
+  const [updateArtist, { isLoading: isUpdating }] = useUpdateartistMutation();
+
+  // Centralized profile data state
   const [profileData, setProfileData] = useState<ProfileData>({
     // Step 1: Seller Account & Business Basics
     fullName: "",
     storeName: "",
     email: "",
     mobile: "",
-    password: "",
-    confirmPassword: "",
     businessType: "",
     businessRegistrationNumber: "",
     productCategories: [],
@@ -107,20 +107,14 @@ export default function MakeProfile() {
     upiId: "",
     gstNumber: "",
     panNumber: "",
-    documents: {
-      gstCertificate: "",
-      panCard: "",
-      businessLicense: "",
-      canceledCheque: "",
-    },
 
     // Step 3: Preferences, Logistics & Agreement
     shippingType: "",
-    serviceAreas: [],
     inventoryVolume: "",
     supportContact: "",
-    returnPolicy: "",
     workingHours: "",
+    serviceAreas: [],
+    returnPolicy: "",
     socialLinks: {
       website: "",
       instagram: "",
@@ -128,52 +122,146 @@ export default function MakeProfile() {
       twitter: "",
     },
     termsAgreed: false,
-    digitalSignature: "",
   });
 
-  const formRef = useRef<HTMLDivElement>(null);
+  // Load existing artist data when available
+  useEffect(() => {
+    if (artistData) {
+      setProfileData({
+        fullName: artistData.fullName || "",
+        storeName: artistData.storeName || "",
+        email: artistData.email || "",
+        mobile: artistData.mobile || "",
+        businessType: artistData.businessType || "",
+        businessRegistrationNumber: artistData.businessRegistrationNumber || "",
+        productCategories: artistData.productCategories || [],
+        businessLogo: artistData.businessLogo || "",
+        businessAddress: artistData.businessAddress || {
+          street: "",
+          city: "",
+          state: "",
+          country: "",
+          pinCode: "",
+        },
+        warehouseAddress: artistData.warehouseAddress || {
+          sameAsBusiness: true,
+          street: "",
+          city: "",
+          state: "",
+          country: "",
+          pinCode: "",
+        },
+        bankAccountName: artistData.bankAccountName || "",
+        bankName: artistData.bankName || "",
+        accountNumber: artistData.accountNumber || "",
+        ifscCode: artistData.ifscCode || "",
+        upiId: artistData.upiId || "",
+        gstNumber: artistData.gstNumber || "",
+        panNumber: artistData.panNumber || "",
+        shippingType: artistData.shippingType || "",
+        inventoryVolume: artistData.inventoryVolume || "",
+        supportContact: artistData.supportContact || "",
+        workingHours: artistData.workingHours || "",
+        serviceAreas: artistData.serviceAreas || [],
+        returnPolicy: artistData.returnPolicy || "",
+        socialLinks: artistData.socialLinks || {
+          website: "",
+          instagram: "",
+          facebook: "",
+          twitter: "",
+        },
+        termsAgreed: artistData.termsAgreed || false,
+      });
+    }
+  }, [artistData]);
 
-  const handleInputChange = (field: string, value: any) => {
-    setProfileData((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
+  // Function to update profile data and sync with API
+  const updateProfileData = async (updates: Partial<ProfileData>) => {
+    const newData = { ...profileData, ...updates };
+    setProfileData(newData);
+
+    // Update the artist data via API
+    try {
+      await updateArtist(updates).unwrap();
+    } catch (error) {
+      console.error("Failed to update artist data:", error);
+    }
   };
 
-  const handleNestedInputChange = (
+  // Function to update nested fields
+  const updateNestedField = async (
     parent: keyof ProfileData,
     field: string,
     value: any
   ) => {
-    setProfileData((prev) => ({
-      ...prev,
+    const updates = {
       [parent]: {
-        ...(prev[parent] as Record<string, any>),
+        ...(profileData[parent] as Record<string, any>),
         [field]: value,
       } as any,
-    }));
-  };
+    };
 
-  const handleArrayAdd = (field: keyof ProfileData, value: string) => {
-    if (value.trim()) {
-      setProfileData((prev) => ({
-        ...prev,
-        [field]: [...(prev[field] as string[]), value.trim()],
-      }));
+    setProfileData((prev) => ({
+      ...prev,
+      ...updates,
+    }));
+
+    // Update the artist data via API
+    try {
+      await updateArtist(updates).unwrap();
+    } catch (error) {
+      console.error("Failed to update artist data:", error);
     }
   };
 
-  const handleArrayRemove = (field: keyof ProfileData, index: number) => {
-    setProfileData((prev) => ({
-      ...prev,
-      [field]: (prev[field] as string[]).filter((_, i) => i !== index),
-    }));
+  // Function to add to array fields
+  const addToArray = async (field: keyof ProfileData, value: string) => {
+    if (value.trim()) {
+      const updates = {
+        [field]: [...(profileData[field] as string[]), value.trim()],
+      };
+
+      setProfileData((prev) => ({
+        ...prev,
+        ...updates,
+      }));
+
+      // Update the artist data via API
+      try {
+        await updateArtist(updates).unwrap();
+      } catch (error) {
+        console.error("Failed to update artist data:", error);
+      }
+    }
   };
 
-  const handleSubmit = () => {
-    // In a real app, this would save to an API
-    console.log("Creating profile:", profileData);
-    alert("Profile created successfully!");
+  // Function to remove from array fields
+  const removeFromArray = async (field: keyof ProfileData, index: number) => {
+    const updates = {
+      [field]: (profileData[field] as string[]).filter((_, i) => i !== index),
+    };
+
+    setProfileData((prev) => ({
+      ...prev,
+      ...updates,
+    }));
+
+    // Update the artist data via API
+    try {
+      await updateArtist(updates).unwrap();
+    } catch (error) {
+      console.error("Failed to update artist data:", error);
+    }
+  };
+
+  const handleSubmit = async () => {
+    try {
+      await updateArtist(profileData).unwrap();
+      alert("Profile created successfully!");
+    } catch (error) {
+      console.error("Failed to submit profile:", error);
+      alert("Failed to submit profile. Please try again.");
+    }
   };
 
   const scrollToTop = () => {
@@ -212,6 +300,26 @@ export default function MakeProfile() {
     "Preferences, Logistics & Agreement",
     "Profile Summary",
   ];
+
+  if (isLoading) {
+    return (
+      <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8">
+        <div className="flex items-center justify-center h-64">
+          <div className="text-lg text-stone-600">Loading profile data...</div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8">
+        <div className="flex items-center justify-center h-64">
+          <div className="text-lg text-red-600">Error loading profile data</div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div ref={formRef} className="container mx-auto px-4 sm:px-6 py-6 sm:py-8">
@@ -277,32 +385,29 @@ export default function MakeProfile() {
       <div className="bg-white border border-stone-200 p-4 sm:p-6 md:p-8 shadow-sm rounded-md">
         {step === 1 && (
           <Step1BusinessBasics
-            profileData={profileData}
-            handleInputChange={handleInputChange}
-            handleArrayAdd={handleArrayAdd}
-            handleArrayRemove={handleArrayRemove}
+            data={profileData}
+            updateData={updateProfileData}
+            addToArray={addToArray}
+            removeFromArray={removeFromArray}
           />
         )}
-
         {step === 2 && (
           <Step2AddressBanking
-            profileData={profileData}
-            handleInputChange={handleInputChange}
-            handleNestedInputChange={handleNestedInputChange}
+            data={profileData}
+            updateData={updateProfileData}
+            updateNestedField={updateNestedField}
           />
         )}
-
         {step === 3 && (
           <Step3PreferencesLogistics
-            profileData={profileData}
-            handleInputChange={handleInputChange}
-            handleNestedInputChange={handleNestedInputChange}
-            handleArrayAdd={handleArrayAdd}
-            handleArrayRemove={handleArrayRemove}
+            data={profileData}
+            updateData={updateProfileData}
+            updateNestedField={updateNestedField}
+            addToArray={addToArray}
+            removeFromArray={removeFromArray}
           />
         )}
-
-        {step === 4 && <Step4Summary profileData={profileData} />}
+        {step === 4 && <Step4Summary data={profileData} />}
 
         {/* Navigation Buttons */}
         <div className="flex flex-col sm:flex-row justify-between gap-3 sm:gap-0 mt-8 pt-6 border-t border-stone-200">
@@ -324,10 +429,11 @@ export default function MakeProfile() {
           ) : (
             <button
               onClick={handleSubmit}
-              className="px-6 py-2 bg-terracotta-600 text-white rounded-md hover:bg-terracotta-700 transition-colors flex items-center justify-center sm:justify-start w-full sm:w-auto"
+              disabled={isUpdating}
+              className="px-6 py-2 bg-terracotta-600 text-white rounded-md hover:bg-terracotta-700 transition-colors flex items-center justify-center sm:justify-start w-full sm:w-auto disabled:opacity-50"
             >
               <Save className="w-4 h-4 mr-2" />
-              Submit Profile
+              {isUpdating ? "Submitting..." : "Submit Profile"}
             </button>
           )}
         </div>

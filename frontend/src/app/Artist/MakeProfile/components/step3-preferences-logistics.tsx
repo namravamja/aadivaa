@@ -1,27 +1,46 @@
 "use client";
 
 import { Upload, X, Plus } from "lucide-react";
-import type { ProfileData } from "../page";
+
+interface ProfileData {
+  shippingType: string;
+  inventoryVolume: string;
+  supportContact: string;
+  workingHours: string;
+  serviceAreas: string[];
+  returnPolicy: string;
+  socialLinks: {
+    website: string;
+    instagram: string;
+    facebook: string;
+    twitter: string;
+  };
+  termsAgreed: boolean;
+}
 
 interface Step3Props {
-  profileData: ProfileData;
-  handleInputChange: (field: string, value: any) => void;
-  handleNestedInputChange: (
+  data: ProfileData;
+  updateData: (updates: Partial<ProfileData>) => void;
+  updateNestedField: (
     parent: keyof ProfileData,
     field: string,
     value: any
   ) => void;
-  handleArrayAdd: (field: keyof ProfileData, value: string) => void;
-  handleArrayRemove: (field: keyof ProfileData, index: number) => void;
+  addToArray: (field: keyof ProfileData, value: string) => void;
+  removeFromArray: (field: keyof ProfileData, index: number) => void;
 }
 
 export default function Step3PreferencesLogistics({
-  profileData,
-  handleInputChange,
-  handleNestedInputChange,
-  handleArrayAdd,
-  handleArrayRemove,
+  data,
+  updateData,
+  updateNestedField,
+  addToArray,
+  removeFromArray,
 }: Step3Props) {
+  const handleInputChange = (field: keyof ProfileData, value: any) => {
+    updateData({ [field]: value });
+  };
+
   return (
     <div>
       <h2 className="text-xl sm:text-2xl font-light text-stone-900 mb-4 sm:mb-6">
@@ -34,7 +53,7 @@ export default function Step3PreferencesLogistics({
             Preferred Shipping Type <span className="text-red-500">*</span>
           </label>
           <select
-            value={profileData.shippingType}
+            value={data.shippingType}
             onChange={(e) => handleInputChange("shippingType", e.target.value)}
             className="w-full px-4 py-3 border border-stone-300 rounded-md focus:border-terracotta-500 focus:outline-none focus:ring-1 focus:ring-terracotta-500"
             required
@@ -50,7 +69,7 @@ export default function Step3PreferencesLogistics({
             Estimated Inventory Volume <span className="text-red-500">*</span>
           </label>
           <select
-            value={profileData.inventoryVolume}
+            value={data.inventoryVolume}
             onChange={(e) =>
               handleInputChange("inventoryVolume", e.target.value)
             }
@@ -71,7 +90,7 @@ export default function Step3PreferencesLogistics({
           </label>
           <input
             type="text"
-            value={profileData.supportContact}
+            value={data.supportContact}
             onChange={(e) =>
               handleInputChange("supportContact", e.target.value)
             }
@@ -86,7 +105,7 @@ export default function Step3PreferencesLogistics({
           </label>
           <input
             type="text"
-            value={profileData.workingHours}
+            value={data.workingHours}
             onChange={(e) => handleInputChange("workingHours", e.target.value)}
             className="w-full px-4 py-3 border border-stone-300 rounded-md focus:border-terracotta-500 focus:outline-none focus:ring-1 focus:ring-terracotta-500"
             placeholder="e.g., Mon-Fri: 9AM-5PM"
@@ -99,14 +118,14 @@ export default function Step3PreferencesLogistics({
           Service Areas <span className="text-red-500">*</span>
         </label>
         <div className="flex flex-wrap gap-2 mb-3">
-          {profileData.serviceAreas.map((area, index) => (
+          {data.serviceAreas.map((area, index) => (
             <span
               key={index}
               className="bg-sage-100 text-sage-700 px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm flex items-center"
             >
               {area}
               <button
-                onClick={() => handleArrayRemove("serviceAreas", index)}
+                onClick={() => removeFromArray("serviceAreas", index)}
                 className="ml-1 sm:ml-2 text-sage-500 hover:text-sage-700"
               >
                 <X className="w-3 h-3" />
@@ -122,7 +141,7 @@ export default function Step3PreferencesLogistics({
             onKeyPress={(e) => {
               if (e.key === "Enter") {
                 e.preventDefault();
-                handleArrayAdd(
+                addToArray(
                   "serviceAreas",
                   (e.target as HTMLInputElement).value
                 );
@@ -134,7 +153,7 @@ export default function Step3PreferencesLogistics({
             onClick={(e) => {
               const input = e.currentTarget
                 .previousElementSibling as HTMLInputElement;
-              handleArrayAdd("serviceAreas", input.value);
+              addToArray("serviceAreas", input.value);
               input.value = "";
             }}
             className="sm:ml-2 bg-sage-600 text-white px-4 py-2 sm:py-3 rounded-md hover:bg-sage-700 transition-colors"
@@ -149,7 +168,7 @@ export default function Step3PreferencesLogistics({
           Return Handling Policy (optional)
         </label>
         <textarea
-          value={profileData.returnPolicy}
+          value={data.returnPolicy}
           onChange={(e) => handleInputChange("returnPolicy", e.target.value)}
           rows={4}
           className="w-full px-4 py-3 border border-stone-300 rounded-md focus:border-terracotta-500 focus:outline-none focus:ring-1 focus:ring-terracotta-500"
@@ -168,13 +187,9 @@ export default function Step3PreferencesLogistics({
             </label>
             <input
               type="url"
-              value={profileData.socialLinks.website}
+              value={data.socialLinks.website}
               onChange={(e) =>
-                handleNestedInputChange(
-                  "socialLinks",
-                  "website",
-                  e.target.value
-                )
+                updateNestedField("socialLinks", "website", e.target.value)
               }
               className="w-full px-4 py-3 border border-stone-300 rounded-md focus:border-terracotta-500 focus:outline-none focus:ring-1 focus:ring-terracotta-500"
               placeholder="https://your-website.com"
@@ -186,13 +201,9 @@ export default function Step3PreferencesLogistics({
             </label>
             <input
               type="text"
-              value={profileData.socialLinks.instagram}
+              value={data.socialLinks.instagram}
               onChange={(e) =>
-                handleNestedInputChange(
-                  "socialLinks",
-                  "instagram",
-                  e.target.value
-                )
+                updateNestedField("socialLinks", "instagram", e.target.value)
               }
               className="w-full px-4 py-3 border border-stone-300 rounded-md focus:border-terracotta-500 focus:outline-none focus:ring-1 focus:ring-terracotta-500"
               placeholder="@username"
@@ -204,13 +215,9 @@ export default function Step3PreferencesLogistics({
             </label>
             <input
               type="text"
-              value={profileData.socialLinks.facebook}
+              value={data.socialLinks.facebook}
               onChange={(e) =>
-                handleNestedInputChange(
-                  "socialLinks",
-                  "facebook",
-                  e.target.value
-                )
+                updateNestedField("socialLinks", "facebook", e.target.value)
               }
               className="w-full px-4 py-3 border border-stone-300 rounded-md focus:border-terracotta-500 focus:outline-none focus:ring-1 focus:ring-terracotta-500"
               placeholder="Page name or URL"
@@ -222,13 +229,9 @@ export default function Step3PreferencesLogistics({
             </label>
             <input
               type="text"
-              value={profileData.socialLinks.twitter}
+              value={data.socialLinks.twitter}
               onChange={(e) =>
-                handleNestedInputChange(
-                  "socialLinks",
-                  "twitter",
-                  e.target.value
-                )
+                updateNestedField("socialLinks", "twitter", e.target.value)
               }
               className="w-full px-4 py-3 border border-stone-300 rounded-md focus:border-terracotta-500 focus:outline-none focus:ring-1 focus:ring-terracotta-500"
               placeholder="@username"
@@ -243,7 +246,7 @@ export default function Step3PreferencesLogistics({
             id="terms"
             name="terms"
             type="checkbox"
-            checked={profileData.termsAgreed}
+            checked={data.termsAgreed}
             onChange={(e) => handleInputChange("termsAgreed", e.target.checked)}
             className="h-4 w-4 text-terracotta-600 focus:ring-terracotta-500 border-stone-300 rounded"
             required

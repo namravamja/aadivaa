@@ -118,8 +118,8 @@ model BusinessAddress {
 
 model WarehouseAddress {
   id             String   @id @default(uuid())
-  sameAsBusiness Boolean?
   street         String?
+  sameAsBusiness Boolean?
   city           String?
   state          String?
   country        String?

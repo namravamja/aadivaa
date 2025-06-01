@@ -1,12 +1,36 @@
 "use client";
 
 import { Upload } from "lucide-react";
-import type { ProfileData } from "../page";
+
+interface ProfileData {
+  businessAddress: {
+    street: string;
+    city: string;
+    state: string;
+    country: string;
+    pinCode: string;
+  };
+  warehouseAddress: {
+    sameAsBusiness: boolean;
+    street: string;
+    city: string;
+    state: string;
+    country: string;
+    pinCode: string;
+  };
+  bankAccountName: string;
+  bankName: string;
+  accountNumber: string;
+  ifscCode: string;
+  upiId: string;
+  gstNumber: string;
+  panNumber: string;
+}
 
 interface Step2Props {
-  profileData: ProfileData;
-  handleInputChange: (field: string, value: any) => void;
-  handleNestedInputChange: (
+  data: ProfileData;
+  updateData: (updates: Partial<ProfileData>) => void;
+  updateNestedField: (
     parent: keyof ProfileData,
     field: string,
     value: any
@@ -14,10 +38,14 @@ interface Step2Props {
 }
 
 export default function Step2AddressBanking({
-  profileData,
-  handleInputChange,
-  handleNestedInputChange,
+  data,
+  updateData,
+  updateNestedField,
 }: Step2Props) {
+  const handleInputChange = (field: keyof ProfileData, value: any) => {
+    updateData({ [field]: value });
+  };
+
   return (
     <div>
       <h2 className="text-xl sm:text-2xl font-light text-stone-900 mb-4 sm:mb-6">
@@ -35,13 +63,9 @@ export default function Step2AddressBanking({
             </label>
             <input
               type="text"
-              value={profileData.businessAddress.street}
+              value={data.businessAddress.street}
               onChange={(e) =>
-                handleNestedInputChange(
-                  "businessAddress",
-                  "street",
-                  e.target.value
-                )
+                updateNestedField("businessAddress", "street", e.target.value)
               }
               className="w-full px-4 py-3 border border-stone-300 rounded-md focus:border-terracotta-500 focus:outline-none focus:ring-1 focus:ring-terracotta-500"
               required
@@ -53,13 +77,9 @@ export default function Step2AddressBanking({
             </label>
             <input
               type="text"
-              value={profileData.businessAddress.city}
+              value={data.businessAddress.city}
               onChange={(e) =>
-                handleNestedInputChange(
-                  "businessAddress",
-                  "city",
-                  e.target.value
-                )
+                updateNestedField("businessAddress", "city", e.target.value)
               }
               className="w-full px-4 py-3 border border-stone-300 rounded-md focus:border-terracotta-500 focus:outline-none focus:ring-1 focus:ring-terracotta-500"
               required
@@ -71,13 +91,9 @@ export default function Step2AddressBanking({
             </label>
             <input
               type="text"
-              value={profileData.businessAddress.state}
+              value={data.businessAddress.state}
               onChange={(e) =>
-                handleNestedInputChange(
-                  "businessAddress",
-                  "state",
-                  e.target.value
-                )
+                updateNestedField("businessAddress", "state", e.target.value)
               }
               className="w-full px-4 py-3 border border-stone-300 rounded-md focus:border-terracotta-500 focus:outline-none focus:ring-1 focus:ring-terracotta-500"
               required
@@ -89,13 +105,9 @@ export default function Step2AddressBanking({
             </label>
             <input
               type="text"
-              value={profileData.businessAddress.country}
+              value={data.businessAddress.country}
               onChange={(e) =>
-                handleNestedInputChange(
-                  "businessAddress",
-                  "country",
-                  e.target.value
-                )
+                updateNestedField("businessAddress", "country", e.target.value)
               }
               className="w-full px-4 py-3 border border-stone-300 rounded-md focus:border-terracotta-500 focus:outline-none focus:ring-1 focus:ring-terracotta-500"
               required
@@ -107,13 +119,9 @@ export default function Step2AddressBanking({
             </label>
             <input
               type="text"
-              value={profileData.businessAddress.pinCode}
+              value={data.businessAddress.pinCode}
               onChange={(e) =>
-                handleNestedInputChange(
-                  "businessAddress",
-                  "pinCode",
-                  e.target.value
-                )
+                updateNestedField("businessAddress", "pinCode", e.target.value)
               }
               className="w-full px-4 py-3 border border-stone-300 rounded-md focus:border-terracotta-500 focus:outline-none focus:ring-1 focus:ring-terracotta-500"
               required
@@ -131,9 +139,9 @@ export default function Step2AddressBanking({
             <input
               type="checkbox"
               id="sameAsBusiness"
-              checked={profileData.warehouseAddress.sameAsBusiness}
+              checked={data.warehouseAddress.sameAsBusiness}
               onChange={(e) =>
-                handleNestedInputChange(
+                updateNestedField(
                   "warehouseAddress",
                   "sameAsBusiness",
                   e.target.checked
@@ -150,7 +158,7 @@ export default function Step2AddressBanking({
           </div>
         </div>
 
-        {!profileData.warehouseAddress.sameAsBusiness && (
+        {!data.warehouseAddress.sameAsBusiness && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="md:col-span-2">
               <label className="block text-sm font-medium text-stone-700 mb-2">
@@ -158,9 +166,9 @@ export default function Step2AddressBanking({
               </label>
               <input
                 type="text"
-                value={profileData.warehouseAddress.street}
+                value={data.warehouseAddress.street}
                 onChange={(e) =>
-                  handleNestedInputChange(
+                  updateNestedField(
                     "warehouseAddress",
                     "street",
                     e.target.value
@@ -175,13 +183,9 @@ export default function Step2AddressBanking({
               </label>
               <input
                 type="text"
-                value={profileData.warehouseAddress.city}
+                value={data.warehouseAddress.city}
                 onChange={(e) =>
-                  handleNestedInputChange(
-                    "warehouseAddress",
-                    "city",
-                    e.target.value
-                  )
+                  updateNestedField("warehouseAddress", "city", e.target.value)
                 }
                 className="w-full px-4 py-3 border border-stone-300 rounded-md focus:border-terracotta-500 focus:outline-none focus:ring-1 focus:ring-terracotta-500"
               />
@@ -192,13 +196,9 @@ export default function Step2AddressBanking({
               </label>
               <input
                 type="text"
-                value={profileData.warehouseAddress.state}
+                value={data.warehouseAddress.state}
                 onChange={(e) =>
-                  handleNestedInputChange(
-                    "warehouseAddress",
-                    "state",
-                    e.target.value
-                  )
+                  updateNestedField("warehouseAddress", "state", e.target.value)
                 }
                 className="w-full px-4 py-3 border border-stone-300 rounded-md focus:border-terracotta-500 focus:outline-none focus:ring-1 focus:ring-terracotta-500"
               />
@@ -209,9 +209,9 @@ export default function Step2AddressBanking({
               </label>
               <input
                 type="text"
-                value={profileData.warehouseAddress.country}
+                value={data.warehouseAddress.country}
                 onChange={(e) =>
-                  handleNestedInputChange(
+                  updateNestedField(
                     "warehouseAddress",
                     "country",
                     e.target.value
@@ -226,9 +226,9 @@ export default function Step2AddressBanking({
               </label>
               <input
                 type="text"
-                value={profileData.warehouseAddress.pinCode}
+                value={data.warehouseAddress.pinCode}
                 onChange={(e) =>
-                  handleNestedInputChange(
+                  updateNestedField(
                     "warehouseAddress",
                     "pinCode",
                     e.target.value
@@ -252,7 +252,7 @@ export default function Step2AddressBanking({
             </label>
             <input
               type="text"
-              value={profileData.bankAccountName}
+              value={data.bankAccountName}
               onChange={(e) =>
                 handleInputChange("bankAccountName", e.target.value)
               }
@@ -266,7 +266,7 @@ export default function Step2AddressBanking({
             </label>
             <input
               type="text"
-              value={profileData.bankName}
+              value={data.bankName}
               onChange={(e) => handleInputChange("bankName", e.target.value)}
               className="w-full px-4 py-3 border border-stone-300 rounded-md focus:border-terracotta-500 focus:outline-none focus:ring-1 focus:ring-terracotta-500"
               required
@@ -278,7 +278,7 @@ export default function Step2AddressBanking({
             </label>
             <input
               type="text"
-              value={profileData.accountNumber}
+              value={data.accountNumber}
               onChange={(e) =>
                 handleInputChange("accountNumber", e.target.value)
               }
@@ -292,7 +292,7 @@ export default function Step2AddressBanking({
             </label>
             <input
               type="text"
-              value={profileData.ifscCode}
+              value={data.ifscCode}
               onChange={(e) => handleInputChange("ifscCode", e.target.value)}
               className="w-full px-4 py-3 border border-stone-300 rounded-md focus:border-terracotta-500 focus:outline-none focus:ring-1 focus:ring-terracotta-500"
               required
@@ -304,7 +304,7 @@ export default function Step2AddressBanking({
             </label>
             <input
               type="text"
-              value={profileData.upiId}
+              value={data.upiId}
               onChange={(e) => handleInputChange("upiId", e.target.value)}
               className="w-full px-4 py-3 border border-stone-300 rounded-md focus:border-terracotta-500 focus:outline-none focus:ring-1 focus:ring-terracotta-500"
             />
@@ -321,7 +321,7 @@ export default function Step2AddressBanking({
             </label>
             <input
               type="text"
-              value={profileData.gstNumber}
+              value={data.gstNumber}
               onChange={(e) => handleInputChange("gstNumber", e.target.value)}
               className="w-full px-4 py-3 border border-stone-300 rounded-md focus:border-terracotta-500 focus:outline-none focus:ring-1 focus:ring-terracotta-500"
             />
@@ -332,7 +332,7 @@ export default function Step2AddressBanking({
             </label>
             <input
               type="text"
-              value={profileData.panNumber}
+              value={data.panNumber}
               onChange={(e) => handleInputChange("panNumber", e.target.value)}
               className="w-full px-4 py-3 border border-stone-300 rounded-md focus:border-terracotta-500 focus:outline-none focus:ring-1 focus:ring-terracotta-500"
               required
@@ -358,17 +358,18 @@ export default function Step2AddressBanking({
                     htmlFor="gst-upload"
                     className="relative cursor-pointer rounded-md font-medium text-terracotta-600 hover:text-terracotta-500"
                   >
-                    <span>Upload a file</span>
+                    <span>Upload a photo</span>
                     <input
                       id="gst-upload"
                       name="gst-upload"
                       type="file"
+                      accept="image/*"
                       className="sr-only"
                     />
                   </label>
                   <p className="sm:pl-1">or drag and drop</p>
                 </div>
-                <p className="text-xs text-stone-500">PDF or image up to 5MB</p>
+                <p className="text-xs text-stone-500">PNG, JPG up to 5MB</p>
               </div>
             </div>
           </div>
@@ -384,17 +385,18 @@ export default function Step2AddressBanking({
                     htmlFor="pan-upload"
                     className="relative cursor-pointer rounded-md font-medium text-terracotta-600 hover:text-terracotta-500"
                   >
-                    <span>Upload a file</span>
+                    <span>Upload a photo</span>
                     <input
                       id="pan-upload"
                       name="pan-upload"
                       type="file"
+                      accept="image/*"
                       className="sr-only"
                     />
                   </label>
                   <p className="sm:pl-1">or drag and drop</p>
                 </div>
-                <p className="text-xs text-stone-500">PDF or image up to 5MB</p>
+                <p className="text-xs text-stone-500">PNG, JPG up to 5MB</p>
               </div>
             </div>
           </div>
@@ -411,17 +413,18 @@ export default function Step2AddressBanking({
                     htmlFor="license-upload"
                     className="relative cursor-pointer rounded-md font-medium text-terracotta-600 hover:text-terracotta-500"
                   >
-                    <span>Upload a file</span>
+                    <span>Upload a photo</span>
                     <input
                       id="license-upload"
                       name="license-upload"
                       type="file"
+                      accept="image/*"
                       className="sr-only"
                     />
                   </label>
                   <p className="sm:pl-1">or drag and drop</p>
                 </div>
-                <p className="text-xs text-stone-500">PDF or image up to 5MB</p>
+                <p className="text-xs text-stone-500">PNG, JPG up to 5MB</p>
               </div>
             </div>
           </div>
@@ -438,17 +441,18 @@ export default function Step2AddressBanking({
                     htmlFor="cheque-upload"
                     className="relative cursor-pointer rounded-md font-medium text-terracotta-600 hover:text-terracotta-500"
                   >
-                    <span>Upload a file</span>
+                    <span>Upload a photo</span>
                     <input
                       id="cheque-upload"
                       name="cheque-upload"
                       type="file"
+                      accept="image/*"
                       className="sr-only"
                     />
                   </label>
                   <p className="sm:pl-1">or drag and drop</p>
                 </div>
-                <p className="text-xs text-stone-500">PDF or image up to 5MB</p>
+                <p className="text-xs text-stone-500">PNG, JPG up to 5MB</p>
               </div>
             </div>
           </div>

@@ -14,6 +14,7 @@ import { useGetartistQuery } from "@/services/api/artistApi"; // Adjust path as 
 export default function ArtistLoginPage() {
   const router = useRouter();
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
+  const [shouldFetchArtist, setShouldFetchArtist] = useState(false);
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -29,9 +30,9 @@ export default function ArtistLoginPage() {
     data: artistData,
     isLoading: isArtistLoading,
     error: artistError,
-  } = useGetartistQuery(undefined);
-
-  // console.log(artistData);
+  } = useGetartistQuery(undefined, {
+    skip: !shouldFetchArtist, // Skip the query until shouldFetchArtist is true
+  });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = e.target;
@@ -44,43 +45,61 @@ export default function ArtistLoginPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    // Basic form validation with user feedback
+    if (!formData.email.trim()) {
+      return;
+    }
+    if (!formData.password.trim()) {
+      return;
+    }
+    if (formData.password.length < 6) {
+      return;
+    }
+
     try {
       // Send login credentials using RTK Query mutation
       const credentials = {
-        email: formData.email,
+        email: formData.email.trim(),
         password: formData.password,
       };
 
       const result = await loginArtist(credentials).unwrap();
 
-      console.log("Artist login successful:", result);
-
-      // Don't redirect here - let the useEffect handle redirection based on profile progress
+      // Trigger artist data fetch after successful login
+      setShouldFetchArtist(true);
     } catch (err) {
-      console.error("Artist login failed:", err);
-      // Error handling is managed by RTK Query state
+      // Reset fetch trigger on login failure
+      setShouldFetchArtist(false);
+      // Error is handled by RTK Query state, no need for console logging
     }
   };
 
   // Handle success state change and profile progress check
   useEffect(() => {
-    if (isSuccess && data) {
+    if (isSuccess && data && shouldFetchArtist) {
       // Wait for artist data to load before making redirection decision
       if (artistData && !isArtistLoading) {
         const profileProgress = artistData.profileProgress || 0; // Default to 0 if undefined
         const isAuthenticated = artistData.isAuthenticated || false; // Default to false if undefined
 
-        if (isAuthenticated && profileProgress < 10) {
+        if (isAuthenticated && profileProgress < 30) {
           // Redirect to profile creation if user is authenticated but profile is incomplete
           router.push("/Artist/MakeProfile");
-        } else if (isAuthenticated && profileProgress >= 10) {
+        } else if (isAuthenticated && profileProgress >= 30) {
           // Redirect to dashboard if user is authenticated and profile is complete
           router.push("/Artist");
         }
         // If isAuthenticated is false, don't redirect (let user stay on login page or handle as needed)
       }
     }
-  }, [isSuccess, data, artistData, isArtistLoading, router]);
+  }, [isSuccess, data, artistData, isArtistLoading, router, shouldFetchArtist]);
+
+  // Reset shouldFetchArtist if login fails
+  useEffect(() => {
+    if (error) {
+      setShouldFetchArtist(false);
+    }
+  }, [error]);
 
   return (
     <div className="min-h-screen bg-gray-50 flex">
@@ -187,12 +206,37 @@ export default function ArtistLoginPage() {
             {error && (
               <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-md">
                 <p className="text-sm text-red-600">
-                  {"data" in error &&
-                  typeof error.data === "object" &&
-                  error.data &&
-                  "message" in error.data
-                    ? (error.data as { message?: string }).message
-                    : "Login failed. Please check your credentials and try again."}
+                  {(() => {
+                    if ("status" in error) {
+                      if (error.status === 401) {
+                        return "Invalid email or password. Please check your credentials and try again.";
+                      }
+                      if (error.status === 429) {
+                        return "Too many login attempts. Please wait a few minutes before trying again.";
+                      }
+                      if (error.status === 500) {
+                        return "Server error. Please try again later.";
+                      }
+                      if (error.status === "FETCH_ERROR") {
+                        return "Network error. Please check your internet connection and try again.";
+                      }
+                      if (error.status === "TIMEOUT_ERROR") {
+                        return "Request timed out. Please try again.";
+                      }
+                    }
+                    if (
+                      "data" in error &&
+                      typeof error.data === "object" &&
+                      error.data &&
+                      "message" in error.data
+                    ) {
+                      return (
+                        (error.data as { message?: string }).message ||
+                        "Login failed. Please try again."
+                      );
+                    }
+                    return "Login failed. Please check your credentials and try again.";
+                  })()}
                 </p>
               </div>
             )}
@@ -201,7 +245,20 @@ export default function ArtistLoginPage() {
             {artistError && (
               <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-md">
                 <p className="text-sm text-yellow-600">
-                  Unable to fetch profile data. Please try again.
+                  {(() => {
+                    if ("status" in artistError) {
+                      if (artistError.status === 403) {
+                        return "Access denied. Please contact support if this issue persists.";
+                      }
+                      if (artistError.status === 404) {
+                        return "Profile not found. Please contact support.";
+                      }
+                      if (artistError.status === "FETCH_ERROR") {
+                        return "Network error while loading profile. Please check your connection.";
+                      }
+                    }
+                    return "Unable to fetch profile data. Please try again.";
+                  })()}
                 </p>
               </div>
             )}
@@ -227,7 +284,9 @@ export default function ArtistLoginPage() {
                     value={formData.email}
                     onChange={handleChange}
                     disabled={isLoading || isArtistLoading}
-                    className="block w-full pl-10 pr-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-2 focus:ring-terracotta-500 focus:border-terracotta-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className={`block w-full pl-10 pr-3 py-3 border placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-2 focus:ring-terracotta-500 focus:border-terracotta-500 disabled:opacity-50 disabled:cursor-not-allowed ${
+                      error ? "border-red-300 bg-red-50" : "border-gray-300"
+                    }`}
                     placeholder="Enter your email"
                   />
                 </div>
@@ -253,7 +312,9 @@ export default function ArtistLoginPage() {
                     value={formData.password}
                     onChange={handleChange}
                     disabled={isLoading || isArtistLoading}
-                    className="block w-full pl-10 pr-10 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-2 focus:ring-terracotta-500 focus:border-terracotta-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className={`block w-full pl-10 pr-10 py-3 border placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-2 focus:ring-terracotta-500 focus:border-terracotta-500 disabled:opacity-50 disabled:cursor-not-allowed ${
+                      error ? "border-red-300 bg-red-50" : "border-gray-300"
+                    }`}
                     placeholder="Enter your password"
                   />
                   <button

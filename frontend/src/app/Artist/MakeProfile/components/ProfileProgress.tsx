@@ -1,21 +1,75 @@
-import { ProfileData } from "../page"; // Adjust the import path as needed
+"use client";
+
+import { useUpdateartistMutation } from "@/services/api/artistApi";
+import { useEffect } from "react";
+
+interface ProfileData {
+  // Step 1: Seller Account & Business Basics
+  fullName: string;
+  storeName: string;
+  email: string;
+  mobile: string;
+  businessType: string;
+  businessRegistrationNumber: string;
+  productCategories: string[];
+  businessLogo: string;
+
+  // Step 2: Address, Banking & Tax Details
+  businessAddress: {
+    street: string;
+    city: string;
+    state: string;
+    country: string;
+    pinCode: string;
+  };
+  warehouseAddress: {
+    sameAsBusiness: boolean;
+    street: string;
+    city: string;
+    state: string;
+    country: string;
+    pinCode: string;
+  };
+  bankAccountName: string;
+  bankName: string;
+  accountNumber: string;
+  ifscCode: string;
+  upiId: string;
+  gstNumber: string;
+  panNumber: string;
+
+  // Step 3: Preferences, Logistics & Agreement
+  shippingType: string;
+  inventoryVolume: string;
+  supportContact: string;
+  workingHours: string;
+  serviceAreas: string[];
+  returnPolicy: string;
+  socialLinks: {
+    website: string;
+    instagram: string;
+    facebook: string;
+    twitter: string;
+  };
+  termsAgreed: boolean;
+}
 
 interface ProfileProgressProps {
   profileData: ProfileData;
 }
 
 export default function ProfileProgress({ profileData }: ProfileProgressProps) {
+  const [updateArtist] = useUpdateartistMutation();
+
   const calculateProgress = () => {
     let completed = 0;
-    const total = 25; // Total required fields across all steps
+    const total = 23; // Total required fields across all steps
 
     // Step 1: Seller Account & Business Basics (9 fields)
     if (profileData.fullName) completed++;
     if (profileData.storeName) completed++;
     if (profileData.email) completed++;
     if (profileData.mobile) completed++;
-    if (profileData.password) completed++;
-    if (profileData.confirmPassword) completed++;
     if (profileData.businessType) completed++;
     if (profileData.businessRegistrationNumber) completed++;
     if (profileData.productCategories.length > 0) completed++;
@@ -45,6 +99,11 @@ export default function ProfileProgress({ profileData }: ProfileProgressProps) {
 
   const progress = calculateProgress();
 
+  // Update progress in the artist model whenever it changes
+  useEffect(() => {
+    updateArtist({ profileProgress: progress });
+  }, [progress, updateArtist]);
+
   const getProgressColor = () => {
     if (progress >= 80) return "bg-sage-500";
     if (progress >= 50) return "bg-terracotta-600";
@@ -66,8 +125,6 @@ export default function ProfileProgress({ profileData }: ProfileProgressProps) {
     if (!profileData.storeName) missing.push("• Add your store name");
     if (!profileData.email) missing.push("• Add your email address");
     if (!profileData.mobile) missing.push("• Add your mobile number");
-    if (!profileData.password) missing.push("• Set a password");
-    if (!profileData.confirmPassword) missing.push("• Confirm your password");
     if (!profileData.businessType) missing.push("• Select business type");
     if (!profileData.businessRegistrationNumber)
       missing.push("• Add business registration number");
