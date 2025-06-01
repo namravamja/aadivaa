@@ -6,6 +6,7 @@ import Step1BusinessBasics from "./components/step1-business-basics";
 import Step2AddressBanking from "./components/step2-address-banking";
 import Step3PreferencesLogistics from "./components/step3-preferences-logistics";
 import Step4Summary from "./components/step4-summary";
+import ProfileProgress from "./components/ProfileProgress";
 
 // Define the profile data type
 export interface ProfileData {
@@ -223,6 +224,8 @@ export default function MakeProfile() {
           Complete your seller profile to start selling on our platform
         </p>
       </div>
+
+      <ProfileProgress profileData={profileData} />
 
       {/* Step Indicators */}
       <div className="mb-6 sm:mb-10">
