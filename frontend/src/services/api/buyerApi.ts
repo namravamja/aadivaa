@@ -23,11 +23,25 @@ export const buyerApi = BuyerApi.injectEndpoints({
 
     // Update buyer info from token
     updateBuyer: builder.mutation({
-      query: (updatedData) => ({
-        url: "/update",
-        method: "PUT",
-        body: updatedData,
-      }),
+      query: (updatedData) => {
+        // Check if updatedData contains a file (avatar)
+        if (updatedData instanceof FormData) {
+          // If it's FormData (contains file), send as multipart/form-data
+          return {
+            url: "/update",
+            method: "PUT",
+            body: updatedData,
+            // Don't set Content-Type header, let the browser set it for FormData
+          };
+        } else {
+          // If it's regular JSON data, send as JSON
+          return {
+            url: "/update",
+            method: "PUT",
+            body: updatedData,
+          };
+        }
+      },
     }),
 
     // Delete buyer (based on token)

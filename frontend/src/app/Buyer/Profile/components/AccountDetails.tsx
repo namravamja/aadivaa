@@ -1,10 +1,15 @@
 "use client";
 
 import type React from "react";
-
-import { useState, useEffect } from "react";
-import { User, Edit, Save, X, Camera } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { User, Edit, Save, X, Camera, Check } from "lucide-react";
 import Image from "next/image";
+import ReactCrop, {
+  type Crop,
+  centerCrop,
+  makeAspectCrop,
+} from "react-image-crop";
+import "react-image-crop/dist/ReactCrop.css";
 import {
   useGetBuyerQuery,
   useUpdateBuyerMutation,
@@ -95,6 +100,83 @@ const validateDateOfBirth = (
   }
 };
 
+// Function to create a centered crop with a specific aspect ratio
+function centerAspectCrop(
+  mediaWidth: number,
+  mediaHeight: number,
+  aspect: number
+) {
+  return centerCrop(
+    makeAspectCrop(
+      {
+        unit: "%",
+        width: 90,
+      },
+      aspect,
+      mediaWidth,
+      mediaHeight
+    ),
+    mediaWidth,
+    mediaHeight
+  );
+}
+
+// Function to get cropped image as File
+async function getCroppedImg(
+  image: HTMLImageElement,
+  crop: Crop,
+  fileName = "cropped-image.jpg"
+): Promise<File> {
+  const canvas = document.createElement("canvas");
+  const ctx = canvas.getContext("2d");
+
+  if (!ctx) {
+    throw new Error("No 2d context");
+  }
+
+  const scaleX = image.naturalWidth / image.width;
+  const scaleY = image.naturalHeight / image.height;
+
+  // Set the canvas size to the crop size
+  canvas.width = crop.width * scaleX;
+  canvas.height = crop.height * scaleY;
+
+  // Draw the cropped image onto the canvas
+  ctx.drawImage(
+    image,
+    crop.x * scaleX,
+    crop.y * scaleY,
+    crop.width * scaleX,
+    crop.height * scaleY,
+    0,
+    0,
+    canvas.width,
+    canvas.height
+  );
+
+  // Convert canvas to blob
+  return new Promise((resolve, reject) => {
+    canvas.toBlob(
+      (blob) => {
+        if (!blob) {
+          reject(new Error("Canvas is empty"));
+          return;
+        }
+
+        // Create a File from the blob
+        const file = new File([blob], fileName, {
+          type: "image/jpeg",
+          lastModified: Date.now(),
+        });
+
+        resolve(file);
+      },
+      "image/jpeg",
+      0.95
+    );
+  });
+}
+
 export default function AccountDetails() {
   const {
     data: buyerData,
@@ -123,8 +205,16 @@ export default function AccountDetails() {
     gender: "",
   });
   const [originalData, setOriginalData] = useState(formData);
-  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+
+  // Image cropping states
+  const [originalFile, setOriginalFile] = useState<File | null>(null);
+  const [croppedImageFile, setCroppedImageFile] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const [showCropper, setShowCropper] = useState(false);
+  const [crop, setCrop] = useState<Crop>();
+  const [completedCrop, setCompletedCrop] = useState<Crop | null>(null);
+  const [imgSrc, setImgSrc] = useState("");
+  const imgRef = useRef<HTMLImageElement>(null);
 
   // Update local state when API data changes
   useEffect(() => {
@@ -150,25 +240,44 @@ export default function AccountDetails() {
   const hasChanges = () => {
     return (
       JSON.stringify(formData) !== JSON.stringify(originalData) ||
-      avatarFile !== null
+      croppedImageFile !== null
     );
   };
 
   const handleSave = async () => {
     try {
-      const avatarUrl = formData.avatar;
-      if (avatarFile) {
-        console.log("Would upload avatar:", avatarFile);
+      console.log("=== SAVE PROCESS STARTED ===");
+      console.log("Has cropped image file:", !!croppedImageFile);
+
+      if (croppedImageFile) {
+        console.log("Cropped file details:", {
+          name: croppedImageFile.name,
+          type: croppedImageFile.type,
+          size: croppedImageFile.size,
+        });
       }
 
-      const updateData: any = {
-        firstName: formData.firstName,
-        lastName: formData.lastName,
-        phone: formData.phone,
-        avatar: avatarUrl,
-        gender: formData.gender,
-      };
+      // Create FormData object for multipart/form-data submission
+      const formDataToSend = new FormData();
 
+      // Add text fields to FormData
+      formDataToSend.append("firstName", formData.firstName);
+      formDataToSend.append("lastName", formData.lastName);
+      formDataToSend.append("phone", formData.phone || "");
+      formDataToSend.append("gender", formData.gender || "");
+
+      // Add cropped image file if available
+      if (croppedImageFile) {
+        console.log("Adding cropped image to FormData...");
+        formDataToSend.append(
+          "avatar",
+          croppedImageFile,
+          croppedImageFile.name
+        );
+        console.log("✓ Cropped image added to FormData");
+      }
+
+      // Handle date of birth
       if (formData.dateOfBirth) {
         const validation = validateDateOfBirth(formData.dateOfBirth);
         if (!validation.isValid) {
@@ -182,27 +291,55 @@ export default function AccountDetails() {
           return;
         }
 
-        updateData.dateOfBirth = formattedDate || undefined;
+        if (formattedDate) {
+          formDataToSend.append("dateOfBirth", formattedDate);
+        }
       }
 
-      await updateBuyer(updateData).unwrap();
+      // Log all FormData entries for debugging
+      console.log("=== FORMDATA CONTENTS ===");
+      for (const [key, value] of formDataToSend.entries()) {
+        if (value instanceof File) {
+          console.log(
+            `${key}: File - ${value.name} (${value.type}, ${value.size} bytes)`
+          );
+        } else {
+          console.log(`${key}: ${value}`);
+        }
+      }
 
+      console.log("Sending update request...");
+      const result = await updateBuyer(formDataToSend).unwrap();
+      console.log("✓ Update successful:", result);
+
+      // Reset states
       setIsEditing(false);
-      setAvatarFile(null);
+      setOriginalFile(null);
+      setCroppedImageFile(null);
       setAvatarPreview(null);
-      setOriginalData(formData);
+      setShowCropper(false);
+      setImgSrc("");
+      setCompletedCrop(null);
+
+      // Update form data with response
+      if (result && result.avatar) {
+        setFormData((prev) => ({ ...prev, avatar: result.avatar }));
+        setOriginalData((prev) => ({ ...prev, avatar: result.avatar }));
+      } else {
+        setOriginalData(formData);
+      }
+
       setShowSaveConfirm(false);
       toast.success("Profile updated successfully");
+      refetch();
     } catch (error: any) {
-      console.error("Failed to update profile:", error);
-
+      console.error("=== SAVE ERROR ===", error);
       let errorMessage = "Failed to update profile. Please try again.";
       if (error?.data?.message) {
         errorMessage = error.data.message;
       } else if (error?.message) {
         errorMessage = error.message;
       }
-
       toast.error(errorMessage);
       setShowSaveConfirm(false);
     }
@@ -219,14 +356,20 @@ export default function AccountDetails() {
   const performCancel = () => {
     setFormData(originalData);
     setIsEditing(false);
-    setAvatarFile(null);
+    setOriginalFile(null);
+    setCroppedImageFile(null);
     setAvatarPreview(null);
+    setShowCropper(false);
+    setImgSrc("");
+    setCompletedCrop(null);
     setShowCancelConfirm(false);
   };
 
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      console.log("Selected file:", file.name, file.type, file.size);
+
       // Validate file size (max 5MB)
       if (file.size > 5 * 1024 * 1024) {
         toast.error("Image size must be less than 5MB");
@@ -239,18 +382,76 @@ export default function AccountDetails() {
         return;
       }
 
-      setAvatarFile(file);
+      setOriginalFile(file);
+
+      // Read the file and set the image source for cropping
       const reader = new FileReader();
-      reader.onloadend = () => {
-        setAvatarPreview(reader.result as string);
+      reader.onload = (e) => {
+        setImgSrc(e.target?.result as string);
+        setShowCropper(true);
       };
       reader.readAsDataURL(file);
+    }
+  };
+
+  // Handle image load to set initial crop
+  const onImageLoad = (e: React.SyntheticEvent<HTMLImageElement>) => {
+    const { width, height } = e.currentTarget;
+    setCrop(centerAspectCrop(width, height, 1));
+  };
+
+  // Handle crop completion
+  const handleCropComplete = async () => {
+    if (!completedCrop || !imgRef.current || !originalFile) {
+      toast.error("Please select an area to crop");
+      return;
+    }
+
+    console.log("=== CROP PROCESS STARTED ===");
+    console.log("Crop dimensions:", completedCrop);
+
+    try {
+      // Get the cropped image as a File
+      const croppedFile = await getCroppedImg(
+        imgRef.current,
+        completedCrop,
+        `cropped-${originalFile.name}`
+      );
+
+      console.log("✓ Cropped file created:", {
+        name: croppedFile.name,
+        type: croppedFile.type,
+        size: croppedFile.size,
+      });
+
+      // Set the cropped file
+      setCroppedImageFile(croppedFile);
+
+      // Create preview URL
+      const previewUrl = URL.createObjectURL(croppedFile);
+      setAvatarPreview(previewUrl);
+      setShowCropper(false);
+
+      console.log("✓ Crop process completed successfully");
+      toast.success("Image cropped successfully!");
+    } catch (error) {
+      console.error("=== CROP ERROR ===", error);
+      toast.error("Failed to crop image. Please try again.");
     }
   };
 
   const handleRetry = () => {
     refetch();
   };
+
+  useEffect(() => {
+    return () => {
+      // Clean up any created object URLs to prevent memory leaks
+      if (avatarPreview && avatarPreview.startsWith("blob:")) {
+        URL.revokeObjectURL(avatarPreview);
+      }
+    };
+  }, [avatarPreview]);
 
   // Error state
   if (fetchError && !buyerData) {
@@ -421,12 +622,72 @@ export default function AccountDetails() {
           </div>
         )}
 
+        {/* Image Cropper Modal */}
+        {showCropper && (
+          <div className="fixed inset-0  bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full p-6">
+              <h3 className="text-lg font-semibold text-stone-900 mb-4">
+                Crop Your Image
+              </h3>
+              <div className="flex flex-col items-center">
+                <div className="max-h-[60vh] overflow-auto mb-4">
+                  {imgSrc && (
+                    <ReactCrop
+                      crop={crop}
+                      onChange={(c) => setCrop(c)}
+                      onComplete={(c) => setCompletedCrop(c)}
+                      aspect={1}
+                      circularCrop
+                    >
+                      <img
+                        ref={imgRef}
+                        alt="Crop me"
+                        src={imgSrc || "/placeholder.svg"}
+                        onLoad={onImageLoad}
+                        className="max-w-full"
+                      />
+                    </ReactCrop>
+                  )}
+                </div>
+
+                <div className="flex space-x-3 mt-4">
+                  <button
+                    onClick={handleCropComplete}
+                    className="bg-terracotta-500 hover:bg-terracotta-600 text-white px-4 py-2 font-medium transition-colors hover:opacity-80 cursor-pointer flex items-center"
+                    disabled={!completedCrop}
+                  >
+                    <Check className="w-4 h-4 mr-2" />
+                    Apply Crop
+                  </button>
+                  <button
+                    onClick={() => {
+                      setShowCropper(false);
+                      setImgSrc("");
+                      setOriginalFile(null);
+                    }}
+                    className="border border-stone-300 text-stone-700 hover:bg-stone-50 px-4 py-2 font-medium transition-colors hover:opacity-80 cursor-pointer flex items-center"
+                  >
+                    <X className="w-4 h-4 mr-2" />
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Profile Photo */}
         <div className="flex items-center space-x-6">
-          <div className="relative w-20 h-20 bg-stone-200 flex items-center justify-center overflow-hidden">
-            {avatarPreview || formData.avatar ? (
+          <div className="relative w-20 h-20 bg-stone-200 rounded-full flex items-center justify-center overflow-hidden">
+            {avatarPreview ? (
+              <img
+                src={avatarPreview || "/placeholder.svg"}
+                alt={`${formData.firstName} ${formData.lastName}`}
+                className="w-full h-full object-cover"
+              />
+            ) : formData.avatar ? (
               <Image
-                src={avatarPreview || formData.avatar || "/placeholder.svg"}
+                src={formData.avatar || "/placeholder.svg"}
                 alt={`${formData.firstName} ${formData.lastName}`}
                 width={80}
                 height={80}
@@ -459,6 +720,12 @@ export default function AccountDetails() {
               <p className="text-xs text-stone-500 mt-1">
                 Max size: 5MB. Formats: JPG, PNG, GIF
               </p>
+              {croppedImageFile && (
+                <p className="text-xs text-green-600 mt-1">
+                  ✓ Image cropped and ready to upload (
+                  {Math.round(croppedImageFile.size / 1024)}KB)
+                </p>
+              )}
             </div>
           )}
         </div>
