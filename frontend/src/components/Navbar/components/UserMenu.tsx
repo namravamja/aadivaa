@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import toast from "react-hot-toast";
 import {
   User,
   LogOut,
@@ -13,6 +15,7 @@ import {
   LucideIcon,
 } from "lucide-react";
 import { useGetBuyerQuery } from "@/services/api/buyerApi";
+import { useLogoutMutation } from "@/services/api/authApi";
 
 // Types
 interface UserMenuProps {
@@ -59,8 +62,11 @@ const mobileActionItems: ActionMenuItem[] = [
 ];
 
 export default function UserMenu({ isMobile = false, onClose }: UserMenuProps) {
+  const router = useRouter();
   const [cartCount, setCartCount] = useState<number>(3);
   const [hasTriedAuth, setHasTriedAuth] = useState<boolean>(false);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState<boolean>(false);
+  const [isLoggingOut, setIsLoggingOut] = useState<boolean>(false);
 
   // Fetch buyer data - RTK Query will handle error states automatically
   const {
@@ -69,6 +75,9 @@ export default function UserMenu({ isMobile = false, onClose }: UserMenuProps) {
     isError,
     error,
   } = useGetBuyerQuery(undefined);
+
+  // Handle logout mutation
+  const [logout] = useLogoutMutation();
 
   // Track when we've tried authentication
   useEffect(() => {
@@ -97,17 +106,69 @@ export default function UserMenu({ isMobile = false, onClose }: UserMenuProps) {
       : null;
 
   const handleLogout = (): void => {
-    // Add your logout logic here
-    // This might include:
-    // - API call to logout endpoint
-    // - Clearing auth state from your store/context
-    // - Redirecting to login page
+    if (showLogoutConfirm) {
+      // Second click - proceed with logout
+      performLogout();
+    } else {
+      // First click - show confirmation
+      setShowLogoutConfirm(true);
+      toast("Click logout again to confirm", {
+        icon: "⚠️",
+        duration: 3000,
+      });
 
-    console.log("Logout clicked");
-    onClose?.();
+      // Reset confirmation after 3 seconds
+      setTimeout(() => {
+        setShowLogoutConfirm(false);
+      }, 3000);
+    }
+  };
 
-    // If you need to reload the page after logout:
-    // window.location.reload();
+  const performLogout = async (): Promise<void> => {
+    setIsLoggingOut(true);
+
+    // Show loading toast
+    const loadingToastId = toast.loading("Logging out...");
+
+    try {
+      await logout({}).unwrap();
+
+      // Dismiss loading toast
+      toast.dismiss(loadingToastId);
+
+      // Show success toast
+      toast.success("Successfully logged out!", {
+        duration: 2000,
+      });
+
+      // Close mobile menu if open
+      if (onClose) {
+        onClose();
+      }
+
+      // Redirect using Next.js router after a short delay
+      setTimeout(() => {
+        router.push("/");
+        window.location.reload();
+      }, 600);
+    } catch (err: any) {
+      console.error("Logout failed:", err);
+
+      // Dismiss loading toast
+      toast.dismiss(loadingToastId);
+
+      // Show error toast
+      const errorMessage =
+        err?.data?.message ||
+        err?.message ||
+        "Failed to logout. Please try again.";
+      toast.error(errorMessage, {
+        duration: 4000,
+      });
+    } finally {
+      setIsLoggingOut(false);
+      setShowLogoutConfirm(false);
+    }
   };
 
   const handleImageError = (
@@ -200,11 +261,14 @@ export default function UserMenu({ isMobile = false, onClose }: UserMenuProps) {
 
         <button
           onClick={handleLogout}
-          className="text-stone-900 text-base sm:text-lg md:text-xl font-light flex items-center gap-3 hover:text-terracotta-600 transition-colors duration-300 p-3 hover:bg-stone-50 rounded-lg w-full text-left"
+          disabled={isLoggingOut}
+          className={`text-stone-900 text-base sm:text-lg md:text-xl font-light flex items-center gap-3 hover:text-terracotta-600 transition-colors duration-300 p-3 hover:bg-stone-50 rounded-lg w-full text-left cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${
+            showLogoutConfirm ? "bg-red-50 border border-red-200" : ""
+          }`}
           type="button"
         >
           <LogOut className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 flex-shrink-0" />
-          <span>Logout</span>
+          <span>{showLogoutConfirm ? "Click again to confirm" : "Logout"}</span>
         </button>
       </>
     );
@@ -264,11 +328,14 @@ export default function UserMenu({ isMobile = false, onClose }: UserMenuProps) {
         })}
         <button
           onClick={handleLogout}
-          className="flex items-center w-full text-left px-4 py-3 text-xs lg:text-sm text-stone-700 hover:bg-stone-50 hover:text-terracotta-600 transition-colors duration-200 rounded-b-lg"
+          disabled={isLoggingOut}
+          className={`flex items-center cursor-pointer w-full text-left px-4 py-3 text-xs lg:text-sm text-stone-700 hover:bg-stone-50 hover:text-terracotta-600 transition-colors duration-200 rounded-b-lg disabled:opacity-50 disabled:cursor-not-allowed ${
+            showLogoutConfirm ? "bg-red-50 text-red-700" : ""
+          }`}
           type="button"
         >
           <LogOut className="w-4 h-4 mr-3 flex-shrink-0" />
-          Logout
+          {showLogoutConfirm ? "Click again to confirm" : "Logout"}
         </button>
       </div>
     </div>
