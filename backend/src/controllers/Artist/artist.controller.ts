@@ -32,7 +32,16 @@ export const updateArtist = async (
   try {
     const userId = req.user?.id;
     if (!userId) throw new Error("Unauthorized controller");
-    const artist = await artistService.updateArtist(userId, req.body);
+
+    // Prepare update data
+    const updateData = { ...req.body };
+
+    // If an image was uploaded, add the Cloudinary URL to update data
+    if (req.file) {
+      updateData.avatar = req.file.path; // Cloudinary URL is stored in file.path
+    }
+
+    const artist = await artistService.updateArtist(userId, updateData);
     res.json(artist);
   } catch (error) {
     res.status(400).json({ error: (error as Error).message });

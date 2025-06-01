@@ -53,6 +53,8 @@ model Address {
 model Artist {
   id                         String   @id @default(uuid())
   fullName                   String?
+  avatar                     String?
+  profileProgess             Int      @default(0)
   storeName                  String?
   email                      String   @unique
   mobile                     String?
