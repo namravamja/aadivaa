@@ -23,6 +23,8 @@ export interface ArtistUpdateData {
   businessLogo?: string;
   digitalSignature?: string;
   termsAgreed?: boolean;
+  isAuthenticated?: boolean;
+  isVerified?: boolean;
   // Add more optional fields as per your schema
 }
 
@@ -80,6 +82,7 @@ export const getArtistById = async (id: string) => {
       fullName: true,
       mobile: true,
       storeName: true,
+      profileProgress: true,
       businessType: true,
       businessRegistrationNumber: true,
       gstNumber: true,
@@ -98,6 +101,8 @@ export const getArtistById = async (id: string) => {
       termsAgreed: true,
       createdAt: true,
       updatedAt: true,
+      isAuthenticated: true,
+      isVerified: true,
     },
   });
   if (!artist) throw new Error("Artist not found");

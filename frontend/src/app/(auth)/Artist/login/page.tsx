@@ -7,8 +7,9 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Eye, EyeOff, Mail, Lock, Loader2 } from "lucide-react";
 
-// Import your RTK Query hook - adjust the import path based on your file structure
+// Import your RTK Query hooks - adjust the import paths based on your file structure
 import { useLoginArtistMutation } from "@/services/api/authApi"; // Adjust path as needed
+import { useGetartistQuery } from "@/services/api/artistApi"; // Adjust path as needed
 
 export default function ArtistLoginPage() {
   const router = useRouter();
@@ -22,6 +23,15 @@ export default function ArtistLoginPage() {
   // RTK Query mutation hook
   const [loginArtist, { isLoading, error, isSuccess, data }] =
     useLoginArtistMutation();
+
+  // RTK Query hook to get artist data (only trigger after successful login)
+  const {
+    data: artistData,
+    isLoading: isArtistLoading,
+    error: artistError,
+  } = useGetartistQuery(undefined);
+
+  // console.log(artistData);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = e.target;
@@ -45,29 +55,32 @@ export default function ArtistLoginPage() {
 
       console.log("Artist login successful:", result);
 
-      // Store token if provided (adjust based on your API response)
-      if (result.token) {
-        localStorage.setItem("artistToken", result.token);
-      }
-
-      // Redirect to dashboard on success
-      router.push("/Artist");
+      // Don't redirect here - let the useEffect handle redirection based on profile progress
     } catch (err) {
       console.error("Artist login failed:", err);
       // Error handling is managed by RTK Query state
     }
   };
 
-  // Handle success state change
+  // Handle success state change and profile progress check
   useEffect(() => {
     if (isSuccess && data) {
-      // Store token if provided
-      if (data.token) {
-        localStorage.setItem("artistToken", data.token);
+      // Wait for artist data to load before making redirection decision
+      if (artistData && !isArtistLoading) {
+        const profileProgress = artistData.profileProgress || 0; // Default to 0 if undefined
+        const isAuthenticated = artistData.isAuthenticated || false; // Default to false if undefined
+
+        if (isAuthenticated && profileProgress < 10) {
+          // Redirect to profile creation if user is authenticated but profile is incomplete
+          router.push("/Artist/MakeProfile");
+        } else if (isAuthenticated && profileProgress >= 10) {
+          // Redirect to dashboard if user is authenticated and profile is complete
+          router.push("/Artist");
+        }
+        // If isAuthenticated is false, don't redirect (let user stay on login page or handle as needed)
       }
-      router.push("/Artist");
     }
-  }, [isSuccess, data, router]);
+  }, [isSuccess, data, artistData, isArtistLoading, router]);
 
   return (
     <div className="min-h-screen bg-gray-50 flex">
@@ -184,6 +197,15 @@ export default function ArtistLoginPage() {
               </div>
             )}
 
+            {/* Display error message if artist data fetch fails */}
+            {artistError && (
+              <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-md">
+                <p className="text-sm text-yellow-600">
+                  Unable to fetch profile data. Please try again.
+                </p>
+              </div>
+            )}
+
             <form onSubmit={handleSubmit} className="space-y-6">
               {/* Email */}
               <div>
@@ -204,7 +226,7 @@ export default function ArtistLoginPage() {
                     required
                     value={formData.email}
                     onChange={handleChange}
-                    disabled={isLoading}
+                    disabled={isLoading || isArtistLoading}
                     className="block w-full pl-10 pr-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-2 focus:ring-terracotta-500 focus:border-terracotta-500 disabled:opacity-50 disabled:cursor-not-allowed"
                     placeholder="Enter your email"
                   />
@@ -230,14 +252,14 @@ export default function ArtistLoginPage() {
                     required
                     value={formData.password}
                     onChange={handleChange}
-                    disabled={isLoading}
+                    disabled={isLoading || isArtistLoading}
                     className="block w-full pl-10 pr-10 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-2 focus:ring-terracotta-500 focus:border-terracotta-500 disabled:opacity-50 disabled:cursor-not-allowed"
                     placeholder="Enter your password"
                   />
                   <button
                     type="button"
                     onClick={() => setIsPasswordVisible(!isPasswordVisible)}
-                    disabled={isLoading}
+                    disabled={isLoading || isArtistLoading}
                     className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 cursor-pointer disabled:cursor-not-allowed"
                   >
                     {isPasswordVisible ? (
@@ -258,7 +280,7 @@ export default function ArtistLoginPage() {
                     type="checkbox"
                     checked={formData.rememberMe}
                     onChange={handleChange}
-                    disabled={isLoading}
+                    disabled={isLoading || isArtistLoading}
                     className="h-4 w-4 text-terracotta-600 focus:ring-terracotta-500 border-gray-300 cursor-pointer disabled:cursor-not-allowed"
                   />
                   <label
@@ -279,13 +301,18 @@ export default function ArtistLoginPage() {
               {/* Submit button */}
               <button
                 type="submit"
-                disabled={isLoading}
+                disabled={isLoading || isArtistLoading}
                 className="w-full flex justify-center items-center py-3 px-4 border border-transparent text-sm font-medium text-white bg-terracotta-600 hover:bg-terracotta-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-terracotta-500 cursor-pointer transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isLoading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     Signing in...
+                  </>
+                ) : isArtistLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Loading profile...
                   </>
                 ) : (
                   "Sign in"
