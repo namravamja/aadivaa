@@ -25,7 +25,6 @@ export const getArtist = async (req: AuthenticatedRequest, res: Response) => {
   }
 };
 
-
 // Update main artist data
 export const updateArtist = async (
   req: AuthenticatedRequest,
