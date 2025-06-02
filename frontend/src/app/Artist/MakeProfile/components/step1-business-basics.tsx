@@ -3,7 +3,7 @@
 import type React from "react";
 
 import { Upload, X, Plus } from "lucide-react";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import toast from "react-hot-toast";
 
 interface ProfileData {
@@ -42,6 +42,14 @@ export default function Step1BusinessBasics({
     data.businessLogo || null
   );
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Add useEffect to handle existing logo from database
+  useEffect(() => {
+    if (data.businessLogo && !uploadedLogo && !logoPreview) {
+      // If there's a business logo URL from database but no uploaded file or preview
+      setLogoPreview(data.businessLogo);
+    }
+  }, [data.businessLogo, uploadedLogo, logoPreview]);
 
   const handleInputChange = (field: keyof ProfileData, value: string) => {
     try {

@@ -45,6 +45,12 @@ interface ProfileData {
     country: string;
     pinCode: string;
   };
+  documents: {
+    gstCertificate?: string;
+    panCard?: string;
+    businessLicense?: string;
+    canceledCheque?: string;
+  };
   bankAccountName: string;
   bankName: string;
   accountNumber: string;
@@ -83,6 +89,7 @@ export default function MakeProfile() {
     error: fetchError,
     refetch,
   } = useGetartistQuery(undefined);
+  console.log(artistData);
   const [updateArtist, { isLoading: isUpdating }] = useUpdateartistMutation();
   const [updateBusinessAddress, { isLoading: isUpdatingBusinessAddress }] =
     useUpdateBusinessAddressMutation();
@@ -128,6 +135,14 @@ export default function MakeProfile() {
     upiId: "",
     gstNumber: "",
     panNumber: "",
+
+    // Documents are not stored in profileData, handled separately
+    documents: {
+      gstCertificate: "",
+      panCard: "",
+      businessLicense: "",
+      canceledCheque: "",
+    },
 
     // Step 3: Preferences, Logistics & Agreement
     shippingType: "",
@@ -179,6 +194,12 @@ export default function MakeProfile() {
             state: artistData.warehouseAddress?.state || "",
             country: artistData.warehouseAddress?.country || "",
             pinCode: artistData.warehouseAddress?.pinCode || "",
+          },
+          documents: {
+            gstCertificate: artistData.documents?.gstCertificate || "",
+            panCard: artistData.documents?.panCard || "",
+            businessLicense: artistData.documents?.businessLicense || "",
+            canceledCheque: artistData.documents?.canceledCheque || "",
           },
           bankAccountName: artistData.bankAccountName || "",
           bankName: artistData.bankName || "",

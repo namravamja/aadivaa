@@ -9,7 +9,7 @@ type UploadedFile = {
 };
 
 import { Upload, X, Plus, FileImage } from "lucide-react";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import toast from "react-hot-toast";
 
 interface ProfileData {
@@ -62,6 +62,19 @@ export default function Step3PreferencesLogistics({
   const [uploadedSignature, setUploadedSignature] =
     useState<UploadedFile | null>(null);
   const signatureInputRef = useRef<HTMLInputElement>(null);
+
+  // Add state for existing signature preview
+  const [existingSignaturePreview, setExistingSignaturePreview] = useState<
+    string | null
+  >(null);
+
+  // Add useEffect to handle existing digital signature from database
+  useEffect(() => {
+    if (data.digitalSignature && !uploadedSignature) {
+      // If there's a digital signature from database but no uploaded file
+      setExistingSignaturePreview(data.digitalSignature);
+    }
+  }, [data.digitalSignature, uploadedSignature]);
 
   const handleInputChange = (field: keyof ProfileData, value: any) => {
     try {
@@ -163,6 +176,7 @@ export default function Step3PreferencesLogistics({
   const removeSignature = () => {
     try {
       setUploadedSignature(null);
+      setExistingSignaturePreview(null); // Add this line
       if (signatureInputRef.current) {
         signatureInputRef.current.value = "";
       }
@@ -471,19 +485,44 @@ export default function Step3PreferencesLogistics({
           className="hidden"
         />
 
-        {uploadedSignature ? (
+        {uploadedSignature || existingSignaturePreview ? (
           <div className="mt-1 p-3 border-2 border-dashed border-stone-300 rounded-md">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-3">
-                <FileImage className="w-8 h-8 text-terracotta-600" />
-                <div>
-                  <p className="text-sm font-medium text-stone-700">
-                    {uploadedSignature.name}
-                  </p>
-                  <p className="text-xs text-stone-500">
-                    {(uploadedSignature.file.size / 1024).toFixed(1)} KB
-                  </p>
-                </div>
+                {existingSignaturePreview && !uploadedSignature ? (
+                  // Display existing signature from database
+                  <>
+                    <img
+                      src={existingSignaturePreview || "/placeholder.svg"}
+                      alt="Digital Signature"
+                      className="w-16 h-16 object-cover rounded border"
+                    />
+                    <div>
+                      <p className="text-sm font-medium text-stone-700">
+                        Digital Signature (from database)
+                      </p>
+                      <p className="text-xs text-stone-500">
+                        Existing signature
+                      </p>
+                    </div>
+                  </>
+                ) : (
+                  // Display newly uploaded signature
+                  <>
+                    <FileImage className="w-8 h-8 text-terracotta-600" />
+                    <div>
+                      <p className="text-sm font-medium text-stone-700">
+                        {uploadedSignature?.name}
+                      </p>
+                      <p className="text-xs text-stone-500">
+                        {uploadedSignature
+                          ? (uploadedSignature.file.size / 1024).toFixed(1) +
+                            " KB"
+                          : ""}
+                      </p>
+                    </div>
+                  </>
+                )}
               </div>
               <button
                 onClick={removeSignature}

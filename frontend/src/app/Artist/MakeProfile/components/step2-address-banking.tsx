@@ -1,8 +1,11 @@
 "use client";
 
+import type React from "react";
+
 import { Upload, X, FileImage } from "lucide-react";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import toast from "react-hot-toast";
+
 // Define UploadedFile type locally
 type UploadedFile = {
   file: File;
@@ -36,7 +39,7 @@ interface ProfileData {
 }
 
 interface Step2Props {
-  data: ProfileData;
+  data: ProfileData & Record<string, any>; // Allow additional properties from database
   updateData: (updates: Partial<ProfileData>) => void;
   updateNestedField: (
     parent: keyof ProfileData,
@@ -60,6 +63,89 @@ export default function Step2AddressBanking({
     Record<string, UploadedFile>
   >({});
   const fileInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
+
+  // Add state for existing documents from database
+  const [existingDocuments, setExistingDocuments] = useState<
+    Record<string, string>
+  >({});
+
+  // Add useEffect to handle existing documents from database
+  useEffect(() => {
+    try {
+      // Map database fields to display fields - handle multiple possible field structures
+      const dbDocuments: Record<string, string> = {};
+
+      // Check for existing documents in the data - try multiple possible field names
+      // Direct fields on data object
+      if (data?.gstCertificate && typeof data.gstCertificate === "string") {
+        dbDocuments["gst-upload"] = data.gstCertificate;
+      }
+      if (data?.panCard && typeof data.panCard === "string") {
+        dbDocuments["pan-upload"] = data.panCard;
+      }
+      if (data?.businessLicense && typeof data.businessLicense === "string") {
+        dbDocuments["license-upload"] = data.businessLicense;
+      }
+      if (data?.canceledCheque && typeof data.canceledCheque === "string") {
+        dbDocuments["cheque-upload"] = data.canceledCheque;
+      }
+
+      // Check nested documents object if it exists
+      if (data?.documents && typeof data.documents === "object") {
+        const docs = data.documents as any;
+        if (docs.gstCertificate && typeof docs.gstCertificate === "string") {
+          dbDocuments["gst-upload"] = docs.gstCertificate;
+        }
+        if (docs.panCard && typeof docs.panCard === "string") {
+          dbDocuments["pan-upload"] = docs.panCard;
+        }
+        if (docs.businessLicense && typeof docs.businessLicense === "string") {
+          dbDocuments["license-upload"] = docs.businessLicense;
+        }
+        if (docs.canceledCheque && typeof docs.canceledCheque === "string") {
+          dbDocuments["cheque-upload"] = docs.canceledCheque;
+        }
+      }
+
+      // Alternative field names that might be used in your API
+      const alternativeFields = {
+        "gst-upload": ["gst_certificate", "gstDocument", "gst_doc"],
+        "pan-upload": ["pan_card", "panDocument", "pan_doc"],
+        "license-upload": [
+          "business_license",
+          "licenseDocument",
+          "license_doc",
+        ],
+        "cheque-upload": [
+          "canceled_cheque",
+          "chequeDocument",
+          "cheque_doc",
+          "cancelled_cheque",
+        ],
+      };
+
+      // Check for alternative field names
+      Object.entries(alternativeFields).forEach(([uploadId, altNames]) => {
+        if (!dbDocuments[uploadId]) {
+          // Only if not already found
+          altNames.forEach((altName) => {
+            if (data && typeof data === "object" && altName in data) {
+              const value = (data as any)[altName];
+              if (value && typeof value === "string") {
+                dbDocuments[uploadId] = value;
+              }
+            }
+          });
+        }
+      });
+
+      setExistingDocuments(dbDocuments);
+    } catch (error) {
+      console.error("Error loading existing documents:", error);
+      // Don't show error to user, just log it
+      setExistingDocuments({});
+    }
+  }, [data]);
 
   const handleInputChange = (field: keyof ProfileData, value: any) => {
     updateData({ [field]: value });
@@ -118,6 +204,13 @@ export default function Step2AddressBanking({
       return newDocs;
     });
 
+    // Also clear existing documents
+    setExistingDocuments((prev) => {
+      const newDocs = { ...prev };
+      delete newDocs[inputId];
+      return newDocs;
+    });
+
     // Clear the file input
     if (fileInputRefs.current[inputId]) {
       fileInputRefs.current[inputId]!.value = "";
@@ -143,6 +236,7 @@ export default function Step2AddressBanking({
     required: boolean;
   }) => {
     const uploadedDoc = uploadedDocuments[doc.id];
+    const existingDoc = existingDocuments[doc.id];
 
     return (
       <div>
@@ -159,19 +253,55 @@ export default function Step2AddressBanking({
           className="hidden"
         />
 
-        {uploadedDoc ? (
+        {uploadedDoc || existingDoc ? (
           <div className="mt-1 p-3 border-2 border-dashed border-stone-300 rounded-md">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-3">
-                <FileImage className="w-8 h-8 text-terracotta-600" />
-                <div>
-                  <p className="text-sm font-medium text-stone-700">
-                    {uploadedDoc.name}
-                  </p>
-                  <p className="text-xs text-stone-500">
-                    {(uploadedDoc.file.size / 1024).toFixed(1)} KB
-                  </p>
-                </div>
+                {existingDoc && !uploadedDoc ? (
+                  // Display existing document from database
+                  <>
+                    <div className="w-16 h-16 flex items-center justify-center bg-stone-100 rounded border">
+                      <img
+                        src={existingDoc || "/placeholder.svg"}
+                        alt={doc.label}
+                        className="w-full h-full object-cover rounded"
+                        onError={(e) => {
+                          // If image fails to load, show file icon instead
+                          const target = e.target as HTMLImageElement;
+                          target.style.display = "none";
+                          const parent = target.parentElement;
+                          if (parent) {
+                            parent.innerHTML =
+                              '<svg class="w-8 h-8 text-terracotta-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>';
+                          }
+                        }}
+                      />
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-stone-700">
+                        {doc.label}
+                      </p>
+                      <p className="text-xs text-stone-500">
+                        Existing document
+                      </p>
+                    </div>
+                  </>
+                ) : (
+                  // Display newly uploaded document
+                  <>
+                    <FileImage className="w-8 h-8 text-terracotta-600" />
+                    <div>
+                      <p className="text-sm font-medium text-stone-700">
+                        {uploadedDoc?.name}
+                      </p>
+                      <p className="text-xs text-stone-500">
+                        {uploadedDoc
+                          ? (uploadedDoc.file.size / 1024).toFixed(1) + " KB"
+                          : ""}
+                      </p>
+                    </div>
+                  </>
+                )}
               </div>
               <button
                 onClick={() => removeDocument(doc.id)}
