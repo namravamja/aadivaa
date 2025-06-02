@@ -1,7 +1,7 @@
 import express from "express";
 import * as artistController from "../../controllers/Artist/artist.controller";
 import { verifyToken } from "../../middleware/authMiddleware";
-import { uploadArtistImages } from "../../middleware/multer"; // Import the multer middleware
+import { uploadArtistImages, uploadDocuments } from "../../middleware/multer"; // Import the multer middleware
 
 const router = express.Router();
 
@@ -20,7 +20,7 @@ router.put(
 );
 router.put(
   "/update/documents",
-  uploadArtistImages,
+  uploadDocuments,
   artistController.updateDocuments
 );
 router.put("/update/social-links", artistController.updateSocialLinks);

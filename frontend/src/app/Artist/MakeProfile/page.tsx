@@ -67,6 +67,7 @@ interface ProfileData {
     twitter: string;
   };
   termsAgreed: boolean;
+  digitalSignature: string;
 }
 
 export default function MakeProfile() {
@@ -142,6 +143,7 @@ export default function MakeProfile() {
       twitter: "",
     },
     termsAgreed: false,
+    digitalSignature: "",
   });
 
   // Add state to track original data for comparison
@@ -201,6 +203,7 @@ export default function MakeProfile() {
           },
           // Fix: Ensure termsAgreed is always a boolean
           termsAgreed: Boolean(artistData.termsAgreed),
+          digitalSignature: artistData.digitalSignature || "",
         };
 
         setProfileData(loadedData);
@@ -494,66 +497,104 @@ export default function MakeProfile() {
 
       // Check if we have any files to upload
       if (Object.keys(uploadedFiles).length > 0) {
-        // Create FormData object for file uploads
-        const formData = new FormData();
+        // Separate document files from other files
+        const documentFiles = {
+          "gst-upload": uploadedFiles["gst-upload"],
+          "pan-upload": uploadedFiles["pan-upload"],
+          "license-upload": uploadedFiles["license-upload"],
+          "cheque-upload": uploadedFiles["cheque-upload"],
+        };
 
-        // Add all regular data fields to FormData
-        Object.entries(submissionData).forEach(([key, value]) => {
-          // Handle boolean fields explicitly
-          if (key === "termsAgreed") {
-            formData.append(key, String(Boolean(value)));
-          } else if (typeof value !== "object" || value === null) {
-            formData.append(key, String(value));
+        const otherFiles = {
+          businessLogo: uploadedFiles.businessLogo,
+          digitalSignature: uploadedFiles.digitalSignature,
+        };
+
+        // Upload documents separately if any exist
+        const hasDocumentFiles = Object.values(documentFiles).some(
+          (file) => file
+        );
+        if (hasDocumentFiles) {
+          const documentsFormData = new FormData();
+          Object.entries(documentFiles).forEach(([key, file]) => {
+            if (file) {
+              const fieldMapping: Record<string, string> = {
+                "gst-upload": "gstCertificate",
+                "pan-upload": "panCard",
+                "license-upload": "businessLicense",
+                "cheque-upload": "canceledCheque",
+              };
+              documentsFormData.append(fieldMapping[key], file);
+            }
+          });
+          await updateDocuments(documentsFormData).unwrap();
+        }
+
+        // Upload other files with main artist data if any exist
+        const hasOtherFiles = Object.values(otherFiles).some((file) => file);
+        if (hasOtherFiles) {
+          const formData = new FormData();
+
+          // Add all regular data fields to FormData
+          Object.entries(submissionData).forEach(([key, value]) => {
+            if (key === "termsAgreed") {
+              formData.append(key, String(Boolean(value)));
+            } else if (typeof value !== "object" || value === null) {
+              formData.append(key, String(value));
+            }
+          });
+
+          // Add arrays as JSON strings
+          if (submissionData.productCategories?.length) {
+            formData.append(
+              "productCategories",
+              JSON.stringify(submissionData.productCategories)
+            );
           }
-        });
 
-        // Add arrays as JSON strings
-        if (submissionData.productCategories?.length) {
-          formData.append(
-            "productCategories",
-            JSON.stringify(submissionData.productCategories)
-          );
+          if (submissionData.serviceAreas?.length) {
+            formData.append(
+              "serviceAreas",
+              JSON.stringify(submissionData.serviceAreas)
+            );
+          }
+
+          // Add nested objects as JSON strings
+          if (submissionData.businessAddress) {
+            formData.append(
+              "businessAddress",
+              JSON.stringify(submissionData.businessAddress)
+            );
+          }
+
+          if (submissionData.warehouseAddress) {
+            formData.append(
+              "warehouseAddress",
+              JSON.stringify(submissionData.warehouseAddress)
+            );
+          }
+
+          if (submissionData.socialLinks) {
+            formData.append(
+              "socialLinks",
+              JSON.stringify(submissionData.socialLinks)
+            );
+          }
+
+          // Add non-document files to FormData
+          Object.entries(otherFiles).forEach(([fieldName, file]) => {
+            if (file) {
+              formData.append(fieldName, file);
+            }
+          });
+
+          await updateArtist(formData).unwrap();
+        } else {
+          // No other files, just send regular JSON data
+          await updateArtist(submissionData).unwrap();
         }
-
-        if (submissionData.serviceAreas?.length) {
-          formData.append(
-            "serviceAreas",
-            JSON.stringify(submissionData.serviceAreas)
-          );
-        }
-
-        // Add nested objects as JSON strings
-        if (submissionData.businessAddress) {
-          formData.append(
-            "businessAddress",
-            JSON.stringify(submissionData.businessAddress)
-          );
-        }
-
-        if (submissionData.warehouseAddress) {
-          formData.append(
-            "warehouseAddress",
-            JSON.stringify(submissionData.warehouseAddress)
-          );
-        }
-
-        if (submissionData.socialLinks) {
-          formData.append(
-            "socialLinks",
-            JSON.stringify(submissionData.socialLinks)
-          );
-        }
-
-        // Add files to FormData
-        Object.entries(uploadedFiles).forEach(([fieldName, file]) => {
-          formData.append(fieldName, file);
-        });
-
-        // Send FormData to the API
-        await updateArtist(formData).unwrap();
       } else {
         // No files to upload, send regular JSON data
-        console.log("Final submission data:", submissionData);
         await updateArtist(submissionData).unwrap();
       }
 
@@ -619,16 +660,17 @@ export default function MakeProfile() {
       };
 
       // Check if data has changed
+      const hasBusinessLogoFile = uploadedFiles.businessLogo;
       if (
         !hasDataChanged(step1Data, originalStep1Data) &&
-        Object.keys(uploadedFiles).length === 0
+        !hasBusinessLogoFile
       ) {
         toast.success("No changes detected in Step 1");
         return true;
       }
 
-      // Check if we have files to upload (business logo)
-      if (Object.keys(uploadedFiles).length > 0) {
+      // Check if we have business logo file to upload
+      if (hasBusinessLogoFile) {
         const formData = new FormData();
 
         // Add all step 1 fields to FormData
@@ -640,10 +682,8 @@ export default function MakeProfile() {
           }
         });
 
-        // Add files to FormData
-        Object.entries(uploadedFiles).forEach(([fieldName, file]) => {
-          formData.append(fieldName, file);
-        });
+        // Add business logo file to FormData
+        formData.append("businessLogo", hasBusinessLogoFile);
 
         await updateArtist(formData).unwrap();
       } else {
@@ -711,6 +751,46 @@ export default function MakeProfile() {
         } catch (err: any) {
           console.error("Failed to save warehouse address:", err);
           toast.error("Failed to save warehouse address");
+          return false;
+        }
+      }
+
+      // Check and save documents
+      const documentFiles = {
+        "gst-upload": uploadedFiles["gst-upload"],
+        "pan-upload": uploadedFiles["pan-upload"],
+        "license-upload": uploadedFiles["license-upload"],
+        "cheque-upload": uploadedFiles["cheque-upload"],
+      };
+
+      const hasDocumentFiles = Object.values(documentFiles).some(
+        (file) => file
+      );
+
+      if (hasDocumentFiles) {
+        try {
+          const formData = new FormData();
+
+          // Add only document files to FormData
+          Object.entries(documentFiles).forEach(([key, file]) => {
+            if (file) {
+              // Map the upload keys to document field names
+              const fieldMapping: Record<string, string> = {
+                "gst-upload": "gstCertificate",
+                "pan-upload": "panCard",
+                "license-upload": "businessLicense",
+                "cheque-upload": "canceledCheque",
+              };
+              formData.append(fieldMapping[key], file);
+            }
+          });
+
+          await updateDocuments(formData).unwrap();
+          toast.success("Documents uploaded!");
+          hasChanges = true;
+        } catch (err: any) {
+          console.error("Failed to save documents:", err);
+          toast.error("Failed to save documents");
           return false;
         }
       }
@@ -813,6 +893,7 @@ export default function MakeProfile() {
         serviceAreas: profileData.serviceAreas,
         returnPolicy: profileData.returnPolicy,
         termsAgreed: profileData.termsAgreed,
+        digitalSignature: profileData.digitalSignature,
       };
 
       const originalPreferencesData = {
@@ -823,15 +904,44 @@ export default function MakeProfile() {
         serviceAreas: originalData.serviceAreas,
         returnPolicy: originalData.returnPolicy,
         termsAgreed: originalData.termsAgreed,
+        digitalSignature: originalData.digitalSignature,
       };
 
-      if (hasDataChanged(preferencesData, originalPreferencesData)) {
+      // Check if we have digital signature file to upload
+      const hasDigitalSignatureFile = uploadedFiles.digitalSignature;
+      if (
+        hasDataChanged(preferencesData, originalPreferencesData) ||
+        hasDigitalSignatureFile
+      ) {
         try {
-          const changedFields = getChangedFields(
-            preferencesData,
-            originalPreferencesData
-          );
-          await updateArtist(changedFields).unwrap();
+          if (hasDigitalSignatureFile) {
+            // If we have a file, use FormData
+            const formData = new FormData();
+
+            // Add all preferences data to FormData
+            Object.entries(preferencesData).forEach(([key, value]) => {
+              if (key === "serviceAreas") {
+                formData.append(key, JSON.stringify(value));
+              } else if (key === "termsAgreed") {
+                formData.append(key, String(Boolean(value)));
+              } else {
+                formData.append(key, String(value));
+              }
+            });
+
+            // Add digital signature file
+            formData.append("digitalSignature", hasDigitalSignatureFile);
+
+            await updateArtist(formData).unwrap();
+          } else {
+            // No file, just send changed fields
+            const changedFields = getChangedFields(
+              preferencesData,
+              originalPreferencesData
+            );
+            await updateArtist(changedFields).unwrap();
+          }
+
           toast.success("Preferences saved!");
           hasChanges = true;
         } catch (err: any) {
@@ -939,6 +1049,19 @@ export default function MakeProfile() {
     );
   }
 
+  // Update the setUploadedFiles function calls to merge files instead of replacing
+  const handleSetUploadedFiles = (
+    files:
+      | Record<string, File>
+      | ((prev: Record<string, File>) => Record<string, File>)
+  ) => {
+    if (typeof files === "function") {
+      setUploadedFiles(files);
+    } else {
+      setUploadedFiles((prev) => ({ ...prev, ...files }));
+    }
+  };
+
   return (
     <div ref={formRef} className="container mx-auto px-4 sm:px-6 py-6 sm:py-8">
       {/* Header */}
@@ -1007,7 +1130,7 @@ export default function MakeProfile() {
             updateData={updateProfileData}
             addToArray={addToArray}
             removeFromArray={removeFromArray}
-            setUploadedFiles={setUploadedFiles}
+            setUploadedFiles={handleSetUploadedFiles}
             onSave={saveStep1Data}
             isLoading={isUpdating}
           />
@@ -1017,11 +1140,13 @@ export default function MakeProfile() {
             data={profileData}
             updateData={updateProfileData}
             updateNestedField={updateNestedField}
+            setUploadedFiles={handleSetUploadedFiles}
             onSave={saveStep2Data}
             isLoading={
               isUpdatingBusinessAddress ||
               isUpdatingWarehouseAddress ||
-              isUpdating
+              isUpdating ||
+              isUpdatingDocuments
             }
           />
         )}
@@ -1032,6 +1157,7 @@ export default function MakeProfile() {
             updateNestedField={updateNestedField}
             addToArray={addToArray}
             removeFromArray={removeFromArray}
+            setUploadedFiles={handleSetUploadedFiles}
             onSave={saveStep3Data}
             isLoading={isUpdatingSocialLinks || isUpdating}
           />

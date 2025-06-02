@@ -26,6 +26,7 @@ interface ProfileData {
     twitter: string;
   };
   termsAgreed: boolean;
+  digitalSignature: string;
 }
 
 interface Step3Props {
@@ -38,8 +39,13 @@ interface Step3Props {
   ) => void;
   addToArray: (field: keyof ProfileData, value: string) => void;
   removeFromArray: (field: keyof ProfileData, index: number) => void;
+  setUploadedFiles: (
+    files:
+      | Record<string, File>
+      | ((prev: Record<string, File>) => Record<string, File>)
+  ) => void;
   onSave?: () => Promise<boolean>;
-  isLoading?: boolean; // Add this prop
+  isLoading?: boolean;
 }
 
 export default function Step3PreferencesLogistics({
@@ -48,8 +54,9 @@ export default function Step3PreferencesLogistics({
   updateNestedField,
   addToArray,
   removeFromArray,
+  setUploadedFiles,
   onSave,
-  isLoading = false, // Add this prop with default
+  isLoading = false,
 }: Step3Props) {
   const [serviceAreaInput, setServiceAreaInput] = useState("");
   const [uploadedSignature, setUploadedSignature] =
@@ -137,6 +144,15 @@ export default function Step3PreferencesLogistics({
       };
       reader.readAsDataURL(file);
 
+      // Store the file for upload
+      setUploadedFiles((prev: Record<string, File>) => ({
+        ...prev,
+        digitalSignature: file,
+      }));
+
+      // Update the profile data field for digitalSignature
+      updateData({ digitalSignature: file.name });
+
       toast.success(`Digital signature uploaded: ${file.name}`);
     } catch (error) {
       console.error("Error uploading signature:", error);
@@ -150,6 +166,16 @@ export default function Step3PreferencesLogistics({
       if (signatureInputRef.current) {
         signatureInputRef.current.value = "";
       }
+
+      // Remove from uploaded files and clear data field
+      setUploadedFiles((prev: Record<string, File>) => {
+        const newFiles = { ...prev };
+        delete newFiles.digitalSignature;
+        return newFiles;
+      });
+
+      updateData({ digitalSignature: "" });
+
       toast.success("Digital signature removed");
     } catch (error) {
       console.error("Error removing signature:", error);

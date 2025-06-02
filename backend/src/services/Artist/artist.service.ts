@@ -238,46 +238,6 @@ export const updateArtistMain = async (id: string, data: any) => {
       updatedAt: true,
       avatar: true,
       profileProgress: true,
-      // Include the related data in the response
-      businessAddress: {
-        select: {
-          id: true,
-          street: true,
-          city: true,
-          state: true,
-          country: true,
-          pinCode: true,
-        },
-      },
-      warehouseAddress: {
-        select: {
-          id: true,
-          street: true,
-          city: true,
-          state: true,
-          country: true,
-          pinCode: true,
-          sameAsBusiness: true,
-        },
-      },
-      documents: {
-        select: {
-          id: true,
-          gstCertificate: true,
-          panCard: true,
-          businessLicense: true,
-          canceledCheque: true,
-        },
-      },
-      socialLinks: {
-        select: {
-          id: true,
-          website: true,
-          instagram: true,
-          facebook: true,
-          twitter: true,
-        },
-      },
     },
   });
 
@@ -408,43 +368,62 @@ export const updateDocuments = async (
   artistId: string,
   documentsData: DocumentsData
 ) => {
-  const artist = await prisma.artist.findUnique({
-    where: { id: artistId },
-    select: { documentsId: true },
-  });
-
-  if (!artist) {
-    throw new Error("Artist not found");
-  }
-
-  let updatedDocuments;
-
-  if (artist.documentsId) {
-    // Update existing documents
-    updatedDocuments = await prisma.documents.update({
-      where: { id: artist.documentsId },
-      data: {
-        ...documentsData,
-      },
-    });
-  } else {
-    // Create new documents and link to artist
-    updatedDocuments = await prisma.documents.create({
-      data: {
-        ...documentsData,
-      },
-    });
-
-    // Link the new documents to the artist
-    await prisma.artist.update({
+  try {
+    // First, check if artist exists
+    const artist = await prisma.artist.findUnique({
       where: { id: artistId },
-      data: { documentsId: updatedDocuments.id },
+      select: {
+        id: true,
+        documentsId: true,
+      },
     });
+
+    if (!artist) {
+      throw new Error("Artist not found");
+    }
+
+    console.log("Artist found:", artist);
+    console.log("Documents data:", documentsData);
+
+    let updatedDocuments;
+
+    if (artist.documentsId) {
+      // Update existing documents
+      console.log("Updating existing documents with ID:", artist.documentsId);
+
+      updatedDocuments = await prisma.documents.update({
+        where: { id: artist.documentsId },
+        data: {
+          ...documentsData,
+        },
+      });
+    } else {
+      // Create new documents and link to artist
+      console.log("Creating new documents for artist:", artistId);
+
+      updatedDocuments = await prisma.documents.create({
+        data: {
+          ...documentsData,
+        },
+      });
+
+      console.log("Created documents:", updatedDocuments);
+
+      // Link the new documents to the artist
+      await prisma.artist.update({
+        where: { id: artistId },
+        data: { documentsId: updatedDocuments.id },
+      });
+
+      console.log("Linked documents to artist");
+    }
+
+    return updatedDocuments;
+  } catch (error) {
+    console.error("Service error in updateDocuments:", error);
+    throw error; // Re-throw to be handled by controller
   }
-
-  return updatedDocuments;
 };
-
 // Update Social Links Service
 export const updateSocialLinks = async (
   artistId: string,

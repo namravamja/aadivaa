@@ -43,16 +43,18 @@ interface Step2Props {
     field: string,
     value: any
   ) => void;
+  setUploadedFiles: React.Dispatch<React.SetStateAction<Record<string, File>>>;
   onSave?: () => Promise<boolean>;
-  isLoading?: boolean; // Add this prop
+  isLoading?: boolean;
 }
 
 export default function Step2AddressBanking({
   data,
   updateData,
   updateNestedField,
+  setUploadedFiles,
   onSave,
-  isLoading = false, // Add this prop with default
+  isLoading = false,
 }: Step2Props) {
   const [uploadedDocuments, setUploadedDocuments] = useState<
     Record<string, UploadedFile>
@@ -99,6 +101,12 @@ export default function Step2AddressBanking({
       };
       reader.readAsDataURL(file);
 
+      // Store the file for document upload
+      setUploadedFiles((prev: Record<string, File>) => ({
+        ...prev,
+        [inputId]: file,
+      }));
+
       toast.success(`Document uploaded: ${file.name}`);
     }
   };
@@ -114,6 +122,13 @@ export default function Step2AddressBanking({
     if (fileInputRefs.current[inputId]) {
       fileInputRefs.current[inputId]!.value = "";
     }
+
+    // Remove from uploaded files only
+    setUploadedFiles((prev: Record<string, File>) => {
+      const newFiles = { ...prev };
+      delete newFiles[inputId];
+      return newFiles;
+    });
 
     toast.success("Document removed");
   };

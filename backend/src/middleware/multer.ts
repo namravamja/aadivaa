@@ -37,7 +37,7 @@ export const uploadSingle = multer({
   limits: { fileSize: 5 * 1024 * 1024 },
 });
 
-// 🔹 Multi-field uploader (for Artist)
+// 🔹 Multi-field uploader (for Artist) - FIXED: Added document fields
 export const uploadArtistImages = multer({
   storage,
   fileFilter,
@@ -46,4 +46,21 @@ export const uploadArtistImages = multer({
   { name: "avatar", maxCount: 1 },
   { name: "businessLogo", maxCount: 1 },
   { name: "digitalSignature", maxCount: 1 },
+  // ADD DOCUMENT FIELDS
+  { name: "gstCertificate", maxCount: 1 },
+  { name: "panCard", maxCount: 1 },
+  { name: "businessLicense", maxCount: 1 },
+  { name: "canceledCheque", maxCount: 1 },
+]);
+
+// 🔹 Document-specific uploader
+export const uploadDocuments = multer({
+  storage,
+  fileFilter,
+  limits: { fileSize: 5 * 1024 * 1024 },
+}).fields([
+  { name: "gstCertificate", maxCount: 1 },
+  { name: "panCard", maxCount: 1 },
+  { name: "businessLicense", maxCount: 1 },
+  { name: "canceledCheque", maxCount: 1 },
 ]);
