@@ -451,11 +451,11 @@ export default function MakeProfile() {
     try {
       return {
         ...data,
-        // Ensure boolean fields are properly converted - be more explicit
-        termsAgreed: data.termsAgreed === true,
+        // Ensure boolean fields are properly converted - keep as actual booleans
+        termsAgreed: Boolean(data.termsAgreed),
         warehouseAddress: {
           ...data.warehouseAddress,
-          sameAsBusiness: data.warehouseAddress.sameAsBusiness === true,
+          sameAsBusiness: Boolean(data.warehouseAddress.sameAsBusiness),
         },
         // Ensure arrays are properly formatted
         productCategories: Array.isArray(data.productCategories)
@@ -538,7 +538,8 @@ export default function MakeProfile() {
           // Add all regular data fields to FormData
           Object.entries(submissionData).forEach(([key, value]) => {
             if (key === "termsAgreed") {
-              formData.append(key, String(Boolean(value)));
+              // Send as JSON boolean, not string
+              formData.append(key, JSON.stringify(Boolean(value)));
             } else if (typeof value !== "object" || value === null) {
               formData.append(key, String(value));
             }
@@ -885,7 +886,16 @@ export default function MakeProfile() {
       }
 
       // Check and save preferences and logistics data
-      const preferencesData = {
+      const preferencesData: {
+        shippingType: string;
+        inventoryVolume: string;
+        supportContact: string;
+        workingHours: string;
+        serviceAreas: string[];
+        returnPolicy: string;
+        termsAgreed: boolean;
+        digitalSignature?: string;
+      } = {
         shippingType: profileData.shippingType,
         inventoryVolume: profileData.inventoryVolume,
         supportContact: profileData.supportContact,
@@ -914,32 +924,24 @@ export default function MakeProfile() {
         hasDigitalSignatureFile
       ) {
         try {
+          // STEP 1: First update all data fields WITHOUT the file
+          const dataToUpdate = { ...preferencesData };
+
+          // If we have a file, don't include digitalSignature in the first update
           if (hasDigitalSignatureFile) {
-            // If we have a file, use FormData
-            const formData = new FormData();
+            delete dataToUpdate.digitalSignature;
+          }
 
-            // Add all preferences data to FormData
-            Object.entries(preferencesData).forEach(([key, value]) => {
-              if (key === "serviceAreas") {
-                formData.append(key, JSON.stringify(value));
-              } else if (key === "termsAgreed") {
-                formData.append(key, String(Boolean(value)));
-              } else {
-                formData.append(key, String(value));
-              }
-            });
+          // Update all data fields first (this will include termsAgreed as a proper boolean)
+          await updateArtist(dataToUpdate).unwrap();
 
-            // Add digital signature file
-            formData.append("digitalSignature", hasDigitalSignatureFile);
+          // STEP 2: If we have a file, upload it separately
+          if (hasDigitalSignatureFile) {
+            const fileFormData = new FormData();
+            fileFormData.append("digitalSignature", hasDigitalSignatureFile);
 
-            await updateArtist(formData).unwrap();
-          } else {
-            // No file, just send changed fields
-            const changedFields = getChangedFields(
-              preferencesData,
-              originalPreferencesData
-            );
-            await updateArtist(changedFields).unwrap();
+            // Only include the file in this request, no other data
+            await updateArtist(fileFormData).unwrap();
           }
 
           toast.success("Preferences saved!");
