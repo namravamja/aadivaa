@@ -3,6 +3,12 @@
 import { Upload, X, FileImage } from "lucide-react";
 import { useState, useRef } from "react";
 import toast from "react-hot-toast";
+// Define UploadedFile type locally
+type UploadedFile = {
+  file: File;
+  preview: string;
+  name: string;
+};
 
 interface ProfileData {
   businessAddress: {
@@ -37,18 +43,16 @@ interface Step2Props {
     field: string,
     value: any
   ) => void;
-}
-
-interface UploadedFile {
-  file: File;
-  preview: string;
-  name: string;
+  onSave?: () => Promise<boolean>;
+  isLoading?: boolean; // Add this prop
 }
 
 export default function Step2AddressBanking({
   data,
   updateData,
   updateNestedField,
+  onSave,
+  isLoading = false, // Add this prop with default
 }: Step2Props) {
   const [uploadedDocuments, setUploadedDocuments] = useState<
     Record<string, UploadedFile>
@@ -540,6 +544,19 @@ export default function Step2AddressBanking({
           ))}
         </div>
       </div>
+
+      {/* Add save button at the end */}
+      {onSave && (
+        <div className="mt-6 pt-4 border-t border-stone-200">
+          <button
+            onClick={onSave}
+            disabled={isLoading}
+            className="px-4 py-2 bg-sage-600 text-white rounded-md hover:bg-sage-700 transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isLoading ? "Saving..." : "Save Step 2 Data"}
+          </button>
+        </div>
+      )}
     </div>
   );
 }

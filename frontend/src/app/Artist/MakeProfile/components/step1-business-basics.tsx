@@ -22,6 +22,9 @@ interface Step1Props {
   updateData: (updates: Partial<ProfileData>) => void;
   addToArray: (field: keyof ProfileData, value: string) => void;
   removeFromArray: (field: keyof ProfileData, index: number) => void;
+  setUploadedFiles: (files: Record<string, File>) => void;
+  onSave?: () => Promise<boolean>;
+  isLoading?: boolean; // Add this prop
 }
 
 export default function Step1BusinessBasics({
@@ -29,26 +32,48 @@ export default function Step1BusinessBasics({
   updateData,
   addToArray,
   removeFromArray,
+  setUploadedFiles,
+  onSave,
+  isLoading = false, // Add this prop with default
 }: Step1Props) {
   const [categoryInput, setCategoryInput] = useState("");
   const [uploadedLogo, setUploadedLogo] = useState<File | null>(null);
-  const [logoPreview, setLogoPreview] = useState<string | null>(null);
+  const [logoPreview, setLogoPreview] = useState<string | null>(
+    data.businessLogo || null
+  );
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleInputChange = (field: keyof ProfileData, value: string) => {
-    console.log(`Updating ${field} with value:`, value); // Debug log
-    updateData({ [field]: value });
+    try {
+      updateData({ [field]: value });
+    } catch (error) {
+      console.error(`Error updating ${field}:`, error);
+      toast.error(`Failed to update ${field}`);
+    }
   };
 
   const handleAddCategory = () => {
-    if (categoryInput.trim()) {
+    if (!categoryInput.trim()) {
+      toast.error("Please enter a category name");
+      return;
+    }
+
+    try {
       addToArray("productCategories", categoryInput.trim());
       setCategoryInput("");
+    } catch (error) {
+      console.error("Error adding category:", error);
+      toast.error("Failed to add category");
     }
   };
 
   const handleRemoveCategory = (index: number) => {
-    removeFromArray("productCategories", index);
+    try {
+      removeFromArray("productCategories", index);
+    } catch (error) {
+      console.error("Error removing category:", error);
+      toast.error("Failed to remove category");
+    }
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -60,10 +85,12 @@ export default function Step1BusinessBasics({
 
   const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
+    if (!file) return;
+
+    try {
       // Validate file type
       if (!file.type.startsWith("image/")) {
-        toast.error("Please upload an image file");
+        toast.error("Please upload an image file (PNG, JPG, GIF)");
         return;
       }
 
@@ -75,31 +102,68 @@ export default function Step1BusinessBasics({
 
       setUploadedLogo(file);
 
+      // Store the file for later upload
+      setUploadedFiles({ businessLogo: file });
+
       // Create preview URL
       const reader = new FileReader();
       reader.onload = (e) => {
         const result = e.target?.result as string;
         setLogoPreview(result);
-        updateData({ businessLogo: result });
       };
       reader.readAsDataURL(file);
 
       toast.success(`Logo uploaded: ${file.name}`);
+    } catch (error) {
+      console.error("Error uploading logo:", error);
+      toast.error("Failed to upload logo");
     }
   };
 
   const removeLogo = () => {
-    setUploadedLogo(null);
-    setLogoPreview(null);
-    updateData({ businessLogo: "" });
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
+    try {
+      setUploadedLogo(null);
+      setLogoPreview(null);
+      updateData({ businessLogo: "" });
+      setUploadedFiles({});
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+      toast.success("Logo removed");
+    } catch (error) {
+      console.error("Error removing logo:", error);
+      toast.error("Failed to remove logo");
     }
-    toast.success("Logo removed");
   };
 
   const triggerFileUpload = () => {
     fileInputRef.current?.click();
+  };
+
+  const validateEmail = (email: string) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
+
+  const validateMobile = (mobile: string) => {
+    const mobileRegex = /^[0-9]{10}$/;
+    return mobileRegex.test(mobile.replace(/\D/g, ""));
+  };
+
+  const handleEmailChange = (value: string) => {
+    handleInputChange("email", value);
+    if (value && !validateEmail(value)) {
+      toast.error("Please enter a valid email address");
+    }
+  };
+
+  const handleMobileChange = (value: string) => {
+    // Remove non-numeric characters
+    const numericValue = value.replace(/\D/g, "");
+    handleInputChange("mobile", numericValue);
+    if (numericValue && !validateMobile(numericValue)) {
+      toast.error("Please enter a valid 10-digit mobile number");
+    }
   };
 
   return (
@@ -118,6 +182,7 @@ export default function Step1BusinessBasics({
             value={data?.fullName || ""}
             onChange={(e) => handleInputChange("fullName", e.target.value)}
             className="w-full px-4 py-3 border border-stone-300 rounded-md focus:border-terracotta-500 focus:outline-none focus:ring-1 focus:ring-terracotta-500"
+            placeholder="Enter your full name or business name"
             required
           />
         </div>
@@ -130,6 +195,7 @@ export default function Step1BusinessBasics({
             value={data?.storeName || ""}
             onChange={(e) => handleInputChange("storeName", e.target.value)}
             className="w-full px-4 py-3 border border-stone-300 rounded-md focus:border-terracotta-500 focus:outline-none focus:ring-1 focus:ring-terracotta-500"
+            placeholder="Enter your store display name"
             required
           />
         </div>
@@ -140,8 +206,9 @@ export default function Step1BusinessBasics({
           <input
             type="email"
             value={data?.email || ""}
-            onChange={(e) => handleInputChange("email", e.target.value)}
+            onChange={(e) => handleEmailChange(e.target.value)}
             className="w-full px-4 py-3 border border-stone-300 rounded-md focus:border-terracotta-500 focus:outline-none focus:ring-1 focus:ring-terracotta-500"
+            placeholder="Enter your email address"
             required
           />
         </div>
@@ -152,8 +219,10 @@ export default function Step1BusinessBasics({
           <input
             type="tel"
             value={data?.mobile || ""}
-            onChange={(e) => handleInputChange("mobile", e.target.value)}
+            onChange={(e) => handleMobileChange(e.target.value)}
             className="w-full px-4 py-3 border border-stone-300 rounded-md focus:border-terracotta-500 focus:outline-none focus:ring-1 focus:ring-terracotta-500"
+            placeholder="Enter 10-digit mobile number"
+            maxLength={10}
             required
           />
         </div>
@@ -164,24 +233,17 @@ export default function Step1BusinessBasics({
           </label>
           <select
             value={data?.businessType || ""}
-            onChange={(e) => {
-              console.log("Business type selected:", e.target.value); // Debug log
-              handleInputChange("businessType", e.target.value);
-            }}
+            onChange={(e) => handleInputChange("businessType", e.target.value)}
             className="w-full px-4 py-3 border border-stone-300 rounded-md focus:border-terracotta-500 focus:outline-none focus:ring-1 focus:ring-terracotta-500"
             required
           >
             <option value="">Select Business Type</option>
-            <option value="Individual">Individual</option>
-            <option value="Company">Company</option>
-            <option value="Partnership">Partnership</option>
-            <option value="LLP">LLP</option>
-            <option value="Other">Other</option>
+            <option value="individual">Individual</option>
+            <option value="company">Company</option>
+            <option value="partnership">Partnership</option>
+            <option value="llp">LLP</option>
+            <option value="other">Other</option>
           </select>
-          {/* Debug display */}
-          <div className="text-xs text-gray-500 mt-1">
-            Current value: {data?.businessType || "None selected"}
-          </div>
         </div>
         <div>
           <label className="block text-sm font-medium text-stone-700 mb-2">
@@ -194,6 +256,7 @@ export default function Step1BusinessBasics({
               handleInputChange("businessRegistrationNumber", e.target.value)
             }
             className="w-full px-4 py-3 border border-stone-300 rounded-md focus:border-terracotta-500 focus:outline-none focus:ring-1 focus:ring-terracotta-500"
+            placeholder="Enter registration number"
             required
           />
         </div>
@@ -225,7 +288,7 @@ export default function Step1BusinessBasics({
         <div className="flex flex-col sm:flex-row gap-2 sm:gap-0">
           <input
             type="text"
-            placeholder="Add a category"
+            placeholder="Add a category (e.g., Handicrafts, Textiles, Jewelry)"
             value={categoryInput}
             onChange={(e) => setCategoryInput(e.target.value)}
             onKeyPress={handleKeyPress}
@@ -304,6 +367,19 @@ export default function Step1BusinessBasics({
           </div>
         )}
       </div>
+
+      {/* Add save button at the end */}
+      {onSave && (
+        <div className="mt-6 pt-4 border-t border-stone-200">
+          <button
+            onClick={onSave}
+            disabled={isLoading}
+            className="px-4 py-2 bg-sage-600 text-white rounded-md hover:bg-sage-700 transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isLoading ? "Saving..." : "Save Step 1 Data"}
+          </button>
+        </div>
+      )}
     </div>
   );
 }

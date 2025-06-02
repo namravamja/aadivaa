@@ -1,6 +1,12 @@
 "use client";
 
 import type React from "react";
+// Define UploadedFile type locally
+type UploadedFile = {
+  file: File;
+  preview: string;
+  name: string;
+};
 
 import { Upload, X, Plus, FileImage } from "lucide-react";
 import { useState, useRef } from "react";
@@ -32,12 +38,8 @@ interface Step3Props {
   ) => void;
   addToArray: (field: keyof ProfileData, value: string) => void;
   removeFromArray: (field: keyof ProfileData, index: number) => void;
-}
-
-interface UploadedFile {
-  file: File;
-  preview: string;
-  name: string;
+  onSave?: () => Promise<boolean>;
+  isLoading?: boolean; // Add this prop
 }
 
 export default function Step3PreferencesLogistics({
@@ -46,6 +48,8 @@ export default function Step3PreferencesLogistics({
   updateNestedField,
   addToArray,
   removeFromArray,
+  onSave,
+  isLoading = false, // Add this prop with default
 }: Step3Props) {
   const [serviceAreaInput, setServiceAreaInput] = useState("");
   const [uploadedSignature, setUploadedSignature] =
@@ -53,7 +57,12 @@ export default function Step3PreferencesLogistics({
   const signatureInputRef = useRef<HTMLInputElement>(null);
 
   const handleInputChange = (field: keyof ProfileData, value: any) => {
-    updateData({ [field]: value });
+    try {
+      updateData({ [field]: value });
+    } catch (error) {
+      console.error(`Error updating ${field}:`, error);
+      toast.error(`Failed to update ${field}`);
+    }
   };
 
   const handleNestedFieldChange = (
@@ -61,18 +70,36 @@ export default function Step3PreferencesLogistics({
     field: string,
     value: any
   ) => {
-    updateNestedField(parent, field, value);
+    try {
+      updateNestedField(parent, field, value);
+    } catch (error) {
+      console.error(`Error updating ${parent}.${field}:`, error);
+      toast.error(`Failed to update ${field}`);
+    }
   };
 
   const handleAddServiceArea = () => {
-    if (serviceAreaInput.trim()) {
+    if (!serviceAreaInput.trim()) {
+      toast.error("Please enter a service area");
+      return;
+    }
+
+    try {
       addToArray("serviceAreas", serviceAreaInput.trim());
       setServiceAreaInput("");
+    } catch (error) {
+      console.error("Error adding service area:", error);
+      toast.error("Failed to add service area");
     }
   };
 
   const handleRemoveServiceArea = (index: number) => {
-    removeFromArray("serviceAreas", index);
+    try {
+      removeFromArray("serviceAreas", index);
+    } catch (error) {
+      console.error("Error removing service area:", error);
+      toast.error("Failed to remove service area");
+    }
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -84,7 +111,9 @@ export default function Step3PreferencesLogistics({
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
+    if (!file) return;
+
+    try {
       // Validate file type
       if (!file.type.startsWith("image/")) {
         toast.error("Please upload an image file");
@@ -109,19 +138,62 @@ export default function Step3PreferencesLogistics({
       reader.readAsDataURL(file);
 
       toast.success(`Digital signature uploaded: ${file.name}`);
+    } catch (error) {
+      console.error("Error uploading signature:", error);
+      toast.error("Failed to upload digital signature");
     }
   };
 
   const removeSignature = () => {
-    setUploadedSignature(null);
-    if (signatureInputRef.current) {
-      signatureInputRef.current.value = "";
+    try {
+      setUploadedSignature(null);
+      if (signatureInputRef.current) {
+        signatureInputRef.current.value = "";
+      }
+      toast.success("Digital signature removed");
+    } catch (error) {
+      console.error("Error removing signature:", error);
+      toast.error("Failed to remove digital signature");
     }
-    toast.success("Digital signature removed");
   };
 
   const triggerFileUpload = () => {
     signatureInputRef.current?.click();
+  };
+
+  const validateEmail = (email: string) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
+
+  const validatePhone = (phone: string) => {
+    const phoneRegex = /^[0-9]{10}$/;
+    return phoneRegex.test(phone.replace(/\D/g, ""));
+  };
+
+  const handleSupportContactChange = (value: string) => {
+    handleInputChange("supportContact", value);
+
+    // Only validate if it looks like an email
+    if (value && value.includes("@")) {
+      if (!validateEmail(value)) {
+        toast.error("Please enter a valid email address");
+      }
+    }
+    // Remove the phone validation from here - it will be handled at submit
+  };
+
+  const handleTermsChange = (checked: boolean) => {
+    try {
+      // Ensure we're storing a proper boolean value
+      handleInputChange("termsAgreed", Boolean(checked));
+      if (checked) {
+        toast.success("Terms and conditions accepted");
+      }
+    } catch (error) {
+      console.error("Error updating terms agreement:", error);
+      toast.error("Failed to update terms agreement");
+    }
   };
 
   return (
@@ -174,9 +246,7 @@ export default function Step3PreferencesLogistics({
           <input
             type="text"
             value={data?.supportContact || ""}
-            onChange={(e) =>
-              handleInputChange("supportContact", e.target.value)
-            }
+            onChange={(e) => handleSupportContactChange(e.target.value)}
             className="w-full px-4 py-3 border border-stone-300 rounded-md focus:border-terracotta-500 focus:outline-none focus:ring-1 focus:ring-terracotta-500"
             placeholder="Email or phone number"
             required
@@ -336,8 +406,8 @@ export default function Step3PreferencesLogistics({
             id="terms"
             name="terms"
             type="checkbox"
-            checked={data?.termsAgreed || false}
-            onChange={(e) => handleInputChange("termsAgreed", e.target.checked)}
+            checked={Boolean(data?.termsAgreed)}
+            onChange={(e) => handleTermsChange(e.target.checked)}
             className="h-4 w-4 text-terracotta-600 focus:ring-terracotta-500 border-stone-300 rounded"
             required
           />
@@ -355,7 +425,8 @@ export default function Step3PreferencesLogistics({
               className="text-terracotta-600 hover:text-terracotta-500"
             >
               Seller Agreement
-            </a>
+            </a>{" "}
+            <span className="text-red-500">*</span>
           </label>
         </div>
       </div>
@@ -415,6 +486,17 @@ export default function Step3PreferencesLogistics({
           </div>
         )}
       </div>
+      {onSave && (
+        <div className="mt-6 pt-4 border-t border-stone-200">
+          <button
+            onClick={onSave}
+            disabled={isLoading}
+            className="px-4 py-2 bg-sage-600 text-white rounded-md hover:bg-sage-700 transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isLoading ? "Saving..." : "Save Step 3 Data"}
+          </button>
+        </div>
+      )}
     </div>
   );
 }

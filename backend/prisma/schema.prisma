@@ -107,7 +107,7 @@ model Artist {
 
 model BusinessAddress {
   id      String  @id @default(uuid())
-  street  String?
+  street  String
   city    String?
   state   String?
   country String?
@@ -118,7 +118,7 @@ model BusinessAddress {
 
 model WarehouseAddress {
   id             String   @id @default(uuid())
-  street         String?
+  street         String
   sameAsBusiness Boolean?
   city           String?
   state          String?

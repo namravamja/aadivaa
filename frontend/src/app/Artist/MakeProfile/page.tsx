@@ -5,7 +5,12 @@ import { Save, Check, FileText, MapPin, Settings } from "lucide-react";
 import {
   useGetartistQuery,
   useUpdateartistMutation,
+  useUpdateBusinessAddressMutation,
+  useUpdateWarehouseAddressMutation,
+  useUpdateDocumentsMutation,
+  useUpdateSocialLinksMutation,
 } from "@/services/api/artistApi";
+import { useRouter } from "next/navigation";
 import Step1BusinessBasics from "./components/step1-business-basics";
 import Step2AddressBanking from "./components/step2-address-banking";
 import Step3PreferencesLogistics from "./components/step3-preferences-logistics";
@@ -68,8 +73,12 @@ interface ProfileData {
 export default function MakeProfile() {
   const [step, setStep] = useState(1);
   const formRef = useRef<HTMLDivElement>(null);
+  // Store uploaded files separately
+  const [uploadedFiles, setUploadedFiles] = useState<Record<string, File>>({});
 
-  // RTK Query hooks
+  const router = useRouter();
+
+  // RTK Query hooks - add the individual mutation hooks
   const {
     data: artistData,
     isLoading,
@@ -77,8 +86,14 @@ export default function MakeProfile() {
     refetch,
   } = useGetartistQuery(undefined);
   const [updateArtist, { isLoading: isUpdating }] = useUpdateartistMutation();
-
-  console.log(artistData);
+  const [updateBusinessAddress, { isLoading: isUpdatingBusinessAddress }] =
+    useUpdateBusinessAddressMutation();
+  const [updateWarehouseAddress, { isLoading: isUpdatingWarehouseAddress }] =
+    useUpdateWarehouseAddressMutation();
+  const [updateDocuments, { isLoading: isUpdatingDocuments }] =
+    useUpdateDocumentsMutation();
+  const [updateSocialLinks, { isLoading: isUpdatingSocialLinks }] =
+    useUpdateSocialLinksMutation();
 
   // Centralized profile data state (local only, no API calls on change)
   const [profileData, setProfileData] = useState<ProfileData>({
@@ -184,8 +199,10 @@ export default function MakeProfile() {
             facebook: artistData.socialLinks?.facebook || "",
             twitter: artistData.socialLinks?.twitter || "",
           },
-          termsAgreed: artistData.termsAgreed || false,
+          // Fix: Ensure termsAgreed is always a boolean
+          termsAgreed: Boolean(artistData.termsAgreed),
         });
+        toast.success("Profile data loaded successfully");
       } catch (err) {
         console.error("Error loading artist data:", err);
         toast.error("Failed to load profile data. Please refresh the page.");
@@ -193,51 +210,119 @@ export default function MakeProfile() {
     }
   }, [artistData]);
 
-  // Function to prepare data for API update
-  const prepareUpdateData = (updates: ProfileData) => {
-    const updatePayload: any = {};
+  // Function to validate step data
+  const validateStep = (stepNumber: number): boolean => {
+    try {
+      switch (stepNumber) {
+        case 1:
+          if (!profileData.fullName?.trim()) {
+            toast.error("Full name is required");
+            return false;
+          }
+          if (!profileData.storeName?.trim()) {
+            toast.error("Store name is required");
+            return false;
+          }
+          if (!profileData.email?.trim()) {
+            toast.error("Email is required");
+            return false;
+          }
+          if (!profileData.mobile?.trim()) {
+            toast.error("Mobile number is required");
+            return false;
+          }
+          if (!profileData.businessType?.trim()) {
+            toast.error("Business type is required");
+            return false;
+          }
+          if (!profileData.businessRegistrationNumber?.trim()) {
+            toast.error("Business registration number is required");
+            return false;
+          }
+          if (
+            !Array.isArray(profileData.productCategories) ||
+            profileData.productCategories.length === 0
+          ) {
+            toast.error("At least one product category is required");
+            return false;
+          }
+          break;
 
-    // Handle simple fields
-    Object.keys(updates).forEach((key) => {
-      if (
-        key !== "businessAddress" &&
-        key !== "warehouseAddress" &&
-        key !== "socialLinks"
-      ) {
-        updatePayload[key] = updates[key as keyof ProfileData];
+        case 2:
+          if (!profileData.businessAddress?.street?.trim()) {
+            toast.error("Business street address is required");
+            return false;
+          }
+          if (!profileData.businessAddress?.city?.trim()) {
+            toast.error("Business city is required");
+            return false;
+          }
+          if (!profileData.businessAddress?.state?.trim()) {
+            toast.error("Business state is required");
+            return false;
+          }
+          if (!profileData.businessAddress?.country?.trim()) {
+            toast.error("Business country is required");
+            return false;
+          }
+          if (!profileData.businessAddress?.pinCode?.trim()) {
+            toast.error("Business PIN code is required");
+            return false;
+          }
+          if (!profileData.bankAccountName?.trim()) {
+            toast.error("Bank account name is required");
+            return false;
+          }
+          if (!profileData.bankName?.trim()) {
+            toast.error("Bank name is required");
+            return false;
+          }
+          if (!profileData.accountNumber?.trim()) {
+            toast.error("Account number is required");
+            return false;
+          }
+          if (!profileData.ifscCode?.trim()) {
+            toast.error("IFSC code is required");
+            return false;
+          }
+          if (!profileData.panNumber?.trim()) {
+            toast.error("PAN number is required");
+            return false;
+          }
+          break;
+
+        case 3:
+          if (!profileData.shippingType?.trim()) {
+            toast.error("Shipping type is required");
+            return false;
+          }
+          if (!profileData.inventoryVolume?.trim()) {
+            toast.error("Inventory volume is required");
+            return false;
+          }
+          if (!profileData.supportContact?.trim()) {
+            toast.error("Support contact is required");
+            return false;
+          }
+          if (
+            !Array.isArray(profileData.serviceAreas) ||
+            profileData.serviceAreas.length === 0
+          ) {
+            toast.error("At least one service area is required");
+            return false;
+          }
+          if (!profileData.termsAgreed) {
+            toast.error("You must agree to the terms and conditions");
+            return false;
+          }
+          break;
       }
-    });
-
-    // Handle address relations
-    if (updates.businessAddress) {
-      updatePayload.businessAddress = {
-        upsert: {
-          create: updates.businessAddress,
-          update: updates.businessAddress,
-        },
-      };
+      return true;
+    } catch (error) {
+      console.error("Validation error:", error);
+      toast.error("Validation failed. Please check your inputs.");
+      return false;
     }
-
-    if (updates.warehouseAddress) {
-      updatePayload.warehouseAddress = {
-        upsert: {
-          create: updates.warehouseAddress,
-          update: updates.warehouseAddress,
-        },
-      };
-    }
-
-    // Handle social links relation
-    if (updates.socialLinks) {
-      updatePayload.socialLinks = {
-        upsert: {
-          create: updates.socialLinks,
-          update: updates.socialLinks,
-        },
-      };
-    }
-
-    return updatePayload;
   };
 
   // Function to update profile data locally only (no API call)
@@ -276,17 +361,27 @@ export default function MakeProfile() {
 
   // Function to add to array fields locally only (no API call)
   const addToArray = (field: keyof ProfileData, value: string) => {
-    if (!value?.trim()) return;
+    if (!value?.trim()) {
+      toast.error("Please enter a valid value");
+      return;
+    }
 
     try {
+      const currentArray = profileData[field] as string[];
+      if (currentArray.includes(value.trim())) {
+        toast.error("This item already exists");
+        return;
+      }
+
       const updates = {
-        [field]: [...(profileData[field] as string[]), value.trim()],
+        [field]: [...currentArray, value.trim()],
       };
 
       setProfileData((prev) => ({
         ...prev,
         ...updates,
       }));
+      toast.success("Item added successfully");
     } catch (error) {
       console.error("Failed to add item:", error);
       toast.error("Failed to add item");
@@ -304,24 +399,147 @@ export default function MakeProfile() {
         ...prev,
         ...updates,
       }));
+      toast.success("Item removed successfully");
     } catch (error) {
       console.error("Failed to remove item:", error);
       toast.error("Failed to remove item");
     }
   };
 
+  // Prepare data for API submission with proper type conversion
+  const prepareDataForSubmission = (data: ProfileData) => {
+    try {
+      return {
+        ...data,
+        // Ensure boolean fields are properly converted - be more explicit
+        termsAgreed: data.termsAgreed === true,
+        warehouseAddress: {
+          ...data.warehouseAddress,
+          sameAsBusiness: data.warehouseAddress.sameAsBusiness === true,
+        },
+        // Ensure arrays are properly formatted
+        productCategories: Array.isArray(data.productCategories)
+          ? data.productCategories
+          : [],
+        serviceAreas: Array.isArray(data.serviceAreas) ? data.serviceAreas : [],
+        // Remove any undefined or null values that might cause issues
+        businessLogo: data.businessLogo || "",
+        upiId: data.upiId || "",
+        gstNumber: data.gstNumber || "",
+        workingHours: data.workingHours || "",
+        returnPolicy: data.returnPolicy || "",
+      };
+    } catch (error) {
+      console.error("Error preparing data for submission:", error);
+      throw new Error("Failed to prepare data for submission");
+    }
+  };
+
   // Final submit function - only API call happens here
   const handleSubmit = async () => {
     try {
-      const updatePayload = prepareUpdateData(profileData);
-      await updateArtist(updatePayload).unwrap();
+      // Validate all steps before submission
+      for (let i = 1; i <= 3; i++) {
+        if (!validateStep(i)) {
+          setStep(i);
+          return;
+        }
+      }
+
+      const submissionData = prepareDataForSubmission(profileData);
+
+      // Debug: Log the data being sent
+      console.log("Submitting data:", {
+        termsAgreed: submissionData.termsAgreed,
+        termsAgreedType: typeof submissionData.termsAgreed,
+        warehouseAddress: submissionData.warehouseAddress,
+      });
+
+      // Check if we have any files to upload
+      if (Object.keys(uploadedFiles).length > 0) {
+        // Create FormData object for file uploads
+        const formData = new FormData();
+
+        // Add all regular data fields to FormData
+        Object.entries(submissionData).forEach(([key, value]) => {
+          // Handle boolean fields explicitly
+          if (key === "termsAgreed") {
+            formData.append(key, String(Boolean(value)));
+          } else if (typeof value !== "object" || value === null) {
+            formData.append(key, String(value));
+          }
+        });
+
+        // Add arrays as JSON strings
+        if (submissionData.productCategories?.length) {
+          formData.append(
+            "productCategories",
+            JSON.stringify(submissionData.productCategories)
+          );
+        }
+
+        if (submissionData.serviceAreas?.length) {
+          formData.append(
+            "serviceAreas",
+            JSON.stringify(submissionData.serviceAreas)
+          );
+        }
+
+        // Add nested objects as JSON strings
+        if (submissionData.businessAddress) {
+          formData.append(
+            "businessAddress",
+            JSON.stringify(submissionData.businessAddress)
+          );
+        }
+
+        if (submissionData.warehouseAddress) {
+          formData.append(
+            "warehouseAddress",
+            JSON.stringify(submissionData.warehouseAddress)
+          );
+        }
+
+        if (submissionData.socialLinks) {
+          formData.append(
+            "socialLinks",
+            JSON.stringify(submissionData.socialLinks)
+          );
+        }
+
+        // Add files to FormData
+        Object.entries(uploadedFiles).forEach(([fieldName, file]) => {
+          formData.append(fieldName, file);
+        });
+
+        // Send FormData to the API
+        await updateArtist(formData).unwrap();
+      } else {
+        // No files to upload, send regular JSON data
+        console.log("Final submission data:", submissionData);
+        await updateArtist(submissionData).unwrap();
+      }
+
       toast.success("Profile submitted successfully!");
+      // Optionally redirect or refresh data
+      refetch();
     } catch (err: any) {
       console.error("Failed to submit profile:", err);
-      toast.error(
-        err?.data?.message || "Failed to submit profile. Please try again."
-      );
+
+      // Handle specific error types
+      if (err?.status === 400) {
+        toast.error("Invalid data provided. Please check your inputs.");
+      } else if (err?.status === 401) {
+        toast.error("You are not authorized. Please log in again.");
+      } else if (err?.status === 500) {
+        toast.error("Server error. Please try again later.");
+      } else {
+        toast.error(
+          err?.data?.message || "Failed to submit profile. Please try again."
+        );
+      }
     }
+    router.push("/Artist/Profile");
   };
 
   const scrollToTop = () => {
@@ -331,10 +549,177 @@ export default function MakeProfile() {
     });
   };
 
-  const nextStep = () => {
-    if (step < 4) {
-      setStep(step + 1);
-      setTimeout(() => scrollToTop(), 100);
+  // Replace the placeholder save functions with actual implementations:
+  const saveStep1Data = async (): Promise<boolean> => {
+    try {
+      if (!validateStep(1)) {
+        return false;
+      }
+
+      // Prepare Step 1 data
+      const step1Data = {
+        fullName: profileData.fullName,
+        storeName: profileData.storeName,
+        email: profileData.email,
+        mobile: profileData.mobile,
+        businessType: profileData.businessType,
+        businessRegistrationNumber: profileData.businessRegistrationNumber,
+        productCategories: profileData.productCategories,
+      };
+
+      // Check if we have files to upload (business logo)
+      if (Object.keys(uploadedFiles).length > 0) {
+        const formData = new FormData();
+
+        // Add all step 1 fields to FormData
+        Object.entries(step1Data).forEach(([key, value]) => {
+          if (key === "productCategories") {
+            formData.append(key, JSON.stringify(value));
+          } else {
+            formData.append(key, String(value));
+          }
+        });
+
+        // Add files to FormData
+        Object.entries(uploadedFiles).forEach(([fieldName, file]) => {
+          formData.append(fieldName, file);
+        });
+
+        await updateArtist(formData).unwrap();
+      } else {
+        await updateArtist(step1Data).unwrap();
+      }
+
+      toast.success("Step 1 data saved successfully!");
+      refetch();
+      return true;
+    } catch (err: any) {
+      console.error("Failed to save Step 1 data:", err);
+      toast.error(err?.data?.message || "Failed to save Step 1 data");
+      return false;
+    }
+  };
+
+  const saveStep2Data = async (): Promise<boolean> => {
+    try {
+      if (!validateStep(2)) {
+        return false;
+      }
+
+      // Save business address
+      try {
+        await updateBusinessAddress(profileData.businessAddress).unwrap();
+        toast.success("Business address saved!");
+      } catch (err: any) {
+        console.error("Failed to save business address:", err);
+        toast.error("Failed to save business address");
+        return false;
+      }
+
+      // Save warehouse address
+      try {
+        await updateWarehouseAddress(profileData.warehouseAddress).unwrap();
+        toast.success("Warehouse address saved!");
+      } catch (err: any) {
+        console.error("Failed to save warehouse address:", err);
+        toast.error("Failed to save warehouse address");
+        return false;
+      }
+
+      // Save banking and tax details
+      const bankingData = {
+        bankAccountName: profileData.bankAccountName,
+        bankName: profileData.bankName,
+        accountNumber: profileData.accountNumber,
+        ifscCode: profileData.ifscCode,
+        upiId: profileData.upiId,
+        gstNumber: profileData.gstNumber,
+        panNumber: profileData.panNumber,
+      };
+
+      try {
+        await updateArtist(bankingData).unwrap();
+        toast.success("Banking details saved!");
+      } catch (err: any) {
+        console.error("Failed to save banking details:", err);
+        toast.error("Failed to save banking details");
+        return false;
+      }
+
+      toast.success("Step 2 data saved successfully!");
+      refetch();
+      return true;
+    } catch (err: any) {
+      console.error("Failed to save Step 2 data:", err);
+      toast.error("Failed to save Step 2 data");
+      return false;
+    }
+  };
+
+  const saveStep3Data = async (): Promise<boolean> => {
+    try {
+      if (!validateStep(3)) {
+        return false;
+      }
+
+      // Save social links
+      try {
+        await updateSocialLinks(profileData.socialLinks).unwrap();
+        toast.success("Social links saved!");
+      } catch (err: any) {
+        console.error("Failed to save social links:", err);
+        toast.error("Failed to save social links");
+        return false;
+      }
+
+      // Save preferences and logistics data
+      const preferencesData = {
+        shippingType: profileData.shippingType,
+        inventoryVolume: profileData.inventoryVolume,
+        supportContact: profileData.supportContact,
+        workingHours: profileData.workingHours,
+        serviceAreas: profileData.serviceAreas,
+        returnPolicy: profileData.returnPolicy,
+        termsAgreed: profileData.termsAgreed,
+      };
+
+      try {
+        await updateArtist(preferencesData).unwrap();
+        toast.success("Preferences saved!");
+      } catch (err: any) {
+        console.error("Failed to save preferences:", err);
+        toast.error("Failed to save preferences");
+        return false;
+      }
+
+      toast.success("Step 3 data saved successfully!");
+      refetch();
+      return true;
+    } catch (err: any) {
+      console.error("Failed to save Step 3 data:", err);
+      toast.error("Failed to save Step 3 data");
+      return false;
+    }
+  };
+
+  const nextStep = async () => {
+    if (validateStep(step)) {
+      // Save current step data before proceeding
+      let saveSuccess = true;
+
+      if (step === 1) {
+        saveSuccess = await saveStep1Data();
+      } else if (step === 2) {
+        saveSuccess = await saveStep2Data();
+      } else if (step === 3) {
+        saveSuccess = await saveStep3Data();
+      }
+
+      if (saveSuccess && step < 4) {
+        setStep(step + 1);
+        setTimeout(() => scrollToTop(), 100);
+        toast.success(`Step ${step} completed successfully`);
+      }
     }
   };
 
@@ -458,6 +843,9 @@ export default function MakeProfile() {
             updateData={updateProfileData}
             addToArray={addToArray}
             removeFromArray={removeFromArray}
+            setUploadedFiles={setUploadedFiles}
+            onSave={saveStep1Data}
+            isLoading={isUpdating}
           />
         )}
         {step === 2 && (
@@ -465,6 +853,12 @@ export default function MakeProfile() {
             data={profileData}
             updateData={updateProfileData}
             updateNestedField={updateNestedField}
+            onSave={saveStep2Data}
+            isLoading={
+              isUpdatingBusinessAddress ||
+              isUpdatingWarehouseAddress ||
+              isUpdating
+            }
           />
         )}
         {step === 3 && (
@@ -474,6 +868,8 @@ export default function MakeProfile() {
             updateNestedField={updateNestedField}
             addToArray={addToArray}
             removeFromArray={removeFromArray}
+            onSave={saveStep3Data}
+            isLoading={isUpdatingSocialLinks || isUpdating}
           />
         )}
         {step === 4 && <Step4Summary data={profileData} />}

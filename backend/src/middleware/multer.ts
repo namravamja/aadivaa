@@ -1,22 +1,23 @@
-// backend/middleware/multer.ts
 import multer from "multer";
 import { CloudinaryStorage } from "multer-storage-cloudinary";
 import cloudinary from "../utils/cloudinary";
 
+// 🔹 Shared Cloudinary config
 const storage = new CloudinaryStorage({
   cloudinary,
   params: async (req, file) => {
+    const fileField = file.fieldname; // avatar, businessLogo, etc.
     return {
-      folder: "aadivaa", // Organize by user type
+      folder: `aadivaa/artist`, // Organize in artist folder
       resource_type: "image",
       allowed_formats: ["jpg", "jpeg", "png"],
       transformation: [{ width: 800, height: 800, crop: "limit" }],
-      public_id: `buyer-${Date.now()}`, // Unique filename
+      public_id: `${fileField}-${Date.now()}`, // Unique per field
     };
   },
 });
 
-// File filter for validation
+// 🔹 File filter (optional: improves UX by rejecting invalid files)
 const fileFilter = (
   req: any,
   file: Express.Multer.File,
@@ -29,12 +30,20 @@ const fileFilter = (
   }
 };
 
-const upload = multer({
+// 🔹 Single file uploader (for Buyer etc.)
+export const uploadSingle = multer({
   storage,
   fileFilter,
-  limits: {
-    fileSize: 5 * 1024 * 1024, // 5MB limit
-  },
+  limits: { fileSize: 5 * 1024 * 1024 },
 });
 
-export default upload;
+// 🔹 Multi-field uploader (for Artist)
+export const uploadArtistImages = multer({
+  storage,
+  fileFilter,
+  limits: { fileSize: 5 * 1024 * 1024 },
+}).fields([
+  { name: "avatar", maxCount: 1 },
+  { name: "businessLogo", maxCount: 1 },
+  { name: "digitalSignature", maxCount: 1 },
+]);

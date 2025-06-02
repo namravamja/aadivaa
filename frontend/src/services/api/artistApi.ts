@@ -21,17 +21,17 @@ export const artistApi = ArtistApi.injectEndpoints({
       query: () => "/view",
     }),
 
-    // Update artist info from token
+    // Update artist main info from token
     updateartist: builder.mutation({
       query: (updatedData) => {
-        // Check if updatedData contains a file (avatar)
+        // Check if updatedData is FormData (contains files)
         if (updatedData instanceof FormData) {
-          // If it's FormData (contains file), send as multipart/form-data
           return {
             url: "/update",
             method: "PUT",
             body: updatedData,
-            // Don't set Content-Type header, let the browser set it for FormData
+            // Don't set Content-Type header, let the browser set it for FormData with boundary
+            formData: true, // This is a hint for RTK Query
           };
         } else {
           // If it's regular JSON data, send as JSON
@@ -42,6 +42,55 @@ export const artistApi = ArtistApi.injectEndpoints({
           };
         }
       },
+    }),
+
+    // Update business address
+    updateBusinessAddress: builder.mutation({
+      query: (addressData) => ({
+        url: "/update/business-address",
+        method: "PUT",
+        body: addressData,
+      }),
+    }),
+
+    // Update warehouse address
+    updateWarehouseAddress: builder.mutation({
+      query: (addressData) => ({
+        url: "/update/warehouse-address",
+        method: "PUT",
+        body: addressData,
+      }),
+    }),
+
+    // Update documents (handles file uploads)
+    updateDocuments: builder.mutation({
+      query: (documentsData) => {
+        // Check if documentsData is FormData (contains files)
+        if (documentsData instanceof FormData) {
+          return {
+            url: "/update/documents",
+            method: "PUT",
+            body: documentsData,
+            formData: true,
+          };
+        } else {
+          // If it's regular JSON data, send as JSON
+          return {
+            url: "/update/documents",
+            method: "PUT",
+            body: documentsData,
+          };
+        }
+      },
+    }),
+
+    // Update social links
+    updateSocialLinks: builder.mutation({
+      query: (socialLinksData) => ({
+        url: "/update/social-links",
+        method: "PUT",
+        body: socialLinksData,
+      }),
     }),
 
     // Delete artist (based on token)
@@ -59,5 +108,9 @@ export const {
   useGetartistsQuery,
   useGetartistQuery,
   useUpdateartistMutation,
+  useUpdateBusinessAddressMutation,
+  useUpdateWarehouseAddressMutation,
+  useUpdateDocumentsMutation,
+  useUpdateSocialLinksMutation,
   useDeleteartistMutation,
 } = artistApi;
