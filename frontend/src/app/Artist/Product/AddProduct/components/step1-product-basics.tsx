@@ -60,18 +60,6 @@ export default function Step1ProductBasics({
 
         <div>
           <label className="block text-sm font-medium text-stone-700 mb-2">
-            Brand (if applicable)
-          </label>
-          <input
-            type="text"
-            value={productData.brand}
-            onChange={(e) => handleInputChange("brand", e.target.value)}
-            className="w-full px-4 py-3 border border-stone-300 rounded-md focus:border-sage-500 focus:outline-none focus:ring-1 focus:ring-sage-500"
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-stone-700 mb-2">
             Short Description <span className="text-red-500">*</span>
           </label>
           <textarea
@@ -86,44 +74,6 @@ export default function Step1ProductBasics({
           <p className="mt-1 text-xs text-stone-500">
             Brief description of your product (100-150 characters recommended)
           </p>
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-stone-700 mb-2">
-            Product Type <span className="text-red-500">*</span>
-          </label>
-          <div className="flex flex-col sm:flex-row gap-4">
-            <label className="inline-flex items-center">
-              <input
-                type="radio"
-                name="productType"
-                value="Physical"
-                checked={productData.productType === "Physical"}
-                onChange={(e) =>
-                  handleInputChange("productType", e.target.value)
-                }
-                className="h-4 w-4 text-sage-600 focus:ring-sage-500 border-stone-300"
-              />
-              <span className="ml-2 text-sm text-stone-700">
-                Physical Product
-              </span>
-            </label>
-            <label className="inline-flex items-center">
-              <input
-                type="radio"
-                name="productType"
-                value="Digital"
-                checked={productData.productType === "Digital"}
-                onChange={(e) =>
-                  handleInputChange("productType", e.target.value)
-                }
-                className="h-4 w-4 text-sage-600 focus:ring-sage-500 border-stone-300"
-              />
-              <span className="ml-2 text-sm text-stone-700">
-                Digital Product
-              </span>
-            </label>
-          </div>
         </div>
       </div>
     </div>

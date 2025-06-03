@@ -44,20 +44,6 @@ export default function Step4Summary({ productData }: Step4Props) {
                 {productData.productName || "Product Name"}
               </h3>
 
-              <div className="flex items-center mb-3">
-                <span className="text-sm text-stone-500 mr-3">
-                  {productData.category || "Category"}
-                </span>
-                {productData.brand && (
-                  <>
-                    <span className="text-stone-300 mx-2">|</span>
-                    <span className="text-sm text-stone-500">
-                      {productData.brand}
-                    </span>
-                  </>
-                )}
-              </div>
-
               <div className="flex items-baseline mb-4">
                 <span className="text-xl font-bold text-sage-700 mr-2">
                   ₹{productData.sellingPrice || "0.00"}
@@ -86,12 +72,6 @@ export default function Step4Summary({ productData }: Step4Props) {
 
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>
-                  <span className="text-stone-500">Product Type:</span>
-                  <span className="ml-2 text-stone-700">
-                    {productData.productType || "Not specified"}
-                  </span>
-                </div>
-                <div>
                   <span className="text-stone-500">SKU:</span>
                   <span className="ml-2 text-stone-700">
                     {productData.skuCode || "Not specified"}
@@ -103,14 +83,7 @@ export default function Step4Summary({ productData }: Step4Props) {
                     {productData.availableStock || "0"} units
                   </span>
                 </div>
-                <div>
-                  <span className="text-stone-500">Shipping:</span>
-                  <span className="ml-2 text-stone-700">
-                    {productData.freeShipping
-                      ? "Free"
-                      : `₹${productData.shippingCost || "0.00"}`}
-                  </span>
-                </div>
+
                 <div>
                   <span className="text-stone-500">Delivery:</span>
                   <span className="ml-2 text-stone-700">

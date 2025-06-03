@@ -9,21 +9,22 @@ import Step4Summary from "./components/step4-summary";
 
 // Define the product data type
 export interface ProductData {
-  // Step 1: Product Basics
+  id: string;
+  // Basic Info
   productName: string;
   category: string;
-  brand: string;
   shortDescription: string;
-  productType: string;
 
-  // Step 2: Price & Inventory
+  // Pricing & Inventory
   sellingPrice: string;
   mrp: string;
   availableStock: string;
   skuCode: string;
 
-  // Step 3: Images & Shipping
+  // Images & Media
   productImages: string[];
+
+  // Shipping Details
   weight: string;
   dimensions: {
     length: string;
@@ -31,19 +32,24 @@ export interface ProductData {
     height: string;
   };
   shippingCost: string;
-  freeShipping: boolean;
   deliveryTimeEstimate: string;
+
+  createdAt: string;
+  updatedAt: string;
 }
 
 export default function AddProduct() {
   const [step, setStep] = useState(1);
   const [productData, setProductData] = useState<ProductData>({
+    // Required fields
+    id: "",
+    createdAt: "",
+    updatedAt: "",
+
     // Step 1: Product Basics
     productName: "",
     category: "",
-    brand: "",
     shortDescription: "",
-    productType: "Physical",
 
     // Step 2: Price & Inventory
     sellingPrice: "",
@@ -60,7 +66,6 @@ export default function AddProduct() {
       height: "",
     },
     shippingCost: "",
-    freeShipping: false,
     deliveryTimeEstimate: "",
   });
 

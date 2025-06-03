@@ -5,10 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import {
   Plus,
-  Search,
   Filter,
-  Edit,
-  Trash2,
   Eye,
   Package,
   Grid,
@@ -25,9 +22,6 @@ const mockProducts = [
     price: 45.99,
     image: "/placeholder.svg?height=80&width=80",
     category: "Jewelry",
-    status: "active",
-    stock: 12,
-    sales: 45,
     createdAt: "2023-04-15",
   },
   {
@@ -36,9 +30,6 @@ const mockProducts = [
     price: 65.0,
     image: "/placeholder.svg?height=80&width=80",
     category: "Pottery",
-    status: "active",
-    stock: 8,
-    sales: 32,
     createdAt: "2023-04-10",
   },
   {
@@ -47,9 +38,6 @@ const mockProducts = [
     price: 75.0,
     image: "/placeholder.svg?height=80&width=80",
     category: "Home Decor",
-    status: "draft",
-    stock: 5,
-    sales: 18,
     createdAt: "2023-04-08",
   },
   {
@@ -58,9 +46,6 @@ const mockProducts = [
     price: 120.0,
     image: "/placeholder.svg?height=80&width=80",
     category: "Jewelry",
-    status: "active",
-    stock: 15,
-    sales: 28,
     createdAt: "2023-04-05",
   },
   {
@@ -69,9 +54,6 @@ const mockProducts = [
     price: 89.99,
     image: "/placeholder.svg?height=80&width=80",
     category: "Textiles",
-    status: "active",
-    stock: 20,
-    sales: 67,
     createdAt: "2023-04-12",
   },
   {
@@ -80,51 +62,22 @@ const mockProducts = [
     price: 55.0,
     image: "/placeholder.svg?height=80&width=80",
     category: "Accessories",
-    status: "archived",
-    stock: 0,
-    sales: 15,
     createdAt: "2023-03-28",
   },
 ];
 
 export default function ArtistProducts() {
   const [products, setProducts] = useState(mockProducts);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [filterStatus, setFilterStatus] = useState("all");
   const [filterCategory, setFilterCategory] = useState("all");
   const [viewMode, setViewMode] = useState<"table" | "grid">("table");
   const [showMobileFilters, setShowMobileFilters] = useState(false);
 
-  // Filter products based on search and filters
+  // Filter products based on category filter
   const filteredProducts = products.filter((product) => {
-    const matchesSearch = product.name
-      .toLowerCase()
-      .includes(searchTerm.toLowerCase());
-    const matchesStatus =
-      filterStatus === "all" || product.status === filterStatus;
     const matchesCategory =
       filterCategory === "all" || product.category === filterCategory;
-    return matchesSearch && matchesStatus && matchesCategory;
+    return matchesCategory;
   });
-
-  const handleDeleteProduct = (productId: string) => {
-    if (confirm("Are you sure you want to delete this product?")) {
-      setProducts(products.filter((p) => p.id !== productId));
-    }
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "active":
-        return "bg-sage-100 text-sage-800";
-      case "draft":
-        return "bg-clay-100 text-clay-800";
-      case "archived":
-        return "bg-stone-100 text-stone-800";
-      default:
-        return "bg-stone-100 text-stone-800";
-    }
-  };
 
   const categories = [
     "all",
@@ -134,7 +87,6 @@ export default function ArtistProducts() {
     "Textiles",
     "Accessories",
   ];
-  const statuses = ["all", "active", "draft", "archived"];
 
   return (
     <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8 max-w-7xl">
@@ -165,7 +117,7 @@ export default function ArtistProducts() {
         >
           <span className="flex items-center">
             <SlidersHorizontal className="w-4 h-4 mr-2" />
-            Filters & Search
+            Filters
           </span>
           <span className="flex items-center text-sm text-stone-500">
             {filteredProducts.length} products
@@ -186,21 +138,9 @@ export default function ArtistProducts() {
       >
         <div className="p-5 sm:p-6">
           <div className="flex flex-col lg:flex-row gap-4">
-            <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {/* Search */}
-              <div className="relative sm:col-span-2 lg:col-span-1">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-stone-400 w-4 h-4" />
-                <input
-                  type="text"
-                  placeholder="Search products..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2.5 border border-stone-300 rounded-md focus:border-terracotta-500 focus:outline-none focus:ring-1 focus:ring-terracotta-500 text-sm"
-                />
-              </div>
-
+            <div className="flex-1">
               {/* Category Filter */}
-              <div>
+              <div className="max-w-xs">
                 <select
                   value={filterCategory}
                   onChange={(e) => setFilterCategory(e.target.value)}
@@ -209,23 +149,6 @@ export default function ArtistProducts() {
                   {categories.map((category) => (
                     <option key={category} value={category}>
                       {category === "all" ? "All Categories" : category}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Status Filter */}
-              <div>
-                <select
-                  value={filterStatus}
-                  onChange={(e) => setFilterStatus(e.target.value)}
-                  className="w-full px-3 py-2.5 border border-stone-300 rounded-md focus:border-terracotta-500 focus:outline-none focus:ring-1 focus:ring-terracotta-500 text-sm appearance-none bg-white bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20fill%3D%22none%22%20viewBox%3D%220%200%2020%2020%22%3E%3Cpath%20stroke%3D%22%236b7280%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%20d%3D%22m6%208%204%204%204-4%22%2F%3E%3C%2Fsvg%3E')] bg-[length:1.25rem_1.25rem] bg-no-repeat bg-[right_0.5rem_center] pr-10"
-                >
-                  {statuses.map((status) => (
-                    <option key={status} value={status}>
-                      {status === "all"
-                        ? "All Statuses"
-                        : status.charAt(0).toUpperCase() + status.slice(1)}
                     </option>
                   ))}
                 </select>
@@ -289,15 +212,6 @@ export default function ArtistProducts() {
                   fill
                   className="object-cover"
                 />
-                <div className="absolute top-3 right-3">
-                  <span
-                    className={`px-2.5 py-1 text-xs rounded-full ${getStatusColor(
-                      product.status
-                    )}`}
-                  >
-                    {product.status}
-                  </span>
-                </div>
               </div>
               <div className="p-4 sm:p-5">
                 <h3 className="font-medium text-stone-900 mb-1 truncate">
@@ -306,45 +220,17 @@ export default function ArtistProducts() {
                 <p className="text-sm text-stone-500 mb-3">
                   {product.category}
                 </p>
-                <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center justify-between">
                   <span className="text-lg font-bold text-terracotta-700">
                     ${product.price.toFixed(2)}
                   </span>
-                  <span
-                    className={`text-sm ${
-                      product.stock < 10 ? "text-red-600" : "text-stone-600"
-                    }`}
+                  <Link
+                    href={`/Artist/Product/${product.id}`}
+                    className="text-stone-400 hover:text-stone-600 transition-colors"
+                    title="View"
                   >
-                    Stock: {product.stock}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-stone-500">
-                    {product.sales} sales
-                  </span>
-                  <div className="flex items-center space-x-3">
-                    <Link
-                      href={`/products/${product.id}`}
-                      className="text-stone-400 hover:text-stone-600 transition-colors"
-                      title="View"
-                    >
-                      <Eye className="w-4 h-4" />
-                    </Link>
-                    <Link
-                      href={`/Artist/products/${product.id}/edit`}
-                      className="text-stone-400 hover:text-terracotta-600 transition-colors"
-                      title="Edit"
-                    >
-                      <Edit className="w-4 h-4" />
-                    </Link>
-                    <button
-                      onClick={() => handleDeleteProduct(product.id)}
-                      className="text-stone-400 hover:text-red-600 transition-colors"
-                      title="Delete"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
+                    <Eye className="w-4 h-4" />
+                  </Link>
                 </div>
               </div>
             </div>
@@ -358,25 +244,16 @@ export default function ArtistProducts() {
             <table className="w-full">
               <thead className="bg-stone-50 border-b border-stone-200">
                 <tr>
-                  <th className="text-left py-3.5 px-5 xl:px-6 font-medium text-stone-900 text-sm">
+                  <th className="text-left py-3.5 px-5 xl:px-6 font-medium text-stone-900 text-sm w-1/2">
                     Product
                   </th>
-                  <th className="text-left py-3.5 px-5 xl:px-6 font-medium text-stone-900 text-sm">
+                  <th className="text-left py-3.5 px-5 xl:px-6 font-medium text-stone-900 text-sm w-1/4">
                     Category
                   </th>
-                  <th className="text-left py-3.5 px-5 xl:px-6 font-medium text-stone-900 text-sm">
+                  <th className="text-left py-3.5 px-5 xl:px-6 font-medium text-stone-900 text-sm w-1/6">
                     Price
                   </th>
-                  <th className="text-left py-3.5 px-5 xl:px-6 font-medium text-stone-900 text-sm">
-                    Stock
-                  </th>
-                  <th className="text-left py-3.5 px-5 xl:px-6 font-medium text-stone-900 text-sm">
-                    Sales
-                  </th>
-                  <th className="text-left py-3.5 px-5 xl:px-6 font-medium text-stone-900 text-sm">
-                    Status
-                  </th>
-                  <th className="text-left py-3.5 px-5 xl:px-6 font-medium text-stone-900 text-sm">
+                  <th className="text-center py-3.5 px-5 xl:px-6 font-medium text-stone-900 text-sm w-1/12">
                     Actions
                   </th>
                 </tr>
@@ -387,7 +264,7 @@ export default function ArtistProducts() {
                     key={product.id}
                     className="border-b border-stone-100 hover:bg-stone-50 transition-colors"
                   >
-                    <td className="py-4 px-5 xl:px-6">
+                    <td className="py-4 px-5 xl:px-6 w-1/2">
                       <div className="flex items-center">
                         <div className="relative w-12 h-12 xl:w-14 xl:h-14 mr-4 flex-shrink-0">
                           <Image
@@ -407,57 +284,20 @@ export default function ArtistProducts() {
                         </div>
                       </div>
                     </td>
-                    <td className="py-4 px-5 xl:px-6 text-stone-600 text-sm">
+                    <td className="py-4 px-5 xl:px-6 text-stone-600 text-sm w-1/4">
                       {product.category}
                     </td>
-                    <td className="py-4 px-5 xl:px-6 text-stone-900 font-medium text-sm">
+                    <td className="py-4 px-5 xl:px-6 text-stone-900 font-medium text-sm w-1/6">
                       ${product.price.toFixed(2)}
                     </td>
-                    <td className="py-4 px-5 xl:px-6">
-                      <span
-                        className={`text-sm ${
-                          product.stock < 10 ? "text-red-600" : "text-stone-600"
-                        }`}
+                    <td className="py-4 px-5 xl:px-6 text-center w-1/12">
+                      <Link
+                        href={`/Artist/Product/${product.id}`}
+                        className="inline-flex items-center justify-center text-blue-600 hover:text-blue-800 transition-colors"
+                        title="View"
                       >
-                        {product.stock}
-                      </span>
-                    </td>
-                    <td className="py-4 px-5 xl:px-6 text-stone-600 text-sm">
-                      {product.sales}
-                    </td>
-                    <td className="py-4 px-5 xl:px-6">
-                      <span
-                        className={`px-2.5 py-1 text-xs rounded-full ${getStatusColor(
-                          product.status
-                        )}`}
-                      >
-                        {product.status}
-                      </span>
-                    </td>
-                    <td className="py-4 px-5 xl:px-6">
-                      <div className="flex items-center space-x-3">
-                        <Link
-                          href={`/products/${product.id}`}
-                          className="text-blue-600 hover:text-blue-800 transition-colors"
-                          title="View"
-                        >
-                          <Eye className="w-5 h-5" />
-                        </Link>
-                        <Link
-                          href={`/Artist/products/${product.id}/edit`}
-                          className="text-yellow-600 hover:text-yellow-700 transition-colors"
-                          title="Edit"
-                        >
-                          <Edit className="w-5 h-5" />
-                        </Link>
-                        <button
-                          onClick={() => handleDeleteProduct(product.id)}
-                          className="text-red-600 hover:text-red-700 transition-colors"
-                          title="Delete"
-                        >
-                          <Trash2 className="w-5 h-5" />
-                        </button>
-                      </div>
+                        <Eye className="w-5 h-5" />
+                      </Link>
                     </td>
                   </tr>
                 ))}
@@ -492,71 +332,28 @@ export default function ArtistProducts() {
                             {product.category}
                           </p>
                         </div>
-                        <div className="ml-2 flex-shrink-0">
-                          <span
-                            className={`px-2.5 py-1 text-xs rounded-full ${getStatusColor(
-                              product.status
-                            )}`}
-                          >
-                            {product.status}
-                          </span>
-                        </div>
                       </div>
 
-                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4 text-xs sm:text-sm mb-3">
-                        <div>
-                          <span className="text-stone-500">Price:</span>
-                          <span className="ml-1 font-medium text-terracotta-700">
-                            ${product.price.toFixed(2)}
-                          </span>
-                        </div>
-                        <div>
-                          <span className="text-stone-500">Stock:</span>
-                          <span
-                            className={`ml-1 ${
-                              product.stock < 10
-                                ? "text-red-600"
-                                : "text-stone-600"
-                            }`}
-                          >
-                            {product.stock}
-                          </span>
-                        </div>
-                        <div>
-                          <span className="text-stone-500">Sales:</span>
-                          <span className="ml-1 text-stone-600">
-                            {product.sales}
-                          </span>
-                        </div>
+                      <div className="mb-3">
+                        <span className="text-stone-500 text-xs sm:text-sm">
+                          Price:
+                        </span>
+                        <span className="ml-1 font-medium text-terracotta-700 text-sm sm:text-base">
+                          ${product.price.toFixed(2)}
+                        </span>
                       </div>
 
                       <div className="flex items-center justify-between">
                         <div className="text-xs text-stone-500">
                           ID: {product.id}
                         </div>
-                        <div className="flex items-center space-x-4">
-                          <Link
-                            href={`/products/${product.id}`}
-                            className="text-blue-600 hover:text-blue-800 transition-colors"
-                            title="View"
-                          >
-                            <Eye className="w-5 h-5" />
-                          </Link>
-                          <Link
-                            href={`/Artist/products/${product.id}/edit`}
-                            className="text-yellow-600 hover:text-yellow-700 transition-colors"
-                            title="Edit"
-                          >
-                            <Edit className="w-5 h-5" />
-                          </Link>
-                          <button
-                            onClick={() => handleDeleteProduct(product.id)}
-                            className="text-red-600 hover:text-red-700 transition-colors"
-                            title="Delete"
-                          >
-                            <Trash2 className="w-5 h-5" />
-                          </button>
-                        </div>
+                        <Link
+                          href={`/Artist/Product/${product.id}`}
+                          className="text-blue-600 hover:text-blue-800 transition-colors"
+                          title="View"
+                        >
+                          <Eye className="w-5 h-5" />
+                        </Link>
                       </div>
                     </div>
                   </div>
@@ -578,8 +375,8 @@ export default function ArtistProducts() {
               No products found
             </h3>
             <p className="text-stone-600 mb-8 text-sm sm:text-base max-w-md mx-auto">
-              {searchTerm || filterStatus !== "all" || filterCategory !== "all"
-                ? "Try adjusting your search or filter criteria"
+              {filterCategory !== "all"
+                ? "Try adjusting your filter criteria"
                 : "Get started by adding your first product to the catalog"}
             </p>
             <Link
@@ -587,7 +384,7 @@ export default function ArtistProducts() {
               className="inline-flex items-center px-5 py-2.5 bg-terracotta-600 text-white rounded-md hover:bg-terracotta-700 transition-colors text-sm sm:text-base"
             >
               <Plus className="w-4 h-4 mr-2" />
-              {searchTerm || filterStatus !== "all" || filterCategory !== "all"
+              {filterCategory !== "all"
                 ? "Add Product"
                 : "Add Your First Product"}
             </Link>

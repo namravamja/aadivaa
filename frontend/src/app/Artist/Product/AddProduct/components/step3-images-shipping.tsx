@@ -217,42 +217,23 @@ export default function Step3ImagesShipping({
                 <label className="block text-sm font-medium text-stone-700">
                   Shipping Cost
                 </label>
-                <div className="flex items-center">
-                  <input
-                    type="checkbox"
-                    id="freeShipping"
-                    checked={productData.freeShipping}
-                    onChange={(e) =>
-                      handleInputChange("freeShipping", e.target.checked)
-                    }
-                    className="h-4 w-4 text-sage-600 focus:ring-sage-500 border-stone-300 rounded"
-                  />
-                  <label
-                    htmlFor="freeShipping"
-                    className="ml-2 text-sm text-stone-700"
-                  >
-                    Free Shipping
-                  </label>
-                </div>
               </div>
 
-              {!productData.freeShipping && (
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <span className="text-stone-500 sm:text-sm">₹</span>
-                  </div>
-                  <input
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    value={productData.shippingCost}
-                    onChange={(e) =>
-                      handleInputChange("shippingCost", e.target.value)
-                    }
-                    className="w-full pl-7 pr-4 py-3 border border-stone-300 rounded-md focus:border-sage-500 focus:outline-none focus:ring-1 focus:ring-sage-500"
-                  />
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <span className="text-stone-500 sm:text-sm">₹</span>
                 </div>
-              )}
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={productData.shippingCost}
+                  onChange={(e) =>
+                    handleInputChange("shippingCost", e.target.value)
+                  }
+                  className="w-full pl-7 pr-4 py-3 border border-stone-300 rounded-md focus:border-sage-500 focus:outline-none focus:ring-1 focus:ring-sage-500"
+                />
+              </div>
             </div>
 
             <div>

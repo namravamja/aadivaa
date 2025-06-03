@@ -61,7 +61,7 @@ model Artist {
   confirmPassword            String?
   businessType               String?
   businessRegistrationNumber String?
-  productCategories          String[] // Prisma supports array of strings
+  productCategories          String[]
   businessLogo               String?
 
   businessAddress   BusinessAddress? @relation(fields: [businessAddressId], references: [id])
@@ -102,6 +102,35 @@ model Artist {
   verifyToken           String?   @unique
   verifyExpires         DateTime?
   isVerified            Boolean   @default(false)
+
+  products Product[] // ✅ One-to-many relation to Product
+}
+
+model Product {
+  id               String @id @default(uuid())
+  productName      String
+  category         String
+  shortDescription String
+
+  sellingPrice   String
+  mrp            String
+  availableStock String
+  skuCode        String
+
+  productImages String[] // Array of image URLs
+
+  weight               String
+  length               String
+  width                String
+  height               String
+  shippingCost         String
+  deliveryTimeEstimate String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  artist   Artist @relation(fields: [artistId], references: [id])
+  artistId String
 }
 
 model BusinessAddress {
