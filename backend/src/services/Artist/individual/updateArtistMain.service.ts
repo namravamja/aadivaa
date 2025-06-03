@@ -81,7 +81,6 @@ export const updateArtistMain = async (id: string, data: any) => {
       termsAgreed: true,
       createdAt: true,
       updatedAt: true,
-      avatar: true,
       profileProgress: true,
     },
   });

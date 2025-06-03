@@ -32,7 +32,6 @@ export const getArtistById = async (id: string) => {
       termsAgreed: true,
       createdAt: true,
       updatedAt: true,
-      avatar: true,
       profileProgress: true,
       isAuthenticated: true,
       // Include the related data in the response

@@ -147,6 +147,34 @@ export default function Step2AddressBanking({
     }
   }, [data]);
 
+  // Add useEffect to sync warehouse address when sameAsBusiness changes
+  useEffect(() => {
+    if (data?.warehouseAddress?.sameAsBusiness && data?.businessAddress) {
+      // Copy business address to warehouse address
+      updateNestedField(
+        "warehouseAddress",
+        "street",
+        data.businessAddress.street
+      );
+      updateNestedField("warehouseAddress", "city", data.businessAddress.city);
+      updateNestedField(
+        "warehouseAddress",
+        "state",
+        data.businessAddress.state
+      );
+      updateNestedField(
+        "warehouseAddress",
+        "country",
+        data.businessAddress.country
+      );
+      updateNestedField(
+        "warehouseAddress",
+        "pinCode",
+        data.businessAddress.pinCode
+      );
+    }
+  }, [data?.warehouseAddress?.sameAsBusiness, data?.businessAddress]);
+
   const handleInputChange = (field: keyof ProfileData, value: any) => {
     updateData({ [field]: value });
   };
@@ -157,6 +185,14 @@ export default function Step2AddressBanking({
     value: any
   ) => {
     updateNestedField(parent, field, value);
+
+    // If business address is changed and warehouse is same as business, sync warehouse address
+    if (
+      parent === "businessAddress" &&
+      data?.warehouseAddress?.sameAsBusiness
+    ) {
+      updateNestedField("warehouseAddress", field, value);
+    }
   };
 
   const handleFileUpload = (inputId: string, file: File | null) => {
