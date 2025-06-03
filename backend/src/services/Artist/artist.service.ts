@@ -7,3 +7,9 @@ export { updateDocuments } from "./individual/updateDocuments.service";
 export { updateSocialLinks } from "./individual/updateSocialLinks.service";
 export { deleteArtist } from "./individual/deleteArtist.service";
 export { listArtists } from "./individual/listArtists.service";
+
+export { createProduct } from "./product/createProduct.service";
+export { getAllProducts } from "./product/getAllProducts.service";
+export { getProductById } from "./product/getProductById.service";
+export { getProductsByArtist } from "./product/getProductsByArtist.service";
+export { updateProduct } from "./product/updateProduct.service";

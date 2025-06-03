@@ -7,7 +7,7 @@ export const AuthApi = createApi({
       process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/auth",
     credentials: "include",
   }),
-  endpoints: () => ({}), // Empty base, split API elsewhere
+  endpoints: () => ({}),
 });
 
 export const BuyerApi = createApi({
@@ -16,7 +16,7 @@ export const BuyerApi = createApi({
     baseUrl: "http://localhost:5000/api/buyer",
     credentials: "include",
   }),
-  endpoints: () => ({}), // Empty base, split API elsewhere
+  endpoints: () => ({}),
 });
 
 export const ArtistApi = createApi({
@@ -26,5 +26,15 @@ export const ArtistApi = createApi({
       process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/artist",
     credentials: "include",
   }),
-  endpoints: () => ({}), // Empty base, split API elsewhere
+  endpoints: () => ({}),
+});
+
+export const ProductApi = createApi({
+  reducerPath: "api4",
+  baseQuery: fetchBaseQuery({
+    baseUrl:
+      process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/product",
+    credentials: "include",
+  }),
+  endpoints: () => ({}),
 });

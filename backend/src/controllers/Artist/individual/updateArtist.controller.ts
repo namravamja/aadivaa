@@ -49,9 +49,6 @@ export const updateArtist = async (
       [fieldname: string]: Express.Multer.File[];
     };
 
-    if (files?.avatar?.[0]) updateData.avatar = files.avatar[0].path;
-    if (files?.businessLogo?.[0])
-      updateData.businessLogo = files.businessLogo[0].path;
     if (files?.digitalSignature?.[0])
       updateData.digitalSignature = files.digitalSignature[0].path;
 

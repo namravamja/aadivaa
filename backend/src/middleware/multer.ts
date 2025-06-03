@@ -64,3 +64,9 @@ export const uploadDocuments = multer({
   { name: "businessLicense", maxCount: 1 },
   { name: "canceledCheque", maxCount: 1 },
 ]);
+
+export const uploadProductImages = multer({
+  storage,
+  fileFilter,
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
+}).array("productImages", 10);
