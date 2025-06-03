@@ -36,8 +36,8 @@ export const updateDocuments = async (
       }
     });
 
-    console.log("Documents data:", documentsData);
-    console.log("Files received:", files);
+    // console.log("Documents data:", documentsData);
+    // console.log("Files received:", files);
 
     const updatedDocuments = await artistService.updateDocuments(
       userId,

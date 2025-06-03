@@ -33,7 +33,7 @@ export default function LoginPage() {
         password: formData.password,
       }).unwrap();
 
-      console.log("Login successful:", result);
+      // console.log("Login successful:", result);
 
       if (result.token) {
         localStorage.setItem("authToken", result.token);

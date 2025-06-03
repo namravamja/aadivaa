@@ -28,14 +28,14 @@ export const updateDocuments = async (
       throw new Error("Artist not found");
     }
 
-    console.log("Artist found:", artist);
-    console.log("Documents data:", documentsData);
+    // console.log("Artist found:", artist);
+    // console.log("Documents data:", documentsData);
 
     let updatedDocuments;
 
     if (artist.documentsId) {
       // Update existing documents
-      console.log("Updating existing documents with ID:", artist.documentsId);
+      // console.log("Updating existing documents with ID:", artist.documentsId);
 
       updatedDocuments = await prisma.documents.update({
         where: { id: artist.documentsId },
@@ -45,7 +45,7 @@ export const updateDocuments = async (
       });
     } else {
       // Create new documents and link to artist
-      console.log("Creating new documents for artist:", artistId);
+      // console.log("Creating new documents for artist:", artistId);
 
       updatedDocuments = await prisma.documents.create({
         data: {
@@ -53,7 +53,7 @@ export const updateDocuments = async (
         },
       });
 
-      console.log("Created documents:", updatedDocuments);
+      // console.log("Created documents:", updatedDocuments);
 
       // Link the new documents to the artist
       await prisma.artist.update({
@@ -61,7 +61,7 @@ export const updateDocuments = async (
         data: { documentsId: updatedDocuments.id },
       });
 
-      console.log("Linked documents to artist");
+      // console.log("Linked documents to artist");
     }
 
     return updatedDocuments;

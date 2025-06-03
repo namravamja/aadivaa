@@ -91,11 +91,11 @@ export default function UserMenu({ isMobile = false, onClose }: UserMenuProps) {
   const isAuthenticated: boolean = !isError && !!buyerData && hasTriedAuth;
   const apiError = error as ApiError | undefined;
 
-  console.log("Auth status:", {
-    isAuthenticated,
-    hasTriedAuth,
-    errorStatus: apiError?.status,
-  });
+  // console.log("Auth status:", {
+  //   isAuthenticated,
+  //   hasTriedAuth,
+  //   errorStatus: apiError?.status,
+  // });
 
   // Extract user data from RTK query response
   const user: User | null =

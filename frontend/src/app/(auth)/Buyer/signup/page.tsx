@@ -29,7 +29,7 @@ export default function SignupPage() {
 
     try {
       const result = await signupBuyer(formData).unwrap();
-      console.log("Signup successful:", result);
+      // console.log("Signup successful:", result);
       router.push("/Buyer/login");
     } catch (err) {
       console.error("Signup failed:", err);

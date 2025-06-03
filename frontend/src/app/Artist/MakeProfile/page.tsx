@@ -91,7 +91,7 @@ export default function MakeProfile() {
     error: fetchError,
     refetch,
   } = useGetartistQuery(undefined);
-  console.log(artistData);
+  // console.log(artistData);
   const [updateArtist, { isLoading: isUpdating }] = useUpdateartistMutation();
   const [updateBusinessAddress, { isLoading: isUpdatingBusinessAddress }] =
     useUpdateBusinessAddressMutation();

@@ -246,15 +246,15 @@ export default function AccountDetails() {
 
   const handleSave = async () => {
     try {
-      console.log("=== SAVE PROCESS STARTED ===");
-      console.log("Has cropped image file:", !!croppedImageFile);
+      // console.log("=== SAVE PROCESS STARTED ===");
+      // console.log("Has cropped image file:", !!croppedImageFile);
 
       if (croppedImageFile) {
-        console.log("Cropped file details:", {
-          name: croppedImageFile.name,
-          type: croppedImageFile.type,
-          size: croppedImageFile.size,
-        });
+        // console.log("Cropped file details:", {
+        //   name: croppedImageFile.name,
+        //   type: croppedImageFile.type,
+        //   size: croppedImageFile.size,
+        // });
       }
 
       // Create FormData object for multipart/form-data submission
@@ -268,13 +268,13 @@ export default function AccountDetails() {
 
       // Add cropped image file if available
       if (croppedImageFile) {
-        console.log("Adding cropped image to FormData...");
+        // console.log("Adding cropped image to FormData...");
         formDataToSend.append(
           "avatar",
           croppedImageFile,
           croppedImageFile.name
         );
-        console.log("✓ Cropped image added to FormData");
+        // console.log("✓ Cropped image added to FormData");
       }
 
       // Handle date of birth
@@ -296,21 +296,7 @@ export default function AccountDetails() {
         }
       }
 
-      // Log all FormData entries for debugging
-      console.log("=== FORMDATA CONTENTS ===");
-      for (const [key, value] of formDataToSend.entries()) {
-        if (value instanceof File) {
-          console.log(
-            `${key}: File - ${value.name} (${value.type}, ${value.size} bytes)`
-          );
-        } else {
-          console.log(`${key}: ${value}`);
-        }
-      }
-
-      console.log("Sending update request...");
       const result = await updateBuyer(formDataToSend).unwrap();
-      console.log("✓ Update successful:", result);
 
       // Reset states
       setIsEditing(false);
@@ -407,9 +393,6 @@ export default function AccountDetails() {
       return;
     }
 
-    console.log("=== CROP PROCESS STARTED ===");
-    console.log("Crop dimensions:", completedCrop);
-
     try {
       // Get the cropped image as a File
       const croppedFile = await getCroppedImg(
@@ -417,12 +400,6 @@ export default function AccountDetails() {
         completedCrop,
         `cropped-${originalFile.name}`
       );
-
-      console.log("✓ Cropped file created:", {
-        name: croppedFile.name,
-        type: croppedFile.type,
-        size: croppedFile.size,
-      });
 
       // Set the cropped file
       setCroppedImageFile(croppedFile);
@@ -432,7 +409,6 @@ export default function AccountDetails() {
       setAvatarPreview(previewUrl);
       setShowCropper(false);
 
-      console.log("✓ Crop process completed successfully");
       toast.success("Image cropped successfully!");
     } catch (error) {
       console.error("=== CROP ERROR ===", error);

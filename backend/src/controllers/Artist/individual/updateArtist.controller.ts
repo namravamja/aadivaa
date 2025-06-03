@@ -55,8 +55,8 @@ export const updateArtist = async (
     if (files?.digitalSignature?.[0])
       updateData.digitalSignature = files.digitalSignature[0].path;
 
-    console.log("Update data:", updateData);
-    console.log("Files received:", files);
+    // console.log("Update data:", updateData);
+    // console.log("Files received:", files);
 
     const artist = await artistService.updateArtistMain(userId, updateData);
     res.json({
