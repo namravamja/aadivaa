@@ -30,9 +30,12 @@ export default function ArtistLoginPage() {
     data: artistData,
     isLoading: isArtistLoading,
     error: artistError,
+    refetch,
   } = useGetartistQuery(undefined, {
     skip: !shouldFetchArtist, // Skip the query until shouldFetchArtist is true
   });
+
+  // console.log(artistData);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = e.target;
@@ -70,7 +73,7 @@ export default function ArtistLoginPage() {
     } catch (err) {
       // Reset fetch trigger on login failure
       setShouldFetchArtist(false);
-      // Error is handled by RTK Query state, no need for console logging
+      // Error is handled by RTK Query state, no need for console logging`
     }
   };
 
@@ -78,14 +81,16 @@ export default function ArtistLoginPage() {
   useEffect(() => {
     if (isSuccess && data && shouldFetchArtist) {
       // Wait for artist data to load before making redirection decision
+      refetch();
       if (artistData && !isArtistLoading) {
         const profileProgress = artistData.profileProgress || 0; // Default to 0 if undefined
         const isAuthenticated = artistData.isAuthenticated || false; // Default to false if undefined
-
-        if (isAuthenticated && profileProgress < 30) {
+        // console.log(profileProgress);
+        // console.log(isAuthenticated);
+        if (isAuthenticated && profileProgress < 50) {
           // Redirect to profile creation if user is authenticated but profile is incomplete
           router.push("/Artist/MakeProfile");
-        } else if (isAuthenticated && profileProgress >= 30) {
+        } else if (isAuthenticated && profileProgress >= 50) {
           // Redirect to dashboard if user is authenticated and profile is complete
           router.push("/Artist");
         }

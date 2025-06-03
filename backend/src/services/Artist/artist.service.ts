@@ -118,6 +118,7 @@ export const getArtistById = async (id: string) => {
       updatedAt: true,
       avatar: true,
       profileProgress: true,
+      isAuthenticated: true,
       // Include the related data in the response
       businessAddress: {
         select: {

@@ -16,6 +16,7 @@ import Step3PreferencesLogistics from "./components/step3-preferences-logistics"
 import Step4Summary from "./components/step4-summary";
 import ProfileProgress from "./components/ProfileProgress";
 import toast from "react-hot-toast";
+import { useRouter } from "next/navigation";
 
 // Define the complete profile data structure
 interface ProfileData {
@@ -81,6 +82,7 @@ export default function MakeProfile() {
   const formRef = useRef<HTMLDivElement>(null);
   // Store uploaded files separately
   const [uploadedFiles, setUploadedFiles] = useState<Record<string, File>>({});
+  const router = useRouter();
 
   // RTK Query hooks - add the individual mutation hooks
   const {
@@ -623,6 +625,7 @@ export default function MakeProfile() {
       toast.success("Profile submitted successfully!");
       // Optionally redirect or refresh data
       refetch();
+      router.push("/Artist/Profile");
     } catch (err: any) {
       console.error("Failed to submit profile:", err);
 
