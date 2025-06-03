@@ -91,7 +91,7 @@ export default function ProfilePage() {
             <div className="flex space-x-3 w-full sm:w-auto">
               <button
                 onClick={handleEditProfile}
-                className="bg-terracotta-500 hover:bg-terracotta-600 text-white px-4 py-2 font-medium transition-colors flex items-center justify-center w-full sm:w-auto"
+                className="bg-terracotta-500 hover:bg-terracotta-600 text-white px-4 py-2 font-medium transition-colors flex items-center justify-center w-full sm:w-auto cursor-pointer"
               >
                 <Edit className="w-4 h-4 mr-2" />
                 Edit Profile

@@ -41,32 +41,40 @@ export default function BankingTaxInformation({
                 Account Holder Name *
               </label>
               <p className="text-stone-600 py-2">
-                {artistData.bankAccountName}
+                {artistData.bankAccountName || "not provided"}
               </p>
             </div>
             <div>
               <label className="block text-sm font-medium text-stone-700 mb-1">
                 Bank Name *
               </label>
-              <p className="text-stone-600 py-2">{artistData.bankName}</p>
+              <p className="text-stone-600 py-2">
+                {artistData.bankName || "not provided"}
+              </p>
             </div>
             <div>
               <label className="block text-sm font-medium text-stone-700 mb-1">
                 Account Number *
               </label>
-              <p className="text-stone-600 py-2">{artistData.accountNumber}</p>
+              <p className="text-stone-600 py-2">
+                {artistData.accountNumber || "not provided"}
+              </p>
             </div>
             <div>
               <label className="block text-sm font-medium text-stone-700 mb-1">
                 IFSC Code *
               </label>
-              <p className="text-stone-600 py-2">{artistData.ifscCode}</p>
+              <p className="text-stone-600 py-2">
+                {artistData.ifscCode || "not provided"}
+              </p>
             </div>
             <div>
               <label className="block text-sm font-medium text-stone-700 mb-1">
                 UPI ID
               </label>
-              <p className="text-stone-600 py-2">{artistData.upiId}</p>
+              <p className="text-stone-600 py-2">
+                {artistData.upiId || "not provided"}
+              </p>
             </div>
           </div>
 
@@ -80,13 +88,17 @@ export default function BankingTaxInformation({
               <label className="block text-sm font-medium text-stone-700 mb-1">
                 GST Number
               </label>
-              <p className="text-stone-600 py-2">{artistData.gstNumber}</p>
+              <p className="text-stone-600 py-2">
+                {artistData.gstNumber || "not provided"}
+              </p>
             </div>
             <div>
               <label className="block text-sm font-medium text-stone-700 mb-1">
                 PAN Number *
               </label>
-              <p className="text-stone-600 py-2">{artistData.panNumber}</p>
+              <p className="text-stone-600 py-2">
+                {artistData.panNumber || "not provided"}
+              </p>
             </div>
           </div>
         </div>

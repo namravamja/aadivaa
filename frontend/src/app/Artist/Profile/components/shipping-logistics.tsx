@@ -34,7 +34,9 @@ export default function ShippingLogistics({
               <Package className="w-4 h-4 mr-2" />
               Shipping Type *
             </label>
-            <p className="text-stone-600 py-2">{artistData.shippingType}</p>
+            <p className="text-stone-600 py-2">
+              {artistData.shippingType || "not provided"}
+            </p>
           </div>
           <div>
             <label className="text-sm font-medium text-stone-700 mb-1 flex items-center">
@@ -42,7 +44,7 @@ export default function ShippingLogistics({
               Inventory Volume *
             </label>
             <p className="text-stone-600 py-2">
-              {artistData.inventoryVolume} items
+              {artistData.inventoryVolume || "not provided"} items
             </p>
           </div>
           <div>
@@ -50,14 +52,18 @@ export default function ShippingLogistics({
               <Mail className="w-4 h-4 mr-2" />
               Support Contact *
             </label>
-            <p className="text-stone-600 py-2">{artistData.supportContact}</p>
+            <p className="text-stone-600 py-2">
+              {artistData.supportContact || "not provided"}
+            </p>
           </div>
           <div>
             <label className="text-sm font-medium text-stone-700 mb-1 flex items-center">
               <Clock className="w-4 h-4 mr-2" />
               Working Hours
             </label>
-            <p className="text-stone-600 py-2">{artistData.workingHours}</p>
+            <p className="text-stone-600 py-2">
+              {artistData.workingHours || "not provided"}
+            </p>
           </div>
         </div>
 
@@ -73,7 +79,7 @@ export default function ShippingLogistics({
                 key={index}
                 className="bg-sage-100 text-sage-700 px-3 py-1 rounded-full text-sm"
               >
-                {area}
+                {area || "not provided"}
               </span>
             ))}
           </div>
@@ -85,7 +91,9 @@ export default function ShippingLogistics({
             <Shield className="w-4 h-4 mr-2" />
             Return Policy
           </label>
-          <p className="text-stone-600">{artistData.returnPolicy}</p>
+          <p className="text-stone-600">
+            {artistData.returnPolicy || "not provided"}
+          </p>
         </div>
       </div>
     </div>

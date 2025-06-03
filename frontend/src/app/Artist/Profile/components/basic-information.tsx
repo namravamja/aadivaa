@@ -51,38 +51,48 @@ export default function BasicInformation({
               <label className="block text-sm font-medium text-stone-700 mb-1">
                 Full Name *
               </label>
-              <p className="text-stone-600 py-2">{artistData.fullName}</p>
+              <p className="text-stone-600 py-2">
+                {artistData.fullName || "not provided"}
+              </p>
             </div>
             <div>
               <label className="block text-sm font-medium text-stone-700 mb-1">
                 Store Name *
               </label>
-              <p className="text-stone-600 py-2">{artistData.storeName}</p>
+              <p className="text-stone-600 py-2">
+                {artistData.storeName || "not provided"}
+              </p>
             </div>
             <div>
               <label className="block text-sm font-medium text-stone-700 mb-1">
                 Email Address *
               </label>
-              <p className="text-stone-600 py-2">{artistData.email}</p>
+              <p className="text-stone-600 py-2">
+                {artistData.email || "not provided"}
+              </p>
             </div>
             <div>
               <label className="block text-sm font-medium text-stone-700 mb-1">
                 Mobile Number *
               </label>
-              <p className="text-stone-600 py-2">{artistData.mobile}</p>
+              <p className="text-stone-600 py-2">
+                {artistData.mobile || "not provided"}
+              </p>
             </div>
             <div>
               <label className="block text-sm font-medium text-stone-700 mb-1">
                 Business Type *
               </label>
-              <p className="text-stone-600 py-2">{artistData.businessType}</p>
+              <p className="text-stone-600 py-2">
+                {artistData.businessType || "not provided"}
+              </p>
             </div>
             <div>
               <label className="block text-sm font-medium text-stone-700 mb-1">
                 Registration Number
               </label>
               <p className="text-stone-600 py-2">
-                {artistData.businessRegistrationNumber}
+                {artistData.businessRegistrationNumber || "not provided"}
               </p>
             </div>
           </div>
@@ -99,7 +109,7 @@ export default function BasicInformation({
                 key={index}
                 className="bg-terracotta-100 text-terracotta-700 px-3 py-1 rounded-full text-sm"
               >
-                {category}
+                {category || "not provided"}
               </span>
             ))}
           </div>

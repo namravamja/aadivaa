@@ -37,7 +37,7 @@ export default function SocialMediaLinks({
               Website
             </label>
             <p className="text-stone-600 py-2">
-              {artistData?.socialLinks?.website || ""}
+              {artistData?.socialLinks?.website || "not provided"}
             </p>
           </div>
           <div>
@@ -46,7 +46,7 @@ export default function SocialMediaLinks({
               Instagram
             </label>
             <p className="text-stone-600 py-2">
-              {artistData?.socialLinks?.instagram || ""}
+              {artistData?.socialLinks?.instagram || "not provided"}
             </p>
           </div>
           <div>
@@ -55,7 +55,7 @@ export default function SocialMediaLinks({
               Facebook
             </label>
             <p className="text-stone-600 py-2">
-              {artistData?.socialLinks?.facebook || ""}
+              {artistData?.socialLinks?.facebook || "not provided"}
             </p>
           </div>
           <div>
@@ -64,7 +64,7 @@ export default function SocialMediaLinks({
               Twitter
             </label>
             <p className="text-stone-600 py-2">
-              {artistData?.socialLinks?.twitter || ""}
+              {artistData?.socialLinks?.twitter || "not provided"}
             </p>
           </div>
         </div>

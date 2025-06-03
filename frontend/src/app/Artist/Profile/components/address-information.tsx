@@ -42,8 +42,9 @@ export default function AddressInformation({
           <div className="text-stone-600 space-y-1">
             <p>{artistData.businessAddress.street}</p>
             <p>
-              {artistData.businessAddress.city},{" "}
-              {artistData.businessAddress.state}{" "}
+              {artistData.businessAddress.city},{"not provided"}
+              {artistData.businessAddress.state}
+              {"not provided"}
               {artistData.businessAddress.pinCode}
             </p>
             <p>{artistData.businessAddress.country}</p>
@@ -61,8 +62,9 @@ export default function AddressInformation({
             <div className="text-stone-600 space-y-1">
               <p>{artistData.warehouseAddress.street}</p>
               <p>
-                {artistData.warehouseAddress.city},{" "}
-                {artistData.warehouseAddress.state}{" "}
+                {artistData.warehouseAddress.city},{"not provided"}
+                {artistData.warehouseAddress.state}
+                {"not provided"}
                 {artistData.warehouseAddress.pinCode}
               </p>
               <p>{artistData.warehouseAddress.country}</p>
