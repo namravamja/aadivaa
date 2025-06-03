@@ -7,7 +7,6 @@ export interface ArtistUpdateData {
   businessAddress: any;
   id: string;
   fullName: string;
-  avatar?: string;
   profileProgress?: number;
   storeName?: string;
   email?: string;

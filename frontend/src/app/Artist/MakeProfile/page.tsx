@@ -1195,7 +1195,7 @@ export default function MakeProfile() {
           <button
             onClick={prevStep}
             disabled={step === 1}
-            className="px-6 py-2 border border-stone-300 text-stone-700 rounded-md hover:bg-stone-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed w-full sm:w-auto"
+            className="px-6 py-2 border border-stone-300 text-stone-700 rounded-md hover:bg-stone-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed w-full cursor-pointer sm:w-auto"
           >
             Previous
           </button>
@@ -1203,7 +1203,7 @@ export default function MakeProfile() {
           {step < 4 ? (
             <button
               onClick={nextStep}
-              className="px-6 py-2 bg-terracotta-600 text-white rounded-md hover:bg-terracotta-700 transition-colors w-full sm:w-auto"
+              className="px-6 py-2 bg-terracotta-600 text-white cursor-pointer rounded-md hover:bg-terracotta-700 transition-colors w-full sm:w-auto"
             >
               Next
             </button>
