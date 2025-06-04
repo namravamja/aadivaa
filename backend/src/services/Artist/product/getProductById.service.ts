@@ -6,7 +6,14 @@ export const getProductById = async (productId: string) => {
   const product = await prisma.product.findUnique({
     where: { id: productId },
     include: {
-      artist: true,
+      artist: {
+        select: {
+          id: true,
+          fullName: true,
+          email: true,
+          storeName: true,
+        },
+      },
     },
   });
 

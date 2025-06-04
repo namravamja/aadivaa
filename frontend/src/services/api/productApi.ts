@@ -64,6 +64,7 @@ export const productApi = ProductApi.injectEndpoints({
 export const {
   useCreateProductMutation,
   useUpdateProductMutation,
+  useGetProductByArtistQuery,
   useGetAllProductsQuery,
   useGetProductByIdQuery,
 } = productApi;

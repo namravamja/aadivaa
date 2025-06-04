@@ -8,6 +8,7 @@ import Step2PriceInventory from "./components/step2-price-inventory";
 import Step3ImagesShipping from "./components/step3-images-shipping";
 import Step4Summary from "./components/step4-summary";
 import { useCreateProductMutation } from "@/services/api/productApi";
+import { useRouter } from "next/navigation";
 
 export interface ProductData {
   id: string;
@@ -32,6 +33,8 @@ export interface ProductData {
 export default function AddProduct() {
   const [step, setStep] = useState(1);
   const [createProduct, { isLoading }] = useCreateProductMutation();
+
+  const router = useRouter();
   const [productData, setProductData] = useState<ProductData>({
     id: "",
     createdAt: "",
@@ -91,9 +94,11 @@ export default function AddProduct() {
       });
 
       const result = await createProduct(formData).unwrap();
-      console.log("Form data being sent:", formData);
+      // console.log("Form data being sent:", formData);
       toast.success("Product created successfully!");
-      console.log("Created Product:", result);
+
+      router.push("/Artist/Product");
+      // console.log("Created Product:", result);
     } catch (error: any) {
       console.error("Failed to create product:", error);
       toast.error(
