@@ -57,7 +57,7 @@ app.use("/api/buyer", buyerRoutes);
 app.use("/api/artist", artistRoutes);
 
 // Product routes
-app.use("/api/product", artistRoutes);
+app.use("/api", artistRoutes);
 
 // 404 and error handlers
 app.use(notFound);

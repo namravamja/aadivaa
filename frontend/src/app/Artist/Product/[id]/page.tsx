@@ -35,11 +35,9 @@ const mockProductDetails: ProductData = {
     "/Profile.jpg",
   ],
   weight: "0.15",
-  dimensions: {
-    length: "45",
-    width: "2",
-    height: "1",
-  },
+  length: "45",
+  width: "2",
+  height: "1",
   shippingCost: "5.99",
   deliveryTimeEstimate: "3-5 business days",
   createdAt: "2023-04-15",
@@ -100,23 +98,6 @@ function ProductPreview({ params }: Params) {
     setEditedProduct((prev) => ({
       ...prev!,
       [field]: value,
-    }));
-  };
-
-  const handleNestedInputChange = (
-    parent: keyof ProductData,
-    field: string,
-    value: any
-  ) => {
-    if (!editedProduct) return;
-    setEditedProduct((prev) => ({
-      ...prev!,
-      [parent]: {
-        ...(typeof prev?.[parent] === "object" && prev[parent] !== null
-          ? prev[parent]
-          : {}),
-        [field]: value,
-      } as any,
     }));
   };
 
@@ -234,7 +215,6 @@ function ProductPreview({ params }: Params) {
               editedProduct={editedProduct}
               isEditing={isEditing}
               handleInputChange={handleInputChange}
-              handleNestedInputChange={handleNestedInputChange}
             />
 
             {/* Activity Log */}

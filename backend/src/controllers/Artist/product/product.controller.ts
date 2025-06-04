@@ -74,3 +74,20 @@ export const getProductById = async (req: Request, res: Response) => {
     res.status(404).json({ error: (error as Error).message });
   }
 };
+
+// by artist
+export const getProductsByArtist = async (
+  req: AuthenticatedRequest,
+  res: Response
+) => {
+  try {
+    const artistId = req.user?.id;
+    if (!artistId) throw new Error("Unauthorized");
+
+    const products = await productService.getProductsByArtist(artistId);
+
+    res.status(200).json(products);
+  } catch (error) {
+    res.status(404).json({ error: (error as Error).message });
+  }
+};

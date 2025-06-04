@@ -43,6 +43,7 @@ router.put(
   productController.updateProduct
 );
 router.get("/product/list", productController.getAllProducts);
+router.get("/product/ArtistProduct", productController.getProductsByArtist);
 router.get("/product/:productId", productController.getProductById);
 
 export default router;

@@ -7,14 +7,14 @@ export const productApi = ProductApi.injectEndpoints({
       query: (productData) => {
         if (productData instanceof FormData) {
           return {
-            url: "/product/create",
+            url: "/create",
             method: "POST",
             body: productData,
             // No need to set headers – fetchBaseQuery will handle FormData automatically
           };
         } else {
           return {
-            url: "/product/create",
+            url: "/create",
             method: "POST",
             headers: {
               "Content-Type": "application/json",
@@ -30,14 +30,14 @@ export const productApi = ProductApi.injectEndpoints({
       query: ({ productId, updatedData }) => {
         if (updatedData instanceof FormData) {
           return {
-            url: `/product/update/${productId}`,
+            url: `/update/${productId}`,
             method: "PUT",
             body: updatedData,
             formData: true,
           };
         } else {
           return {
-            url: `/product/update/${productId}`,
+            url: `/update/${productId}`,
             method: "PUT",
             body: updatedData,
           };
@@ -45,14 +45,18 @@ export const productApi = ProductApi.injectEndpoints({
       },
     }),
 
+    getProductByArtist: builder.query({
+      query: () => "/ArtistProduct",
+    }),
+
     // Get all products
     getAllProducts: builder.query({
-      query: () => "/product/list",
+      query: () => "/list",
     }),
 
     // Get product by ID
     getProductById: builder.query({
-      query: (productId) => `/product/${productId}`,
+      query: (productId) => `/${productId}`,
     }),
   }),
 });

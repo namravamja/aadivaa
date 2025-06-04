@@ -7,11 +7,6 @@ interface ShippingInformationProps {
   editedProduct: ProductData;
   isEditing: boolean;
   handleInputChange: (field: string, value: any) => void;
-  handleNestedInputChange: (
-    parent: keyof ProductData,
-    field: string,
-    value: any
-  ) => void;
 }
 
 const ShippingInformation: React.FC<ShippingInformationProps> = ({
@@ -19,7 +14,6 @@ const ShippingInformation: React.FC<ShippingInformationProps> = ({
   editedProduct,
   isEditing,
   handleInputChange,
-  handleNestedInputChange,
 }) => {
   return (
     <div className="bg-white shadow-sm border border-gray-200 p-4 sm:p-6">
@@ -51,14 +45,8 @@ const ShippingInformation: React.FC<ShippingInformationProps> = ({
                 type="number"
                 min="0"
                 step="0.1"
-                value={editedProduct.dimensions.length}
-                onChange={(e) =>
-                  handleNestedInputChange(
-                    "dimensions",
-                    "length",
-                    e.target.value
-                  )
-                }
+                value={editedProduct.length}
+                onChange={(e) => handleInputChange("length", e.target.value)}
                 className="w-full px-3 py-3 border border-gray-300 focus:border-terracotta-500 focus:outline-none focus:ring-1 focus:ring-terracotta-500"
                 placeholder="L"
               />
@@ -66,10 +54,8 @@ const ShippingInformation: React.FC<ShippingInformationProps> = ({
                 type="number"
                 min="0"
                 step="0.1"
-                value={editedProduct.dimensions.width}
-                onChange={(e) =>
-                  handleNestedInputChange("dimensions", "width", e.target.value)
-                }
+                value={editedProduct.width}
+                onChange={(e) => handleInputChange("width", e.target.value)}
                 className="w-full px-3 py-3 border border-gray-300 focus:border-terracotta-500 focus:outline-none focus:ring-1 focus:ring-terracotta-500"
                 placeholder="W"
               />
@@ -77,14 +63,8 @@ const ShippingInformation: React.FC<ShippingInformationProps> = ({
                 type="number"
                 min="0"
                 step="0.1"
-                value={editedProduct.dimensions.height}
-                onChange={(e) =>
-                  handleNestedInputChange(
-                    "dimensions",
-                    "height",
-                    e.target.value
-                  )
-                }
+                value={editedProduct.height}
+                onChange={(e) => handleInputChange("height", e.target.value)}
                 className="w-full px-3 py-3 border border-gray-300 focus:border-terracotta-500 focus:outline-none focus:ring-1 focus:ring-terracotta-500"
                 placeholder="H"
               />
@@ -136,8 +116,7 @@ const ShippingInformation: React.FC<ShippingInformationProps> = ({
           <div className="flex justify-between items-center">
             <span className="text-gray-600">Dimensions</span>
             <span className="font-medium text-gray-900">
-              {product.dimensions.length} × {product.dimensions.width} ×{" "}
-              {product.dimensions.height} cm
+              {product.length} × {product.width} × {product.height} cm
             </span>
           </div>
           <div className="flex justify-between items-center">

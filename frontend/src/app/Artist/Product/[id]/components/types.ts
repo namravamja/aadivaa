@@ -16,11 +16,9 @@ export interface ProductData {
 
   // Shipping Details
   weight: string;
-  dimensions: {
-    length: string;
-    width: string;
-    height: string;
-  };
+  length: string;
+  width: string;
+  height: string;
   shippingCost: string;
   deliveryTimeEstimate: string;
 
