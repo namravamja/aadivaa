@@ -93,9 +93,8 @@ export default function Step4Summary({ productData }: Step4Props) {
                 <div>
                   <span className="text-stone-500">Dimensions:</span>
                   <span className="ml-2 text-stone-700">
-                    {productData.dimensions.length || "0"} ×{" "}
-                    {productData.dimensions.width || "0"} ×{" "}
-                    {productData.dimensions.height || "0"} cm
+                    {productData.length || "0"} × {productData.width || "0"} ×{" "}
+                    {productData.height || "0"} cm
                   </span>
                 </div>
               </div>

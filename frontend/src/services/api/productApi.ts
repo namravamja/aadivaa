@@ -10,13 +10,16 @@ export const productApi = ProductApi.injectEndpoints({
             url: "/product/create",
             method: "POST",
             body: productData,
-            formData: true,
+            // No need to set headers – fetchBaseQuery will handle FormData automatically
           };
         } else {
           return {
             url: "/product/create",
             method: "POST",
-            body: productData,
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(productData),
           };
         }
       },

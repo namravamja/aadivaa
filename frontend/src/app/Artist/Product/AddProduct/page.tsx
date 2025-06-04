@@ -2,69 +2,52 @@
 
 import { useState, useRef } from "react";
 import { Save, Check, Package, DollarSign, ImageIcon } from "lucide-react";
+import { toast } from "react-hot-toast";
 import Step1ProductBasics from "./components/step1-product-basics";
 import Step2PriceInventory from "./components/step2-price-inventory";
 import Step3ImagesShipping from "./components/step3-images-shipping";
 import Step4Summary from "./components/step4-summary";
+import { useCreateProductMutation } from "@/services/api/productApi";
 
-// Define the product data type
 export interface ProductData {
   id: string;
-  // Basic Info
   productName: string;
   category: string;
   shortDescription: string;
-
-  // Pricing & Inventory
   sellingPrice: string;
   mrp: string;
   availableStock: string;
   skuCode: string;
-
-  // Images & Media
   productImages: string[];
-
-  // Shipping Details
   weight: string;
-  dimensions: {
-    length: string;
-    width: string;
-    height: string;
-  };
+  length: string;
+  width: string;
+  height: string;
   shippingCost: string;
   deliveryTimeEstimate: string;
-
   createdAt: string;
   updatedAt: string;
 }
 
 export default function AddProduct() {
   const [step, setStep] = useState(1);
+  const [createProduct, { isLoading }] = useCreateProductMutation();
   const [productData, setProductData] = useState<ProductData>({
-    // Required fields
     id: "",
     createdAt: "",
     updatedAt: "",
-
-    // Step 1: Product Basics
     productName: "",
     category: "",
     shortDescription: "",
-
-    // Step 2: Price & Inventory
     sellingPrice: "",
     mrp: "",
     availableStock: "",
     skuCode: "",
-
-    // Step 3: Images & Shipping
     productImages: [],
     weight: "",
-    dimensions: {
-      length: "",
-      width: "",
-      height: "",
-    },
+    length: "",
+    width: "",
+    height: "",
     shippingCost: "",
     deliveryTimeEstimate: "",
   });
@@ -78,26 +61,45 @@ export default function AddProduct() {
     }));
   };
 
-  const handleNestedInputChange = (
-    parent: keyof ProductData,
-    field: string,
-    value: any
-  ) => {
-    setProductData((prev) => ({
-      ...prev,
-      [parent]: {
-        ...(typeof prev[parent] === "object" && prev[parent] !== null
-          ? prev[parent]
-          : {}),
-        [field]: value,
-      } as any,
-    }));
-  };
+  const handleSubmit = async () => {
+    try {
+      const formData = new FormData();
 
-  const handleSubmit = () => {
-    // In a real app, this would save to an API
-    console.log("Creating product:", productData);
-    alert("Product created successfully!");
+      // Convert base64 images back to File objects
+      for (let i = 0; i < productData.productImages.length; i++) {
+        const base64String = productData.productImages[i];
+
+        // Convert base64 to blob
+        const response = await fetch(base64String);
+        const blob = await response.blob();
+
+        // Create File object from blob
+        const file = new File([blob], `product-image-${i}.jpg`, {
+          type: "image/jpeg",
+        });
+
+        // Append to FormData with the key expected by multer
+        formData.append("productImages", file);
+      }
+
+      // Append other form fields (excluding productImages since we handled it above)
+      const { productImages, id, createdAt, updatedAt, ...otherData } =
+        productData;
+
+      Object.entries(otherData).forEach(([key, value]) => {
+        formData.append(key, value.toString());
+      });
+
+      const result = await createProduct(formData).unwrap();
+      console.log("Form data being sent:", formData);
+      toast.success("Product created successfully!");
+      console.log("Created Product:", result);
+    } catch (error: any) {
+      console.error("Failed to create product:", error);
+      toast.error(
+        error?.data?.message || "Something went wrong while creating product"
+      );
+    }
   };
 
   const scrollToTop = () => {
@@ -121,7 +123,6 @@ export default function AddProduct() {
     }
   };
 
-  // Step icons
   const stepIcons = [
     <Package key="1" className="w-4 h-4 sm:w-6 sm:h-6" />,
     <DollarSign key="2" className="w-4 h-4 sm:w-6 sm:h-6" />,
@@ -129,7 +130,6 @@ export default function AddProduct() {
     <Check key="4" className="w-4 h-4 sm:w-6 sm:h-6" />,
   ];
 
-  // Step titles
   const stepTitles = [
     "Product Basics",
     "Price & Inventory",
@@ -139,7 +139,6 @@ export default function AddProduct() {
 
   return (
     <div ref={formRef} className="container mx-auto px-4 sm:px-6 py-6 sm:py-8">
-      {/* Header */}
       <div className="mb-8">
         <h1 className="text-3xl font-light text-stone-900 mb-2">
           Add New Product
@@ -149,7 +148,6 @@ export default function AddProduct() {
         </p>
       </div>
 
-      {/* Step Indicators */}
       <div className="mb-6 sm:mb-10">
         <div className="flex justify-between items-center relative">
           {[1, 2, 3, 4].map((i) => (
@@ -184,8 +182,6 @@ export default function AddProduct() {
               </div>
             </div>
           ))}
-
-          {/* Progress Line */}
           <div className="absolute top-4 sm:top-6 left-0 right-0 h-0.5 bg-stone-200">
             <div
               className="h-full bg-sage-600 transition-all duration-300"
@@ -195,7 +191,6 @@ export default function AddProduct() {
         </div>
       </div>
 
-      {/* Step Content */}
       <div className="bg-white border border-stone-200 p-4 sm:p-6 md:p-8 shadow-sm rounded-md">
         {step === 1 && (
           <Step1ProductBasics
@@ -215,13 +210,11 @@ export default function AddProduct() {
           <Step3ImagesShipping
             productData={productData}
             handleInputChange={handleInputChange}
-            handleNestedInputChange={handleNestedInputChange}
           />
         )}
 
         {step === 4 && <Step4Summary productData={productData} />}
 
-        {/* Navigation Buttons */}
         <div className="flex flex-col sm:flex-row justify-between gap-3 sm:gap-0 mt-8 pt-6 border-t border-stone-200">
           <button
             onClick={prevStep}
@@ -241,10 +234,11 @@ export default function AddProduct() {
           ) : (
             <button
               onClick={handleSubmit}
-              className="px-6 py-2 bg-sage-700 text-white rounded-md hover:bg-sage-800 transition-colors flex items-center justify-center sm:justify-start w-full sm:w-auto"
+              disabled={isLoading}
+              className="px-6 py-2 bg-sage-700 text-white rounded-md hover:bg-sage-800 transition-colors flex items-center justify-center sm:justify-start w-full sm:w-auto disabled:opacity-50"
             >
               <Save className="w-4 h-4 mr-2" />
-              Publish Product
+              {isLoading ? "Publishing..." : "Publish Product"}
             </button>
           )}
         </div>

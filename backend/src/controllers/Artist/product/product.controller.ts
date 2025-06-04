@@ -1,19 +1,33 @@
 import { Request, Response } from "express";
 import * as productService from "../../../services/Artist/artist.service";
 
-// Create product
-export const createProduct = async (req: Request, res: Response) => {
-  try {
-    const files = req.files as Express.Multer.File[];
+export interface AuthenticatedRequest extends Request {
+  user?: { id: string; role: string };
+}
 
-    const imageUrls = files?.map((file) => file.path); // Cloudinary gives .path as secure_url
+// Create product
+export const createProduct = async (
+  req: AuthenticatedRequest,
+  res: Response
+) => {
+  try {
+    const artistId = req.user?.id;
+    if (!artistId) throw new Error("Unauthorized");
+
+    const files = req.files as Express.Multer.File[];
+    const imageUrls = files?.map((file) => file.path) || [];
+
     const productData = {
       ...req.body,
       productImages: imageUrls,
     };
 
-    const product = await productService.createProduct(productData);
-    res.status(201).json(product);
+    const product = await productService.createProduct(artistId, productData);
+
+    res.status(201).json({
+      message: "Product created successfully",
+      product,
+    });
   } catch (error) {
     res.status(400).json({ error: (error as Error).message });
   }
