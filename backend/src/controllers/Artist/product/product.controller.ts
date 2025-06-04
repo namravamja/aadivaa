@@ -33,21 +33,42 @@ export const createProduct = async (
   }
 };
 
-export const updateProduct = async (req: Request, res: Response) => {
+export const updateProduct = async (
+  req: AuthenticatedRequest,
+  res: Response
+) => {
   try {
+    const artistId = req.user?.id;
+    if (!artistId) throw new Error("Unauthorized");
+
+    // console.log(artistId)
+
     const { productId } = req.params;
     const files = req.files as Express.Multer.File[];
 
+    // 1. Verify product exists and belongs to this artist
+    const existingProduct = await productService.getProductById(productId);
+
+    if (!existingProduct) throw new Error("Product not found");
+    if (existingProduct.artistId !== artistId)
+      throw new Error("Not authorized to update this product");
+
+    // 2. Map uploaded files to image URLs (paths)
     const imageUrls = files?.map((file) => file.path);
+
+    // 3. Merge body with productImages if any
     const updatedData = {
       ...req.body,
       ...(imageUrls?.length ? { productImages: imageUrls } : {}),
     };
 
+    // 4. Update product with updatedData
     const updatedProduct = await productService.updateProduct(
       productId,
+      artistId,
       updatedData
     );
+
     res.status(200).json(updatedProduct);
   } catch (error) {
     res.status(400).json({ error: (error as Error).message });

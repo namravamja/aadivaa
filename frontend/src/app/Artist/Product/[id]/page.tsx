@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { use, useState, useEffect, useRef } from "react";
+import toast from "react-hot-toast";
 import { ProductData } from "./components/types";
 import ProductHeader from "./components/ProductHeader";
 import ProductInformation from "./components/ProductInformation";
@@ -10,136 +11,238 @@ import ProductImages from "./components/ProductImages";
 import ActivityLog from "./components/ActivityLog";
 import DeleteModal from "./components/DeleteModal";
 import { ArrowLeft, Package } from "lucide-react";
+import {
+  useGetProductByIdQuery,
+  useUpdateProductMutation,
+} from "@/services/api/productApi";
 
 interface Params {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
-// Mock product data
-const mockProductDetails: ProductData = {
-  id: "1",
-  productName: "Handcrafted Beaded Necklace with Turquoise Stones",
-  category: "Jewelry",
-  shortDescription:
-    "Beautiful handcrafted necklace featuring genuine turquoise stones and silver beads. Perfect for both casual and formal occasions.",
-  sellingPrice: "45.99",
-  mrp: "65.99",
-  availableStock: "12",
-  skuCode: "JWL-TRQ-001",
-  productImages: [
-    "/Profile.jpg",
-    "/Profile.jpg",
-    "/Profile.jpg",
-    "/Profile.jpg",
-  ],
-  weight: "0.15",
-  length: "45",
-  width: "2",
-  height: "1",
-  shippingCost: "5.99",
-  deliveryTimeEstimate: "3-5 business days",
-  createdAt: "2023-04-15",
-  updatedAt: "2023-12-10",
-};
-
-// Available categories
-const categories = [
-  "Electronics",
-  "Clothing",
-  "Home & Kitchen",
-  "Beauty & Personal Care",
-  "Books",
-  "Toys & Games",
-  "Sports & Outdoors",
-  "Health & Wellness",
-  "Jewelry",
-  "Handmade",
-  "other",
-];
+// Utility to detect if a string is an Object URL (created by URL.createObjectURL)
+function isObjectURL(url: string): boolean {
+  return url.startsWith("blob:");
+}
 
 function ProductPreview({ params }: Params) {
-  const [product, setProduct] = useState<ProductData | null>(null);
-  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
-  const [loading, setLoading] = useState(true);
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [isEditing, setIsEditing] = useState(false);
+  const { id } = use(params);
+
+  // Fetch product from API
+  const { data: product, isLoading, error } = useGetProductByIdQuery(id);
+
+  // Mutation to update product
+  const [updateProduct, { isLoading: isUpdating }] = useUpdateProductMutation();
+
+  // Local states
+  const [selectedImageIndex, setSelectedImageIndex] = useState<number>(0);
+  const [showDeleteModal, setShowDeleteModal] = useState<boolean>(false);
+  const [isEditing, setIsEditing] = useState<boolean>(false);
   const [editedProduct, setEditedProduct] = useState<ProductData | null>(null);
   const [previewImages, setPreviewImages] = useState<string[]>([]);
 
+  // New files selected by user but not yet uploaded
+  const [newFiles, setNewFiles] = useState<File[]>([]);
+
   const formRef = useRef<HTMLDivElement>(null);
 
+  // Initialize edited product & preview images when product loads
   useEffect(() => {
-    // Simulate API call
-    const fetchProduct = async () => {
-      setLoading(true);
-      // In real app, fetch product by id
-      setTimeout(() => {
-        setProduct(mockProductDetails);
-        setEditedProduct(mockProductDetails);
-        setPreviewImages(mockProductDetails.productImages);
-        setLoading(false);
-      }, 500);
-    };
+    if (product) {
+      setEditedProduct(product);
+      setPreviewImages(product.productImages || []);
+      setNewFiles([]);
+    }
+  }, [product]);
 
-    fetchProduct();
-  }, []);
+  // Show error toast if API fetch fails
+  useEffect(() => {
+    if (error) {
+      toast.error("Failed to load product data");
+    }
+  }, [error]);
 
-  const handleDeleteProduct = () => {
-    // In real app, make API call to delete product
-    console.log("Deleting product:", product?.id);
-    alert("Product deleted successfully!");
-    // In a real app, you would redirect to products page
-  };
-
-  const handleInputChange = (field: string, value: any) => {
+  // Handle input change for edited product fields
+  const handleInputChange = (field: string, value: any): void => {
     if (!editedProduct) return;
-    setEditedProduct((prev) => ({
-      ...prev!,
-      [field]: value,
-    }));
+    setEditedProduct((prev) => {
+      if (!prev) return null;
+      return {
+        ...prev,
+        [field]: value,
+      };
+    });
   };
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Handle new image upload (file input)
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>): void => {
     if (e.target.files && e.target.files.length > 0) {
-      const newImages: string[] = [];
+      const filesArray = Array.from(e.target.files);
+      setNewFiles((prev) => [...prev, ...filesArray]);
 
-      Array.from(e.target.files).forEach((file) => {
-        const imageUrl = URL.createObjectURL(file);
-        newImages.push(imageUrl);
-      });
+      // Create preview URLs for new images and add to previewImages
+      const newImageUrls = filesArray.map((file) => URL.createObjectURL(file));
+      setPreviewImages((prev) => [...prev, ...newImageUrls]);
 
-      setPreviewImages([...previewImages, ...newImages]);
-      // In a real app, you would upload these to a server and get back URLs
-      handleInputChange("productImages", [...previewImages, ...newImages]);
+      // Also update productImages field with previews for UI consistency
+      handleInputChange("productImages", [...previewImages, ...newImageUrls]);
+
+      toast.success(`${filesArray.length} image(s) added successfully`);
     }
   };
 
-  const removeImage = (index: number) => {
-    const updatedImages = [...previewImages];
-    updatedImages.splice(index, 1);
-    setPreviewImages(updatedImages);
-    handleInputChange("productImages", updatedImages);
+  // Remove image from preview and newFiles if applicable
+  const removeImage = (index: number): void => {
+    const updatedPreviews = [...previewImages];
+    const removedUrl = updatedPreviews[index];
+    updatedPreviews.splice(index, 1);
+
+    setPreviewImages(updatedPreviews);
+
+    // If the removed image is a new file (object URL), remove corresponding file
+    if (isObjectURL(removedUrl)) {
+      // Find index in newFiles corresponding to removedUrl
+      const newFileIndex = newFiles.findIndex((file) => {
+        const fileUrl = URL.createObjectURL(file);
+        const isMatch = fileUrl === removedUrl;
+        // Clean up the temporary URL
+        URL.revokeObjectURL(fileUrl);
+        return isMatch;
+      });
+
+      if (newFileIndex !== -1) {
+        const updatedNewFiles = [...newFiles];
+        updatedNewFiles.splice(newFileIndex, 1);
+        setNewFiles(updatedNewFiles);
+      }
+
+      // Revoke the object URL to free memory
+      URL.revokeObjectURL(removedUrl);
+    }
+
+    // Update productImages field
+    handleInputChange("productImages", updatedPreviews);
+    toast.success("Image removed successfully");
   };
 
-  const handleSaveChanges = () => {
-    // In a real app, make API call to update product
-    console.log("Saving product changes:", editedProduct);
-    setProduct(editedProduct);
-    setIsEditing(false);
-    // Show success message
-    alert("Product updated successfully!");
+  // Prepare data for update mutation, FormData if new files exist else JSON
+  const prepareUpdatedData = (): FormData | ProductData | null => {
+    if (!editedProduct) return null;
+
+    if (newFiles.length > 0) {
+      const formData = new FormData();
+
+      // Append text fields
+      formData.append("productName", editedProduct.productName || "");
+      formData.append("category", editedProduct.category || "");
+      formData.append("shortDescription", editedProduct.shortDescription || "");
+      formData.append("sellingPrice", String(editedProduct.sellingPrice || ""));
+      formData.append("mrp", String(editedProduct.mrp || ""));
+      formData.append(
+        "availableStock",
+        String(editedProduct.availableStock || "")
+      );
+      formData.append("skuCode", editedProduct.skuCode || "");
+      formData.append("weight", String(editedProduct.weight || ""));
+      formData.append("length", String(editedProduct.length || ""));
+      formData.append("width", String(editedProduct.width || ""));
+      formData.append("height", String(editedProduct.height || ""));
+      formData.append("shippingCost", String(editedProduct.shippingCost || ""));
+      formData.append(
+        "deliveryTimeEstimate",
+        editedProduct.deliveryTimeEstimate || ""
+      );
+
+      // Append new image files
+      newFiles.forEach((file) => {
+        formData.append("productImages", file);
+      });
+
+      // Append existing images (URLs) as JSON string - those that are NOT object URLs
+      const existingImageUrls = previewImages.filter(
+        (url) => !isObjectURL(url)
+      );
+      formData.append("existingImages", JSON.stringify(existingImageUrls));
+
+      return formData;
+    } else {
+      // No new files, send full JSON update
+      return {
+        ...editedProduct,
+        productImages: previewImages, // updated preview images (all URLs)
+      };
+    }
   };
 
-  if (loading) {
+  const handleSaveChanges = async (): Promise<void> => {
+    if (!editedProduct) {
+      toast.error("No product data to save");
+      return;
+    }
+
+    const updatedData = prepareUpdatedData();
+    if (!updatedData) {
+      toast.error("Failed to prepare update data");
+      return;
+    }
+
+    const loadingToast = toast.loading("Updating product...");
+
+    try {
+      await updateProduct({ productId: id, updatedData }).unwrap();
+      toast.dismiss(loadingToast);
+      toast.success("Product updated successfully!");
+      setIsEditing(false);
+      setNewFiles([]);
+
+      // Clean up any remaining object URLs
+      previewImages.forEach((url) => {
+        if (isObjectURL(url)) {
+          URL.revokeObjectURL(url);
+        }
+      });
+    } catch (err: any) {
+      toast.dismiss(loadingToast);
+      const errorMessage =
+        err?.data?.message || err?.message || "Failed to update product";
+      toast.error(errorMessage);
+      console.error("Update error:", err);
+    }
+  };
+
+  const handleDeleteProduct = (): void => {
+    const loadingToast = toast.loading("Deleting product...");
+
+    // Simulate deletion - replace with actual API call
+    setTimeout(() => {
+      toast.dismiss(loadingToast);
+      toast.success("Product deleted successfully!");
+      setShowDeleteModal(false);
+      // Navigate back to products list or handle as needed
+    }, 1500);
+  };
+
+  // Cleanup object URLs on component unmount
+  useEffect(() => {
+    return () => {
+      previewImages.forEach((url) => {
+        if (isObjectURL(url)) {
+          URL.revokeObjectURL(url);
+        }
+      });
+    };
+  }, [previewImages]);
+
+  if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-100">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 max-w-7xl">
+        <div className="container mx-auto px-4 py-6 max-w-7xl">
           <div className="animate-pulse">
             <div className="h-8 bg-gray-200 rounded w-1/4 mb-6"></div>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              <div className="aspect-square bg-gray-200 "></div>
+              <div className="aspect-square bg-gray-200"></div>
               <div className="space-y-4">
                 <div className="h-6 bg-gray-200 rounded w-3/4"></div>
                 <div className="h-4 bg-gray-200 rounded w-1/2"></div>
@@ -155,20 +258,18 @@ function ProductPreview({ params }: Params) {
   if (!product || !editedProduct) {
     return (
       <div className="min-h-screen bg-gray-100">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 max-w-7xl">
-          <div className="text-center py-16">
-            <Package className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-            <h2 className="text-xl font-medium text-gray-900 mb-2">
-              Product not found
-            </h2>
-            <p className="text-gray-600 mb-6">
-              The product you're looking for doesn't exist.
-            </p>
-            <button className="inline-flex items-center px-6 py-3 bg-terracotta-600 text-white hover:bg-terracotta-700 transition-colors">
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Back to Products
-            </button>
-          </div>
+        <div className="container mx-auto px-4 py-6 max-w-7xl text-center">
+          <Package className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+          <h2 className="text-xl font-medium text-gray-900 mb-2">
+            Product not found
+          </h2>
+          <p className="text-gray-600 mb-6">
+            The product you're looking for doesn't exist.
+          </p>
+          <button className="inline-flex items-center px-6 py-3 bg-terracotta-600 text-white hover:bg-terracotta-700 transition-colors">
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Back to Products
+          </button>
         </div>
       </div>
     );
@@ -176,7 +277,7 @@ function ProductPreview({ params }: Params) {
 
   return (
     <div ref={formRef} className="min-h-screen bg-gray-100">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 max-w-7xl">
+      <div className="container mx-auto px-4 py-6 max-w-7xl">
         {/* Header */}
         <ProductHeader
           product={product}
@@ -192,16 +293,26 @@ function ProductPreview({ params }: Params) {
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
           {/* Left Column - Product Information and other sections */}
           <div className="xl:col-span-2 space-y-6">
-            {/* Product Information */}
             <ProductInformation
               product={product}
               editedProduct={editedProduct}
               isEditing={isEditing}
               handleInputChange={handleInputChange}
-              categories={categories}
+              categories={[
+                "Electronics",
+                "Clothing",
+                "Home & Kitchen",
+                "Beauty & Personal Care",
+                "Books",
+                "Toys & Games",
+                "Sports & Outdoors",
+                "Health & Wellness",
+                "Jewelry",
+                "Handmade",
+                "other",
+              ]}
             />
 
-            {/* Pricing & Inventory */}
             <PricingInventory
               product={product}
               editedProduct={editedProduct}
@@ -209,7 +320,6 @@ function ProductPreview({ params }: Params) {
               handleInputChange={handleInputChange}
             />
 
-            {/* Shipping Information */}
             <ShippingInformation
               product={product}
               editedProduct={editedProduct}
@@ -217,11 +327,10 @@ function ProductPreview({ params }: Params) {
               handleInputChange={handleInputChange}
             />
 
-            {/* Activity Log */}
             <ActivityLog product={product} />
           </div>
 
-          {/* Right Column - Only Product Images */}
+          {/* Right Column - Product Images */}
           <div className="xl:col-span-1">
             <ProductImages
               product={product}

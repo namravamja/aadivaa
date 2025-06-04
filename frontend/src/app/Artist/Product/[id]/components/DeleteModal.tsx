@@ -17,8 +17,8 @@ const DeleteModal: React.FC<DeleteModalProps> = ({
   if (!showDeleteModal) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white p-6 max-w-md w-full mx-4">
+    <div className="fixed inset-0  bg-opacity-50 flex items-center justify-center p-4 z-50">
+      <div className="bg-white p-6 max-w-md w-full mx-4 shadow-2xl rounded-md  border-2 border-black">
         <h3 className="text-lg font-medium text-gray-900 mb-4">
           Delete Product
         </h3>
