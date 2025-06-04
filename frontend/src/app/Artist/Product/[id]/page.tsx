@@ -14,7 +14,9 @@ import { ArrowLeft, Package } from "lucide-react";
 import {
   useGetProductByIdQuery,
   useUpdateProductMutation,
+  useDeleteProductMutation,
 } from "@/services/api/productApi";
+import { useRouter } from "next/navigation";
 
 interface Params {
   params: Promise<{
@@ -22,7 +24,6 @@ interface Params {
   }>;
 }
 
-// Utility to detect if a string is an Object URL (created by URL.createObjectURL)
 function isObjectURL(url: string): boolean {
   return url.startsWith("blob:");
 }
@@ -30,25 +31,30 @@ function isObjectURL(url: string): boolean {
 function ProductPreview({ params }: Params) {
   const { id } = use(params);
 
-  // Fetch product from API
-  const { data: product, isLoading, error } = useGetProductByIdQuery(id);
+  const {
+    data: product,
+    isLoading,
+    error,
+    refetch,
+  } = useGetProductByIdQuery(id, {
+    refetchOnMountOrArgChange: true,
+  });
 
-  // Mutation to update product
+  const [deleteProduct] = useDeleteProductMutation();
+
+  const router = useRouter();
+
   const [updateProduct, { isLoading: isUpdating }] = useUpdateProductMutation();
 
-  // Local states
   const [selectedImageIndex, setSelectedImageIndex] = useState<number>(0);
   const [showDeleteModal, setShowDeleteModal] = useState<boolean>(false);
   const [isEditing, setIsEditing] = useState<boolean>(false);
   const [editedProduct, setEditedProduct] = useState<ProductData | null>(null);
   const [previewImages, setPreviewImages] = useState<string[]>([]);
-
-  // New files selected by user but not yet uploaded
   const [newFiles, setNewFiles] = useState<File[]>([]);
 
   const formRef = useRef<HTMLDivElement>(null);
 
-  // Initialize edited product & preview images when product loads
   useEffect(() => {
     if (product) {
       setEditedProduct(product);
@@ -57,14 +63,12 @@ function ProductPreview({ params }: Params) {
     }
   }, [product]);
 
-  // Show error toast if API fetch fails
   useEffect(() => {
     if (error) {
       toast.error("Failed to load product data");
     }
   }, [error]);
 
-  // Handle input change for edited product fields
   const handleInputChange = (field: string, value: any): void => {
     if (!editedProduct) return;
     setEditedProduct((prev) => {
@@ -76,24 +80,22 @@ function ProductPreview({ params }: Params) {
     });
   };
 
-  // Handle new image upload (file input)
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>): void => {
     if (e.target.files && e.target.files.length > 0) {
       const filesArray = Array.from(e.target.files);
       setNewFiles((prev) => [...prev, ...filesArray]);
 
-      // Create preview URLs for new images and add to previewImages
       const newImageUrls = filesArray.map((file) => URL.createObjectURL(file));
       setPreviewImages((prev) => [...prev, ...newImageUrls]);
 
-      // Also update productImages field with previews for UI consistency
       handleInputChange("productImages", [...previewImages, ...newImageUrls]);
 
       toast.success(`${filesArray.length} image(s) added successfully`);
+
+      refetch();
     }
   };
 
-  // Remove image from preview and newFiles if applicable
   const removeImage = (index: number): void => {
     const updatedPreviews = [...previewImages];
     const removedUrl = updatedPreviews[index];
@@ -101,13 +103,10 @@ function ProductPreview({ params }: Params) {
 
     setPreviewImages(updatedPreviews);
 
-    // If the removed image is a new file (object URL), remove corresponding file
     if (isObjectURL(removedUrl)) {
-      // Find index in newFiles corresponding to removedUrl
       const newFileIndex = newFiles.findIndex((file) => {
         const fileUrl = URL.createObjectURL(file);
         const isMatch = fileUrl === removedUrl;
-        // Clean up the temporary URL
         URL.revokeObjectURL(fileUrl);
         return isMatch;
       });
@@ -118,62 +117,64 @@ function ProductPreview({ params }: Params) {
         setNewFiles(updatedNewFiles);
       }
 
-      // Revoke the object URL to free memory
       URL.revokeObjectURL(removedUrl);
     }
 
-    // Update productImages field
+    refetch();
+
     handleInputChange("productImages", updatedPreviews);
     toast.success("Image removed successfully");
   };
 
-  // Prepare data for update mutation, FormData if new files exist else JSON
-  const prepareUpdatedData = (): FormData | ProductData | null => {
+  // Convert a file to Base64 string
+  const fileToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        if (reader.result && typeof reader.result === "string") {
+          resolve(reader.result);
+        } else {
+          reject("Failed to convert file to base64");
+        }
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  };
+
+  // Convert image URL to base64 (fetch and read as blob)
+  const urlToBase64 = async (url: string): Promise<string> => {
+    const response = await fetch(url);
+    const blob = await response.blob();
+    return await fileToBase64(
+      new File([blob], "image.jpg", { type: blob.type })
+    );
+  };
+
+  // Prepare final data with Base64 images
+  const prepareUpdatedData = async (): Promise<ProductData | null> => {
     if (!editedProduct) return null;
 
-    if (newFiles.length > 0) {
-      const formData = new FormData();
+    const base64Images: string[] = [];
 
-      // Append text fields
-      formData.append("productName", editedProduct.productName || "");
-      formData.append("category", editedProduct.category || "");
-      formData.append("shortDescription", editedProduct.shortDescription || "");
-      formData.append("sellingPrice", String(editedProduct.sellingPrice || ""));
-      formData.append("mrp", String(editedProduct.mrp || ""));
-      formData.append(
-        "availableStock",
-        String(editedProduct.availableStock || "")
-      );
-      formData.append("skuCode", editedProduct.skuCode || "");
-      formData.append("weight", String(editedProduct.weight || ""));
-      formData.append("length", String(editedProduct.length || ""));
-      formData.append("width", String(editedProduct.width || ""));
-      formData.append("height", String(editedProduct.height || ""));
-      formData.append("shippingCost", String(editedProduct.shippingCost || ""));
-      formData.append(
-        "deliveryTimeEstimate",
-        editedProduct.deliveryTimeEstimate || ""
-      );
-
-      // Append new image files
-      newFiles.forEach((file) => {
-        formData.append("productImages", file);
-      });
-
-      // Append existing images (URLs) as JSON string - those that are NOT object URLs
-      const existingImageUrls = previewImages.filter(
-        (url) => !isObjectURL(url)
-      );
-      formData.append("existingImages", JSON.stringify(existingImageUrls));
-
-      return formData;
-    } else {
-      // No new files, send full JSON update
-      return {
-        ...editedProduct,
-        productImages: previewImages, // updated preview images (all URLs)
-      };
+    // Convert new files to Base64
+    for (const file of newFiles) {
+      const base64 = await fileToBase64(file);
+      base64Images.push(base64);
     }
+
+    // Convert existing URLs to Base64 (excluding object URLs)
+    for (const url of previewImages) {
+      if (!isObjectURL(url)) {
+        const base64 = await urlToBase64(url);
+        base64Images.push(base64);
+      }
+    }
+
+    return {
+      ...editedProduct,
+      productImages: base64Images,
+    };
   };
 
   const handleSaveChanges = async (): Promise<void> => {
@@ -182,27 +183,31 @@ function ProductPreview({ params }: Params) {
       return;
     }
 
-    const updatedData = prepareUpdatedData();
-    if (!updatedData) {
-      toast.error("Failed to prepare update data");
-      return;
-    }
-
     const loadingToast = toast.loading("Updating product...");
 
     try {
+      const updatedData = await prepareUpdatedData();
+      if (!updatedData) {
+        toast.dismiss(loadingToast);
+        toast.error("Failed to prepare update data");
+        return;
+      }
+
       await updateProduct({ productId: id, updatedData }).unwrap();
+
       toast.dismiss(loadingToast);
       toast.success("Product updated successfully!");
+
       setIsEditing(false);
       setNewFiles([]);
 
-      // Clean up any remaining object URLs
       previewImages.forEach((url) => {
         if (isObjectURL(url)) {
           URL.revokeObjectURL(url);
         }
       });
+
+      await refetch(); // ✅ Properly refetch after update completes
     } catch (err: any) {
       toast.dismiss(loadingToast);
       const errorMessage =
@@ -212,19 +217,29 @@ function ProductPreview({ params }: Params) {
     }
   };
 
-  const handleDeleteProduct = (): void => {
+  const handleDeleteProduct = async () => {
     const loadingToast = toast.loading("Deleting product...");
 
-    // Simulate deletion - replace with actual API call
-    setTimeout(() => {
+    try {
+      await deleteProduct(id).unwrap();
+
       toast.dismiss(loadingToast);
       toast.success("Product deleted successfully!");
-      setShowDeleteModal(false);
-      // Navigate back to products list or handle as needed
-    }, 1500);
-  };
 
-  // Cleanup object URLs on component unmount
+      setShowDeleteModal(false);
+
+      refetch();
+
+      // Redirect to product list or dashboard
+      router.push("/Artist/Product"); // 👈 change the path as per your app structure
+    } catch (err: any) {
+      toast.dismiss(loadingToast);
+      const errorMessage =
+        err?.data?.message || err?.error || "Failed to delete product";
+      toast.error(errorMessage);
+      console.error("Delete error:", err);
+    }
+  };
   useEffect(() => {
     return () => {
       previewImages.forEach((url) => {
@@ -266,7 +281,7 @@ function ProductPreview({ params }: Params) {
           <p className="text-gray-600 mb-6">
             The product you're looking for doesn't exist.
           </p>
-          <button className="inline-flex items-center px-6 py-3 bg-terracotta-600 text-white hover:bg-terracotta-700 transition-colors">
+          <button className="inline-flex cursor-pointer items-center px-6 py-3 bg-terracotta-600 text-white hover:bg-terracotta-700 transition-colors">
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back to Products
           </button>
@@ -278,7 +293,6 @@ function ProductPreview({ params }: Params) {
   return (
     <div ref={formRef} className="min-h-screen bg-gray-100">
       <div className="container mx-auto px-4 py-6 max-w-7xl">
-        {/* Header */}
         <ProductHeader
           product={product}
           isEditing={isEditing}
@@ -289,9 +303,7 @@ function ProductPreview({ params }: Params) {
           handleSaveChanges={handleSaveChanges}
         />
 
-        {/* Main Content */}
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-          {/* Left Column - Product Information and other sections */}
           <div className="xl:col-span-2 space-y-6">
             <ProductInformation
               product={product}
@@ -330,7 +342,6 @@ function ProductPreview({ params }: Params) {
             <ActivityLog product={product} />
           </div>
 
-          {/* Right Column - Product Images */}
           <div className="xl:col-span-1">
             <ProductImages
               product={product}
@@ -345,7 +356,6 @@ function ProductPreview({ params }: Params) {
           </div>
         </div>
 
-        {/* Delete Confirmation Modal */}
         <DeleteModal
           product={product}
           showDeleteModal={showDeleteModal}

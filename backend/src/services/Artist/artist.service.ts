@@ -13,3 +13,4 @@ export { getAllProducts } from "./product/getAllProducts.service";
 export { getProductById } from "./product/getProductById.service";
 export { getProductsByArtist } from "./product/getProductsByArtist.service";
 export { updateProduct } from "./product/updateProduct.service";
+export { deleteProduct } from "./product/deleteProduct.service";

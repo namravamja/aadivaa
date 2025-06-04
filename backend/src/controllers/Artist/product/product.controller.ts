@@ -112,3 +112,28 @@ export const getProductsByArtist = async (
     res.status(404).json({ error: (error as Error).message });
   }
 };
+
+// Delete product
+export const deleteProduct = async (
+  req: AuthenticatedRequest,
+  res: Response
+) => {
+  try {
+    const artistId = req.user?.id;
+    if (!artistId) throw new Error("Unauthorized");
+
+    const { productId } = req.params;
+
+    const existingProduct = await productService.getProductById(productId);
+    if (!existingProduct) throw new Error("Product not found");
+
+    if (existingProduct.artistId !== artistId)
+      throw new Error("Not authorized to delete this product");
+
+    await productService.deleteProduct(productId, artistId);
+
+    res.status(200).json({ message: "Product deleted successfully" });
+  } catch (error) {
+    res.status(400).json({ error: (error as Error).message });
+  }
+};

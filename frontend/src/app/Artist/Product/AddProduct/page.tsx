@@ -33,8 +33,9 @@ export interface ProductData {
 export default function AddProduct() {
   const [step, setStep] = useState(1);
   const [createProduct, { isLoading }] = useCreateProductMutation();
-
   const router = useRouter();
+  const formRef = useRef<HTMLDivElement>(null);
+
   const [productData, setProductData] = useState<ProductData>({
     id: "",
     createdAt: "",
@@ -55,56 +56,11 @@ export default function AddProduct() {
     deliveryTimeEstimate: "",
   });
 
-  const formRef = useRef<HTMLDivElement>(null);
-
   const handleInputChange = (field: string, value: any) => {
     setProductData((prev) => ({
       ...prev,
       [field]: value,
     }));
-  };
-
-  const handleSubmit = async () => {
-    try {
-      const formData = new FormData();
-
-      // Convert base64 images back to File objects
-      for (let i = 0; i < productData.productImages.length; i++) {
-        const base64String = productData.productImages[i];
-
-        // Convert base64 to blob
-        const response = await fetch(base64String);
-        const blob = await response.blob();
-
-        // Create File object from blob
-        const file = new File([blob], `product-image-${i}.jpg`, {
-          type: "image/jpeg",
-        });
-
-        // Append to FormData with the key expected by multer
-        formData.append("productImages", file);
-      }
-
-      // Append other form fields (excluding productImages since we handled it above)
-      const { productImages, id, createdAt, updatedAt, ...otherData } =
-        productData;
-
-      Object.entries(otherData).forEach(([key, value]) => {
-        formData.append(key, value.toString());
-      });
-
-      const result = await createProduct(formData).unwrap();
-      // console.log("Form data being sent:", formData);
-      toast.success("Product created successfully!");
-
-      router.push("/Artist/Product");
-      // console.log("Created Product:", result);
-    } catch (error: any) {
-      console.error("Failed to create product:", error);
-      toast.error(
-        error?.data?.message || "Something went wrong while creating product"
-      );
-    }
   };
 
   const scrollToTop = () => {
@@ -114,7 +70,125 @@ export default function AddProduct() {
     });
   };
 
+  const validateFields = (): boolean => {
+    const requiredFields = [
+      "productName",
+      "category",
+      "shortDescription",
+      "sellingPrice",
+      "mrp",
+      "availableStock",
+      "skuCode",
+      "weight",
+      "length",
+      "width",
+      "height",
+      "shippingCost",
+      "deliveryTimeEstimate",
+    ];
+
+    const numberFields = [
+      "sellingPrice",
+      "mrp",
+      "availableStock",
+      "weight",
+      "length",
+      "width",
+      "height",
+      "shippingCost",
+    ];
+
+    for (const field of requiredFields) {
+      const value = productData[field as keyof ProductData];
+      if (!value || value.toString().trim() === "") {
+        toast.error(`${field} is required`);
+        return false;
+      }
+
+      if (numberFields.includes(field) && isNaN(Number(value))) {
+        toast.error(`${field} must be a valid number`);
+        return false;
+      }
+    }
+
+    if (productData.productImages.length === 0) {
+      toast.error("At least one product image is required");
+      return false;
+    }
+
+    return true;
+  };
+
+  const handleSubmit = async () => {
+    if (!validateFields()) {
+      scrollToTop();
+      return;
+    }
+
+    try {
+      const formData = new FormData();
+
+      for (let i = 0; i < productData.productImages.length; i++) {
+        const base64String = productData.productImages[i];
+        const response = await fetch(base64String);
+        const blob = await response.blob();
+        const file = new File([blob], `product-image-${i}.jpg`, {
+          type: "image/jpeg",
+        });
+        formData.append("productImages", file);
+      }
+
+      const { productImages, id, createdAt, updatedAt, ...otherData } =
+        productData;
+      Object.entries(otherData).forEach(([key, value]) => {
+        formData.append(key, value.toString());
+      });
+
+      await createProduct(formData).unwrap();
+      toast.success("Product created successfully!");
+      router.push("/Artist/Product");
+    } catch (error: any) {
+      console.error("Failed to create product:", error);
+      toast.error(
+        error?.data?.message || "Something went wrong while creating product"
+      );
+    }
+  };
+
   const nextStep = () => {
+    if (
+      step === 1 &&
+      (!productData.productName ||
+        !productData.category ||
+        !productData.shortDescription)
+    ) {
+      toast.error("Please complete all Product Basics fields.");
+      return;
+    }
+    if (
+      step === 2 &&
+      (!productData.sellingPrice ||
+        !productData.mrp ||
+        !productData.availableStock ||
+        !productData.skuCode)
+    ) {
+      toast.error("Please complete all Price & Inventory fields.");
+      return;
+    }
+    if (
+      step === 3 &&
+      (productData.productImages.length === 0 ||
+        !productData.weight ||
+        !productData.length ||
+        !productData.width ||
+        !productData.height ||
+        !productData.shippingCost ||
+        !productData.deliveryTimeEstimate)
+    ) {
+      toast.error("Please complete all Images & Shipping fields.");
+      return;
+    }
+
     if (step < 4) {
       setStep(step + 1);
       setTimeout(() => scrollToTop(), 100);
@@ -203,28 +277,25 @@ export default function AddProduct() {
             handleInputChange={handleInputChange}
           />
         )}
-
         {step === 2 && (
           <Step2PriceInventory
             productData={productData}
             handleInputChange={handleInputChange}
           />
         )}
-
         {step === 3 && (
           <Step3ImagesShipping
             productData={productData}
             handleInputChange={handleInputChange}
           />
         )}
-
         {step === 4 && <Step4Summary productData={productData} />}
 
         <div className="flex flex-col sm:flex-row justify-between gap-3 sm:gap-0 mt-8 pt-6 border-t border-stone-200">
           <button
             onClick={prevStep}
             disabled={step === 1}
-            className="px-6 py-2 border border-stone-300 text-stone-700 rounded-md hover:bg-stone-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed w-full sm:w-auto"
+            className="px-6 py-2 border cursor-pointer border-stone-300 text-stone-700 rounded-md hover:bg-stone-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed w-full sm:w-auto"
           >
             Previous
           </button>
@@ -232,7 +303,7 @@ export default function AddProduct() {
           {step < 4 ? (
             <button
               onClick={nextStep}
-              className="px-6 py-2 bg-sage-700 text-white rounded-md hover:bg-sage-800 transition-colors w-full sm:w-auto"
+              className="px-6 py-2 bg-sage-700 cursor-pointer text-white rounded-md hover:bg-sage-800 transition-colors w-full sm:w-auto"
             >
               Next
             </button>
@@ -240,7 +311,7 @@ export default function AddProduct() {
             <button
               onClick={handleSubmit}
               disabled={isLoading}
-              className="px-6 py-2 bg-sage-700 text-white rounded-md hover:bg-sage-800 transition-colors flex items-center justify-center sm:justify-start w-full sm:w-auto disabled:opacity-50"
+              className="px-6 py-2 bg-sage-700 cursor-pointer text-white rounded-md hover:bg-sage-800 transition-colors flex items-center justify-center sm:justify-start w-full sm:w-auto disabled:opacity-50"
             >
               <Save className="w-4 h-4 mr-2" />
               {isLoading ? "Publishing..." : "Publish Product"}

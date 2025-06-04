@@ -58,6 +58,13 @@ export const productApi = ProductApi.injectEndpoints({
     getProductById: builder.query({
       query: (productId) => `/${productId}`,
     }),
+
+    deleteProduct: builder.mutation({
+      query: (productId: string) => ({
+        url: `/delete/${productId}`,
+        method: "DELETE",
+      }),
+    }),
   }),
 });
 
@@ -67,4 +74,5 @@ export const {
   useGetProductByArtistQuery,
   useGetAllProductsQuery,
   useGetProductByIdQuery,
+  useDeleteProductMutation,
 } = productApi;

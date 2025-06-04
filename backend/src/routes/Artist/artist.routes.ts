@@ -45,5 +45,6 @@ router.put(
 router.get("/product/list", productController.getAllProducts);
 router.get("/product/ArtistProduct", productController.getProductsByArtist);
 router.get("/product/:productId", productController.getProductById);
+router.delete("/product/delete/:productId", productController.deleteProduct);
 
 export default router;

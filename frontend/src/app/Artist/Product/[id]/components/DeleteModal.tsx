@@ -29,13 +29,13 @@ const DeleteModal: React.FC<DeleteModalProps> = ({
         <div className="flex gap-3">
           <button
             onClick={() => setShowDeleteModal(false)}
-            className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors"
+            className="flex-1 px-4 py-2 border cursor-pointer border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors"
           >
             Cancel
           </button>
           <button
             onClick={handleDeleteProduct}
-            className="flex-1 px-4 py-2 bg-red-600 text-white hover:bg-red-700 transition-colors"
+            className="flex-1 px-4 py-2 cursor-pointer bg-red-600 text-white hover:bg-red-700 transition-colors"
           >
             Delete
           </button>
