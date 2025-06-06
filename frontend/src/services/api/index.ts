@@ -38,3 +38,24 @@ export const ProductApi = createApi({
   }),
   endpoints: () => ({}),
 });
+
+export const CartApi = createApi({
+  reducerPath: "api5",
+  baseQuery: fetchBaseQuery({
+    baseUrl:
+      process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/buyer/cart",
+    credentials: "include",
+  }),
+  endpoints: () => ({}),
+});
+
+export const WishlistApi = createApi({
+  reducerPath: "api6",
+  baseQuery: fetchBaseQuery({
+    baseUrl:
+      process.env.NEXT_PUBLIC_API_URL ||
+      "http://localhost:5000/api/buyer/wishlist",
+    credentials: "include",
+  }),
+  endpoints: () => ({}),
+});
