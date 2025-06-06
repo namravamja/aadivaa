@@ -170,7 +170,7 @@ export default function BuyerWishlist() {
               Retry
             </button>
             <Link
-              href="/products"
+              href="/Products"
               className="inline-block px-6 py-3 border border-stone-300 text-stone-700 hover:bg-stone-50 font-medium transition-colors"
             >
               Explore Products
@@ -219,7 +219,7 @@ export default function BuyerWishlist() {
               wishlist.
             </p>
             <Link
-              href="/products"
+              href="/Products"
               className="inline-block px-6 py-3 bg-terracotta-600 text-white font-medium hover:bg-terracotta-700 transition-colors"
             >
               Explore Products

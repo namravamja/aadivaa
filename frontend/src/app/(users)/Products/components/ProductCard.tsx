@@ -73,7 +73,6 @@ export default function ProductCard({ product }: ProductCardProps) {
         duration: 3000,
         icon: "🔒",
       });
-      router.push("/Buyer/login");
       return;
     }
 
@@ -113,7 +112,6 @@ export default function ProductCard({ product }: ProductCardProps) {
         duration: 3000,
         icon: "🔒",
       });
-      router.push("/Buyer/login");
       return;
     }
 

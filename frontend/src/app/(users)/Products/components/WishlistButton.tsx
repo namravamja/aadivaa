@@ -51,7 +51,6 @@ export default function WishlistButton({ productId }: WishlistButtonProps) {
         duration: 3000,
         icon: "🔒",
       });
-      router.push("/Buyer/login");
       return;
     }
 

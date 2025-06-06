@@ -97,7 +97,7 @@ export default function ProductDetailPage({
               The product you're looking for doesn't exist.
             </p>
             <Link
-              href="/products"
+              href="/Products"
               className="inline-flex items-center text-terracotta-600 hover:text-terracotta-700"
             >
               <ArrowLeft className="w-4 h-4 mr-2" />
