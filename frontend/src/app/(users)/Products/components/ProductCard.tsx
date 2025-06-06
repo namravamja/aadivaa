@@ -44,7 +44,7 @@ export default function ProductCard({ product }: ProductCardProps) {
 
   return (
     <div className="group">
-      <Link href={`/products/${product.id}`} className="block">
+      <Link href={`/Products/${product.id}`} className="block">
         <div className="relative aspect-square mb-4 bg-stone-100 overflow-hidden">
           <Image
             src={product.image || "/placeholder.svg"}
@@ -64,13 +64,17 @@ export default function ProductCard({ product }: ProductCardProps) {
               isWishlisted ? "Remove from wishlist" : "Add to wishlist"
             }
           >
-            <Heart className={`w-4 h-4 ${isWishlisted ? "fill-white" : ""}`} />
+            <Heart
+              className={`w-4 cursor-pointer h-4 ${
+                isWishlisted ? "fill-white" : ""
+              }`}
+            />
           </button>
 
           <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
             <button
               onClick={addToCart}
-              className="bg-white text-stone-900 px-4 sm:px-6 py-2 sm:py-3 font-medium flex items-center"
+              className="bg-white text-stone-900 px-4 cursor-pointer sm:px-6 py-2 sm:py-3 font-medium flex items-center"
               aria-label="Add to cart"
             >
               {isAddedToCart ? (
@@ -79,7 +83,7 @@ export default function ProductCard({ product }: ProductCardProps) {
                 </>
               ) : (
                 <>
-                  <Plus className="w-4 h-4 mr-2" /> Add to Cart
+                  <Plus className="w-4 h-4 mr-2 " /> Add to Cart
                 </>
               )}
             </button>

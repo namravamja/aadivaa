@@ -1,144 +1,79 @@
 "use client";
 
 import type React from "react";
-
 import { useState, useEffect } from "react";
 import ProductCard from "./ProductCard";
 import { ChevronDown } from "lucide-react";
 
-// Mock products data - in a real app, this would come from an API
-const mockProducts = [
-  {
-    id: "1",
-    name: "Beaded Necklace",
-    price: 45.99,
-    image: "/products/necklace.jpg",
-    artist: "Maya Johnson",
-    tribe: "navajo",
-    category: "jewelry",
-  },
-  {
-    id: "2",
-    name: "Woven Wall Hanging",
-    price: 89.99,
-    image: "/products/wall-hanging.jpg",
-    artist: "Tomas Rivera",
-    tribe: "hopi",
-    category: "decor",
-  },
-  {
-    id: "3",
-    name: "Ceramic Vase",
-    price: 65.0,
-    image: "/products/vase.jpg",
-    artist: "Leila White",
-    tribe: "cherokee",
-    category: "pottery",
-  },
-  {
-    id: "4",
-    name: "Leather Pouch",
-    price: 35.5,
-    image: "/products/pouch.jpg",
-    artist: "Daniel Black",
-    tribe: "apache",
-    category: "accessories",
-  },
-  {
-    id: "5",
-    name: "Turquoise Bracelet",
-    price: 120.0,
-    image: "/products/bracelet.jpg",
-    artist: "Sarah Blue",
-    tribe: "navajo",
-    category: "jewelry",
-  },
-  {
-    id: "6",
-    name: "Handwoven Basket",
-    price: 75.0,
-    image: "/products/basket.jpg",
-    artist: "Robert White",
-    tribe: "hopi",
-    category: "decor",
-  },
-  {
-    id: "7",
-    name: "Painted Pottery Bowl",
-    price: 95.0,
-    image: "/products/bowl.jpg",
-    artist: "Maria Garcia",
-    tribe: "zuni",
-    category: "pottery",
-  },
-  {
-    id: "8",
-    name: "Dreamcatcher",
-    price: 40.0,
-    image: "/products/dreamcatcher.jpg",
-    artist: "John Eagle",
-    tribe: "cherokee",
-    category: "decor",
-  },
-  {
-    id: "9",
-    name: "Beaded Earrings",
-    price: 30.0,
-    image: "/products/earrings.jpg",
-    artist: "Lisa Thunder",
-    tribe: "navajo",
-    category: "jewelry",
-  },
-  {
-    id: "10",
-    name: "Woven Blanket",
-    price: 250.0,
-    image: "/products/blanket.jpg",
-    artist: "Michael Cloud",
-    tribe: "hopi",
-    category: "textiles",
-  },
-  {
-    id: "11",
-    name: "Carved Wooden Mask",
-    price: 180.0,
-    image: "/products/mask.jpg",
-    artist: "David Stone",
-    tribe: "apache",
-    category: "decor",
-  },
-  {
-    id: "12",
-    name: "Leather Moccasins",
-    price: 85.0,
-    image: "/products/moccasins.jpg",
-    artist: "Emma River",
-    tribe: "cherokee",
-    category: "accessories",
-  },
-];
+// Product type based on API response
+type Product = {
+  id: string;
+  productName: string;
+  category: string;
+  shortDescription: string;
+  sellingPrice: string;
+  mrp: string;
+  availableStock: string;
+  skuCode: string;
+  productImages: string[];
+  weight: string;
+  length: string;
+  width: string;
+  height: string;
+  shippingCost: string;
+  deliveryTimeEstimate: string;
+  createdAt: string;
+  updatedAt: string;
+};
 
 type ProductsGridProps = {
+  products: Product[];
   category: string;
   priceRange: string;
-  tribe: string;
   sort: string;
   search: string;
 };
 
 export default function ProductsGrid({
+  products: apiProducts,
   category,
   priceRange,
-  tribe,
   sort,
   search,
 }: ProductsGridProps) {
-  const [products, setProducts] = useState(mockProducts);
+  const [products, setProducts] = useState<any[]>([]);
   const [sortOption, setSortOption] = useState(sort);
+
+  // Transform API products to match the expected format
+  const transformedProducts = apiProducts.map((product) => ({
+    id: product.id,
+    name: product.productName,
+    price: Number.parseFloat(product.sellingPrice),
+    originalPrice: Number.parseFloat(product.mrp),
+    image: product.productImages[0] || "/placeholder.svg?height=300&width=300",
+    images: product.productImages,
+    artist: "Artisan", // You might want to add artist info to your API
+    category: product.category.toLowerCase().replace(/\s+/g, "-"),
+    description: product.shortDescription,
+    stock: Number.parseInt(product.availableStock),
+    sku: product.skuCode,
+    weight: product.weight,
+    dimensions: {
+      length: product.length,
+      width: product.width,
+      height: product.height,
+    },
+    shipping: {
+      cost: Number.parseFloat(product.shippingCost),
+      estimatedDelivery: product.deliveryTimeEstimate,
+    },
+    createdAt: product.createdAt,
+    updatedAt: product.updatedAt,
+  }));
 
   // Filter and sort products based on the selected filters
   useEffect(() => {
-    let filteredProducts = [...mockProducts];
+    let filteredProducts = [...transformedProducts];
 
     // Apply category filter
     if (category && category !== "all") {
@@ -173,13 +108,6 @@ export default function ProductsGrid({
       }
     }
 
-    // Apply tribe filter
-    if (tribe && tribe !== "all") {
-      filteredProducts = filteredProducts.filter(
-        (product) => product.tribe === tribe
-      );
-    }
-
     // Apply search filter
     if (search && search.trim() !== "") {
       const searchLower = search.toLowerCase();
@@ -187,7 +115,8 @@ export default function ProductsGrid({
         (product) =>
           product.name.toLowerCase().includes(searchLower) ||
           product.artist.toLowerCase().includes(searchLower) ||
-          product.category.toLowerCase().includes(searchLower)
+          product.category.toLowerCase().includes(searchLower) ||
+          product.description.toLowerCase().includes(searchLower)
       );
     }
 
@@ -199,10 +128,17 @@ export default function ProductsGrid({
       case "price-high-low":
         filteredProducts.sort((a, b) => b.price - a.price);
         break;
+      case "category-az":
+        filteredProducts.sort((a, b) => a.category.localeCompare(b.category));
+        break;
+      case "category-za":
+        filteredProducts.sort((a, b) => b.category.localeCompare(a.category));
+        break;
       case "newest":
-        // In a real app, you would sort by date
-        // Here we're just reversing the array as a placeholder
-        filteredProducts.reverse();
+        filteredProducts.sort(
+          (a, b) =>
+            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        );
         break;
       default:
         // "featured" - no specific sorting
@@ -210,7 +146,7 @@ export default function ProductsGrid({
     }
 
     setProducts(filteredProducts);
-  }, [category, priceRange, tribe, search, sortOption]);
+  }, [category, priceRange, search, sortOption, apiProducts]);
 
   const handleSortChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setSortOption(e.target.value);
@@ -226,12 +162,28 @@ export default function ProductsGrid({
         <div className="relative">
           <select
             value={sortOption}
-            onChange={handleSortChange}
+            onChange={(e) => {
+              const newSort = e.target.value;
+              setSortOption(newSort);
+
+              // Update URL with new sort parameter
+              const params = new URLSearchParams(window.location.search);
+              if (newSort !== "featured") {
+                params.set("sort", newSort);
+              } else {
+                params.delete("sort");
+              }
+
+              const newUrl = `${window.location.pathname}?${params.toString()}`;
+              window.history.replaceState({}, "", newUrl);
+            }}
             className="appearance-none bg-white border border-stone-300 px-4 py-2 pr-10 rounded-sm focus:outline-none focus:ring-1 focus:ring-terracotta-500 focus:border-terracotta-500"
           >
             <option value="featured">Featured</option>
             <option value="price-low-high">Price: Low to High</option>
             <option value="price-high-low">Price: High to Low</option>
+            <option value="category-az">Category: A to Z</option>
+            <option value="category-za">Category: Z to A</option>
             <option value="newest">Newest</option>
           </select>
           <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 pointer-events-none text-stone-500" />

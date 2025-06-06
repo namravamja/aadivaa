@@ -13,6 +13,7 @@ const router = express.Router();
 // Artist routes
 router.post("/create", verifyToken, artistController.createArtist);
 router.get("/list", artistController.getArtists);
+router.get("/product/list", productController.getAllProducts);
 
 router.use(verifyToken);
 
@@ -42,7 +43,6 @@ router.put(
   uploadProductImages,
   productController.updateProduct
 );
-router.get("/product/list", productController.getAllProducts);
 router.get("/product/ArtistProduct", productController.getProductsByArtist);
 router.get("/product/:productId", productController.getProductById);
 router.delete("/product/delete/:productId", productController.deleteProduct);
