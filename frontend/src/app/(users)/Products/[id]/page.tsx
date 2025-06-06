@@ -18,7 +18,13 @@ export default function ProductDetailPage({
   const { id } = use(params);
 
   // Fetch specific product data by ID
-  const { data: apiProduct, isLoading, error } = useGetProductByIdQuery(id);
+  const {
+    data: apiProduct,
+    isLoading,
+    error,
+  } = useGetProductByIdQuery(id, {
+    refetchOnMountOrArgChange: true,
+  });
 
   // Transform API product to match component format
   const product = apiProduct
@@ -29,18 +35,14 @@ export default function ProductDetailPage({
         originalPrice: Number.parseFloat(apiProduct.mrp),
         description: apiProduct.shortDescription,
         images:
-          apiProduct.productImages.length > 0
-            ? apiProduct.productImages
-            : ["/placeholder.svg?height=400&width=400"],
+          apiProduct.productImages.length > 0 ? apiProduct.productImages : [""],
         artist: {
           id: apiProduct.artist.id,
           name: apiProduct.artist.fullName,
           email: apiProduct.artist.email,
           storeName: apiProduct.artist.storeName,
-          image: "/placeholder.svg?height=32&width=32", // You might want to add artist image to your API
         },
         category: apiProduct.category,
-        materials: ["Handcrafted materials"], // You might want to add materials to your API
         dimensions: `${apiProduct.length}" × ${apiProduct.width}" × ${apiProduct.height}"`,
         weight: `${apiProduct.weight}`,
         inStock: Number.parseInt(apiProduct.availableStock) > 0,
@@ -113,7 +115,7 @@ export default function ProductDetailPage({
         {/* Breadcrumb */}
         <div className="mb-6">
           <Link
-            href="/products"
+            href="/Products"
             className="flex items-center text-stone-600 hover:text-terracotta-600 transition-colors"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
@@ -126,7 +128,7 @@ export default function ProductDetailPage({
           <div className="space-y-4">
             <div className="relative aspect-square bg-stone-100 rounded-lg overflow-hidden">
               <Image
-                src={product.images[0] || "/placeholder.svg"}
+                src={product.images[0] || "/Profile.jpg"}
                 alt={product.name}
                 fill
                 className="object-cover"
@@ -162,14 +164,6 @@ export default function ProductDetailPage({
 
             {/* Artist Info */}
             <div className="flex items-center mb-4">
-              <div className="relative w-8 h-8 rounded-full overflow-hidden mr-2">
-                <Image
-                  src={product.artist.image || "/placeholder.svg"}
-                  alt={product.artist.name}
-                  fill
-                  className="object-cover"
-                />
-              </div>
               <div className="flex flex-col">
                 <span className="text-stone-600">
                   By{" "}

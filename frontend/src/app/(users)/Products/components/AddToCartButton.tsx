@@ -2,6 +2,10 @@
 
 import { useState } from "react";
 import { ShoppingBag, Check } from "lucide-react";
+import { useRouter } from "next/navigation";
+import toast from "react-hot-toast";
+import { useAddToCartMutation, useGetCartQuery } from "@/services/api/cartApi";
+import { useAuth } from "@/hooks/useAuth";
 
 type AddToCartButtonProps = {
   productId: string;
@@ -14,6 +18,16 @@ export default function AddToCartButton({
 }: AddToCartButtonProps) {
   const [quantity, setQuantity] = useState(1);
   const [isAdded, setIsAdded] = useState(false);
+  const router = useRouter();
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
+
+  const { refetch: refetchCart } = useGetCartQuery(undefined, {
+    skip: !isAuthenticated,
+    refetchOnFocus: true,
+    refetchOnReconnect: true,
+  });
+
+  const [addToCart, { isLoading: isAdding }] = useAddToCartMutation();
 
   const decreaseQuantity = () => {
     if (quantity > 1) {
@@ -25,19 +39,45 @@ export default function AddToCartButton({
     setQuantity(quantity + 1);
   };
 
-  const addToCart = () => {
-    // In a real app, this would call an API to add the product to the cart
-    console.log(
-      `Adding product ${productId} to cart with quantity ${quantity}`
-    );
+  const handleAddToCart = async () => {
+    if (!isAuthenticated) {
+      toast.error("Please login to add items to your cart", {
+        duration: 3000,
+        icon: "🔒",
+      });
+      router.push("/Buyer/login");
+      return;
+    }
 
-    setIsAdded(true);
+    try {
+      await addToCart({ productId, quantity }).unwrap();
+      setIsAdded(true);
+      toast.success(
+        `Added ${quantity} item${quantity > 1 ? "s" : ""} to cart`,
+        {
+          duration: 2000,
+          icon: "🛒",
+        }
+      );
 
-    // Reset the button state after 2 seconds
-    setTimeout(() => {
-      setIsAdded(false);
-    }, 2000);
+      // Refetch cart data after mutation
+      await refetchCart();
+
+      // Reset the button state after 2 seconds
+      setTimeout(() => {
+        setIsAdded(false);
+      }, 2000);
+    } catch (error: any) {
+      console.error(`Error adding product ${productId} to cart:`, error);
+      const errorMessage =
+        error?.data?.message || error?.message || "Something went wrong";
+      toast.error(errorMessage, {
+        duration: 3000,
+      });
+    }
   };
+
+  const isLoading = isAdding || authLoading;
 
   return (
     <div className="flex flex-col w-full sm:w-auto">
@@ -45,8 +85,8 @@ export default function AddToCartButton({
         <button
           type="button"
           onClick={decreaseQuantity}
-          disabled={quantity <= 1 || disabled}
-          className="px-4 py-2 text-stone-600 hover:bg-stone-100 disabled:opacity-50 disabled:cursor-not-allowed"
+          disabled={quantity <= 1 || disabled || !isAuthenticated}
+          className="px-4 py-2 text-stone-600 hover:bg-stone-100 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
           aria-label="Decrease quantity"
         >
           -
@@ -57,8 +97,8 @@ export default function AddToCartButton({
         <button
           type="button"
           onClick={increaseQuantity}
-          disabled={disabled}
-          className="px-4 py-2 text-stone-600 hover:bg-stone-100 disabled:opacity-50 disabled:cursor-not-allowed"
+          disabled={disabled || !isAuthenticated}
+          className="px-4 py-2 text-stone-600 hover:bg-stone-100 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
           aria-label="Increase quantity"
         >
           +
@@ -66,23 +106,28 @@ export default function AddToCartButton({
       </div>
 
       <button
-        onClick={addToCart}
-        disabled={disabled}
-        className={`flex items-center justify-center px-6 py-3 font-medium transition-colors ${
-          disabled
+        onClick={handleAddToCart}
+        disabled={disabled || isLoading || !isAuthenticated}
+        className={`flex items-center justify-center px-6 py-3 font-medium transition-colors cursor-pointer ${
+          disabled || !isAuthenticated
             ? "bg-stone-300 text-stone-500 cursor-not-allowed"
             : isAdded
             ? "bg-green-600 text-white"
             : "bg-terracotta-600 text-white hover:bg-terracotta-700"
         }`}
       >
-        {isAdded ? (
+        {isLoading ? (
+          <>
+            <ShoppingBag className="w-5 h-5 mr-2 animate-pulse" /> Adding...
+          </>
+        ) : isAdded ? (
           <>
             <Check className="w-5 h-5 mr-2" /> Added to Cart
           </>
         ) : (
           <>
-            <ShoppingBag className="w-5 h-5 mr-2" /> Add to Cart
+            <ShoppingBag className="w-5 h-5 mr-2" />
+            {!isAuthenticated ? "Login to Add to Cart" : "Add to Cart"}
           </>
         )}
       </button>

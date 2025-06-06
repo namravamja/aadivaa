@@ -1,11 +1,19 @@
 "use client";
 
 import type React from "react";
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Heart, Plus, Check } from "lucide-react";
+import { Heart, Plus, Check, ShoppingBag } from "lucide-react";
+import { useRouter } from "next/navigation";
+import toast from "react-hot-toast";
+import {
+  useAddToWishlistMutation,
+  useRemoveFromWishlistMutation,
+  useGetWishlistQuery,
+} from "@/services/api/wishlistApi";
+import { useAddToCartMutation, useGetCartQuery } from "@/services/api/cartApi";
+import { useAuth } from "@/hooks/useAuth";
 
 type Product = {
   id: string;
@@ -24,22 +32,118 @@ type ProductCardProps = {
 export default function ProductCard({ product }: ProductCardProps) {
   const [isWishlisted, setIsWishlisted] = useState(false);
   const [isAddedToCart, setIsAddedToCart] = useState(false);
+  const router = useRouter();
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
 
-  const toggleWishlist = (e: React.MouseEvent) => {
+  // RTK Query hooks - only run if authenticated
+  const { data: wishlistData, refetch: refetchWishlist } = useGetWishlistQuery(
+    undefined,
+    {
+      skip: !isAuthenticated,
+      refetchOnFocus: true,
+      refetchOnReconnect: true,
+    }
+  );
+
+  const { refetch: refetchCart } = useGetCartQuery(undefined, {
+    skip: !isAuthenticated,
+    refetchOnFocus: true,
+    refetchOnReconnect: true,
+  });
+
+  const [addToWishlist] = useAddToWishlistMutation();
+  const [removeFromWishlist] = useRemoveFromWishlistMutation();
+  const [addToCart, { isLoading: isAddingToCart }] = useAddToCartMutation();
+
+  // Check if product is in wishlist when data loads
+  useEffect(() => {
+    if (wishlistData && isAuthenticated) {
+      const isInWishlist = wishlistData.some(
+        (item: any) => item.productId === product.id
+      );
+      setIsWishlisted(isInWishlist);
+    }
+  }, [wishlistData, product.id, isAuthenticated]);
+
+  const toggleWishlist = async (e: React.MouseEvent) => {
     e.preventDefault();
-    setIsWishlisted(!isWishlisted);
-    // In a real app, this would call an API to update the wishlist
+
+    if (!isAuthenticated) {
+      toast.error("Please login to add items to your wishlist", {
+        duration: 3000,
+        icon: "🔒",
+      });
+      router.push("/Buyer/login");
+      return;
+    }
+
+    try {
+      if (isWishlisted) {
+        await removeFromWishlist(product.id).unwrap();
+        setIsWishlisted(false);
+        toast.success("Removed from wishlist", {
+          duration: 2000,
+          icon: "💔",
+        });
+      } else {
+        await addToWishlist(product.id).unwrap();
+        setIsWishlisted(true);
+        toast.success("Added to wishlist", {
+          duration: 2000,
+          icon: "❤️",
+        });
+      }
+      // Refetch wishlist data after mutation
+      await refetchWishlist();
+    } catch (error: any) {
+      console.error("Error updating wishlist:", error);
+      const errorMessage =
+        error?.data?.message || error?.message || "Something went wrong";
+      toast.error(errorMessage, {
+        duration: 3000,
+      });
+    }
   };
 
-  const addToCart = (e: React.MouseEvent) => {
+  const handleAddToCart = async (e: React.MouseEvent) => {
     e.preventDefault();
-    setIsAddedToCart(true);
-    // In a real app, this would call an API to add the product to the cart
 
-    // Reset the button state after 2 seconds
-    setTimeout(() => {
-      setIsAddedToCart(false);
-    }, 2000);
+    if (!isAuthenticated) {
+      toast.error("Please login to add items to your cart", {
+        duration: 3000,
+        icon: "🔒",
+      });
+      router.push("/Buyer/login");
+      return;
+    }
+
+    try {
+      await addToCart({ productId: product.id, quantity: 1 }).unwrap();
+      setIsAddedToCart(true);
+      toast.success("Added to cart", {
+        duration: 2000,
+        icon: "🛒",
+      });
+
+      // Refetch cart data after mutation
+      await refetchCart();
+
+      // Reset the button state after 2 seconds
+      setTimeout(() => {
+        setIsAddedToCart(false);
+      }, 2000);
+    } catch (error: any) {
+      console.error("Error adding to cart:", error);
+      const errorMessage =
+        error?.data?.message || error?.message || "Something went wrong";
+      toast.error(errorMessage, {
+        duration: 3000,
+      });
+      // Reset the button state after 2 seconds even if there's an error
+      setTimeout(() => {
+        setIsAddedToCart(false);
+      }, 2000);
+    }
   };
 
   return (
@@ -55,29 +159,37 @@ export default function ProductCard({ product }: ProductCardProps) {
 
           <button
             onClick={toggleWishlist}
-            className={`absolute top-4 right-4 p-2 rounded-full z-10 ${
-              isWishlisted
+            className={`absolute top-4 right-4 p-2 rounded-full z-10 cursor-pointer ${
+              isAuthenticated && isWishlisted
                 ? "bg-terracotta-600 text-white"
                 : "bg-white text-stone-900 opacity-0 group-hover:opacity-100"
             } transition-all duration-300`}
             aria-label={
-              isWishlisted ? "Remove from wishlist" : "Add to wishlist"
+              isAuthenticated && isWishlisted
+                ? "Remove from wishlist"
+                : "Add to wishlist"
             }
           >
             <Heart
               className={`w-4 cursor-pointer h-4 ${
-                isWishlisted ? "fill-white" : ""
+                isAuthenticated && isWishlisted ? "fill-white" : ""
               }`}
             />
           </button>
 
           <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
             <button
-              onClick={addToCart}
-              className="bg-white text-stone-900 px-4 cursor-pointer sm:px-6 py-2 sm:py-3 font-medium flex items-center"
+              onClick={handleAddToCart}
+              disabled={isAddingToCart || authLoading}
+              className="bg-white text-stone-900 px-4 cursor-pointer sm:px-6 py-2 sm:py-3 font-medium flex items-center disabled:opacity-50 disabled:cursor-not-allowed"
               aria-label="Add to cart"
             >
-              {isAddedToCart ? (
+              {isAddingToCart ? (
+                <>
+                  <ShoppingBag className="w-4 h-4 mr-2 animate-pulse" />{" "}
+                  Adding...
+                </>
+              ) : isAddedToCart ? (
                 <>
                   <Check className="w-4 h-4 mr-2" /> Added
                 </>
