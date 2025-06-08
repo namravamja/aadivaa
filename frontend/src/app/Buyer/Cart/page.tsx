@@ -207,7 +207,7 @@ export default function BuyerCartPage() {
             >
               Retry
             </button>
-            <Link href="/Products">
+            <Link href="/products">
               <button className="border border-stone-300 text-stone-700 hover:bg-stone-50 px-6 py-3 font-medium transition-colors">
                 Start Shopping
               </button>
@@ -231,7 +231,7 @@ export default function BuyerCartPage() {
               Discover our beautiful handcrafted items and add them to your
               cart.
             </p>
-            <Link href="/Products">
+            <Link href="/products">
               <button className="bg-terracotta-600 hover:bg-terracotta-700 text-white px-6 py-3 font-medium transition-colors cursor-pointer">
                 Start Shopping
               </button>
@@ -286,7 +286,7 @@ export default function BuyerCartPage() {
                     <div className="flex-1 min-w-0">
                       <div className="flex justify-between items-start mb-2">
                         <div>
-                          <Link href={`/Products/${item.product.id}`}>
+                          <Link href={`/products/${item.product.id}`}>
                             <h3 className="font-medium text-stone-900 hover:text-terracotta-600 transition-colors">
                               {item.product.productName}
                             </h3>
@@ -412,14 +412,14 @@ export default function BuyerCartPage() {
                   </div>
                 )}
 
-                <Link href="/buyer/checkout">
+                <Link href="/Buyer/checkout">
                   <button className="w-full bg-terracotta-600 hover:bg-terracotta-700 text-white px-6 py-3 font-medium mb-4 transition-colors cursor-pointer">
                     Proceed to Checkout
                     <ArrowRight className="w-4 h-4 ml-2 inline" />
                   </button>
                 </Link>
 
-                <Link href="/Products">
+                <Link href="/products">
                   <button className="w-full border border-stone-300 text-stone-700 hover:bg-stone-50 px-6 py-3 font-medium transition-colors cursor-pointer">
                     Continue Shopping
                   </button>

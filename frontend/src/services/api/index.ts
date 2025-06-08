@@ -59,3 +59,14 @@ export const WishlistApi = createApi({
   }),
   endpoints: () => ({}),
 });
+
+export const OrderApi = createApi({
+  reducerPath: "api7",
+  baseQuery: fetchBaseQuery({
+    baseUrl:
+      process.env.NEXT_PUBLIC_API_URL ||
+      "http://localhost:5000/api/buyer/order",
+    credentials: "include",
+  }),
+  endpoints: () => ({}),
+});

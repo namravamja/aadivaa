@@ -6,6 +6,7 @@ import {
   ProductApi,
   CartApi,
   WishlistApi,
+  OrderApi,
 } from "@/services/api"; // base API with injectEndpoints
 import "@/services/api/authApi"; // This ensures auth endpoints are injected into the base api
 import "@/services/api/artistApi";
@@ -13,6 +14,7 @@ import "@/services/api/buyerApi";
 import "@/services/api/productApi";
 import "@/services/api/cartApi";
 import "@/services/api/wishlistApi";
+import "@/services/api/orderApi";
 
 export const makeStore = () =>
   configureStore({
@@ -23,6 +25,7 @@ export const makeStore = () =>
       [ProductApi.reducerPath]: ProductApi.reducer,
       [CartApi.reducerPath]: CartApi.reducer,
       [WishlistApi.reducerPath]: WishlistApi.reducer,
+      [OrderApi.reducerPath]: OrderApi.reducer,
     },
     middleware: (getDefaultMiddleware) =>
       getDefaultMiddleware().concat(
@@ -31,7 +34,8 @@ export const makeStore = () =>
         ArtistApi.middleware,
         ProductApi.middleware,
         CartApi.middleware,
-        WishlistApi.middleware
+        WishlistApi.middleware,
+        OrderApi.middleware
       ), // Only include the base API middleware
   });
 

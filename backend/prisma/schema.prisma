@@ -71,6 +71,9 @@ model OrderItem {
 
   quantity        Int
   priceAtPurchase Float
+
+  artist   Artist @relation(fields: [artistId], references: [id])
+  artistId String
 }
 
 model Order {
@@ -80,11 +83,12 @@ model Order {
 
   orderItems OrderItem[]
 
-  totalAmount     Float
-  status          String @default("pending") // pending, shipped, delivered, cancelled
-  shippingAddress String
-  paymentMethod   String 
-  paymentStatus   String @default("unpaid") // unpaid, paid, failed
+  totalAmount       Float
+  status            String  @default("pending") // pending, shipped, delivered, cancelled
+  shippingAddress   Address @relation(fields: [shippingAddressId], references: [id])
+  shippingAddressId Int
+  paymentMethod     String
+  paymentStatus     String  @default("unpaid") // unpaid, paid, failed
 
   placedAt  DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -108,6 +112,7 @@ model Address {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  Order     Order[]
 
   @@map("buyer_addresses")
 }
@@ -165,7 +170,8 @@ model Artist {
   verifyExpires         DateTime?
   isVerified            Boolean   @default(false)
 
-  products Product[] // ✅ One-to-many relation to Product
+  products   Product[]
+  orderItems OrderItem[]
 }
 
 model Product {
@@ -240,4 +246,3 @@ model SocialLinks {
 
   artist Artist?
 }
-

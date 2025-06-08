@@ -1,177 +1,98 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useMemo } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Package, Eye, Download, Filter, Search, Calendar } from "lucide-react";
+import {
+  Package,
+  Eye,
+  Download,
+  Filter,
+  Search,
+  Calendar,
+  User,
+} from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useGetBuyerOrdersQuery } from "@/services/api/orderApi";
+import { useAuth } from "@/hooks/useAuth";
 
-interface OrderItem {
-  id: string;
-  productId: string;
-  name: string;
-  image: string;
-  artist: string;
-  quantity: number;
-  price: number;
-}
-
-interface Order {
-  id: string;
-  orderNumber: string;
-  status:
-    | "PENDING"
-    | "CONFIRMED"
-    | "PROCESSING"
-    | "SHIPPED"
-    | "DELIVERED"
-    | "CANCELLED";
-  paymentStatus: "PENDING" | "PAID" | "FAILED" | "REFUNDED";
-  totalAmount: number;
-  shippingCost: number;
-  taxAmount: number;
-  items: OrderItem[];
-  shippingAddress: {
-    firstName: string;
-    lastName: string;
-    addressLine1: string;
-    city: string;
-    state: string;
-    postalCode: string;
-    country: string;
-  };
-  createdAt: string;
-  updatedAt: string;
-  estimatedDelivery?: string;
-}
-
-// Mock orders data
-const mockOrders: Order[] = [
-  {
-    id: "1",
-    orderNumber: "TC-2024-001",
-    status: "DELIVERED",
-    paymentStatus: "PAID",
-    totalAmount: 234.48,
-    shippingCost: 15.0,
-    taxAmount: 18.48,
-    items: [
-      {
-        id: "1",
-        productId: "prod1",
-        name: "Handwoven Basket",
-        image: "/placeholder.svg?height=80&width=80",
-        artist: "Maria Santos",
-        quantity: 2,
-        price: 89.99,
-      },
-      {
-        id: "2",
-        productId: "prod2",
-        name: "Ceramic Vase",
-        image: "/placeholder.svg?height=80&width=80",
-        artist: "David Chen",
-        quantity: 1,
-        price: 65.0,
-      },
-    ],
-    shippingAddress: {
-      firstName: "John",
-      lastName: "Doe",
-      addressLine1: "123 Main St",
-      city: "New York",
-      state: "NY",
-      postalCode: "10001",
-      country: "USA",
-    },
-    createdAt: "2024-01-15T10:30:00Z",
-    updatedAt: "2024-01-20T14:45:00Z",
-    estimatedDelivery: "2024-01-18T00:00:00Z",
-  },
-  {
-    id: "2",
-    orderNumber: "TC-2024-002",
-    status: "SHIPPED",
-    paymentStatus: "PAID",
-    totalAmount: 156.99,
-    shippingCost: 0,
-    taxAmount: 11.99,
-    items: [
-      {
-        id: "3",
-        productId: "prod3",
-        name: "Beaded Necklace",
-        image: "/placeholder.svg?height=80&width=80",
-        artist: "Sarah Johnson",
-        quantity: 1,
-        price: 45.99,
-      },
-      {
-        id: "4",
-        productId: "prod4",
-        name: "Wooden Sculpture",
-        image: "/placeholder.svg?height=80&width=80",
-        artist: "Michael Brown",
-        quantity: 1,
-        price: 99.0,
-      },
-    ],
-    shippingAddress: {
-      firstName: "John",
-      lastName: "Doe",
-      addressLine1: "123 Main St",
-      city: "New York",
-      state: "NY",
-      postalCode: "10001",
-      country: "USA",
-    },
-    createdAt: "2024-01-25T09:15:00Z",
-    updatedAt: "2024-01-27T16:20:00Z",
-    estimatedDelivery: "2024-01-30T00:00:00Z",
-  },
-];
-
-const statusColors = {
-  PENDING: "bg-yellow-100 text-yellow-800",
-  CONFIRMED: "bg-blue-100 text-blue-800",
-  PROCESSING: "bg-purple-100 text-purple-800",
-  SHIPPED: "bg-orange-100 text-orange-800",
-  DELIVERED: "bg-green-100 text-green-800",
-  CANCELLED: "bg-red-100 text-red-800",
+// Status color mappings
+const statusColors: Record<string, string> = {
+  pending: "bg-yellow-100 text-yellow-800",
+  confirmed: "bg-blue-100 text-blue-800",
+  processing: "bg-purple-100 text-purple-800",
+  shipped: "bg-orange-100 text-orange-800",
+  delivered: "bg-green-100 text-green-800",
+  cancelled: "bg-red-100 text-red-800",
 };
 
-const paymentStatusColors = {
-  PENDING: "bg-yellow-100 text-yellow-800",
-  PAID: "bg-green-100 text-green-800",
-  FAILED: "bg-red-100 text-red-800",
-  REFUNDED: "bg-gray-100 text-gray-800",
+const paymentStatusColors: Record<string, string> = {
+  unpaid: "bg-yellow-100 text-yellow-800",
+  paid: "bg-green-100 text-green-800",
+  failed: "bg-red-100 text-red-800",
+  refunded: "bg-gray-100 text-gray-800",
+};
+
+// Helper function to format price (assuming the API returns price in cents)
+const formatPrice = (price: number) => {
+  return (price / 100).toFixed(2);
 };
 
 export default function BuyerOrdersPage() {
-  const [orders, setOrders] = useState<Order[]>(mockOrders);
-  const [filteredOrders, setFilteredOrders] = useState<Order[]>(mockOrders);
   const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [dateFilter, setDateFilter] = useState<string>("all");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [dateFilter, setDateFilter] = useState("all");
+  const [currentPage, setCurrentPage] = useState(1);
+  const router = useRouter();
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
 
-  useEffect(() => {
-    let filtered = orders;
+  // RTK Query hook for fetching orders
+  const {
+    data: ordersResponse,
+    isLoading,
+    error,
+    refetch,
+  } = useGetBuyerOrdersQuery(
+    {
+      page: currentPage,
+      limit: 10,
+      ...(statusFilter !== "all" && { status: statusFilter }),
+    },
+    {
+      skip: !isAuthenticated,
+      refetchOnFocus: true,
+      refetchOnReconnect: true,
+    }
+  );
+
+  // Extract orders and pagination from the response
+  const orders = ordersResponse?.data?.orders || [];
+  const pagination = ordersResponse?.data?.pagination;
+
+  // Filter orders based on search term and date
+  const filteredOrders = useMemo(() => {
+    let filtered = orders || [];
 
     // Search filter
     if (searchTerm) {
       filtered = filtered.filter(
-        (order) =>
-          order.orderNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          order.items.some(
-            (item) =>
-              item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-              item.artist.toLowerCase().includes(searchTerm.toLowerCase())
+        (order: any) =>
+          order.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          order.orderItems.some(
+            (item: any) =>
+              item.product.productName
+                .toLowerCase()
+                .includes(searchTerm.toLowerCase()) ||
+              (item.artist?.fullName &&
+                item.artist.fullName
+                  .toLowerCase()
+                  .includes(searchTerm.toLowerCase())) ||
+              (item.artist?.storeName &&
+                item.artist.storeName
+                  .toLowerCase()
+                  .includes(searchTerm.toLowerCase()))
           )
       );
-    }
-
-    // Status filter
-    if (statusFilter !== "all") {
-      filtered = filtered.filter((order) => order.status === statusFilter);
     }
 
     // Date filter
@@ -195,19 +116,93 @@ export default function BuyerOrdersPage() {
       }
 
       filtered = filtered.filter(
-        (order) => new Date(order.createdAt) >= filterDate
+        (order: any) => new Date(order.placedAt) >= filterDate
       );
     }
 
-    setFilteredOrders(filtered);
-  }, [orders, searchTerm, statusFilter, dateFilter]);
+    return filtered;
+  }, [orders, searchTerm, dateFilter]);
 
   const downloadInvoice = (orderId: string) => {
     // Implementation for downloading invoice
     console.log(`Downloading invoice for order ${orderId}`);
+    // This would typically call an API endpoint to generate and download the invoice
   };
 
-  if (orders.length === 0) {
+  // Show login prompt if not authenticated
+  if (!authLoading && !isAuthenticated) {
+    return (
+      <main className="pt-24 pb-16">
+        <div className="container mx-auto px-4">
+          <div className="text-center py-16">
+            <User className="w-24 h-24 mx-auto text-stone-300 mb-6" />
+            <h1 className="text-3xl font-light text-stone-900 mb-4">
+              Login Required
+            </h1>
+            <p className="text-stone-600 mb-8">
+              Please login to view your orders.
+            </p>
+            <Link href="/Buyer/login">
+              <button className="bg-terracotta-600 hover:bg-terracotta-700 text-white px-6 py-3 font-medium transition-colors cursor-pointer">
+                Login to Continue
+              </button>
+            </Link>
+          </div>
+        </div>
+      </main>
+    );
+  }
+
+  if (authLoading || isLoading) {
+    return (
+      <main className="pt-24 pb-16">
+        <div className="container mx-auto px-4">
+          <div className="animate-pulse">
+            <div className="h-8 bg-stone-200 rounded w-48 mb-8"></div>
+            <div className="space-y-4">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className="bg-white border border-stone-200 p-6">
+                  <div className="h-6 bg-stone-200 rounded w-32 mb-4"></div>
+                  <div className="space-y-2">
+                    <div className="h-4 bg-stone-200 rounded w-full"></div>
+                    <div className="h-4 bg-stone-200 rounded w-3/4"></div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </main>
+    );
+  }
+
+  if (error) {
+    return (
+      <main className="pt-24 pb-16">
+        <div className="container mx-auto px-4">
+          <div className="text-center py-16">
+            <h1 className="text-3xl font-light text-stone-900 mb-4">
+              Error loading orders
+            </h1>
+            <p className="text-stone-600 mb-8">Please try again later.</p>
+            <button
+              onClick={() => refetch()}
+              className="bg-terracotta-600 hover:bg-terracotta-700 text-white px-6 py-3 font-medium transition-colors cursor-pointer mr-4"
+            >
+              Retry
+            </button>
+            <Link href="/products">
+              <button className="border border-stone-300 text-stone-700 hover:bg-stone-50 px-6 py-3 font-medium transition-colors cursor-pointer">
+                Continue Shopping
+              </button>
+            </Link>
+          </div>
+        </div>
+      </main>
+    );
+  }
+
+  if (!orders || orders.length === 0) {
     return (
       <main className="pt-24 pb-16">
         <div className="container mx-auto px-4">
@@ -220,7 +215,7 @@ export default function BuyerOrdersPage() {
               Start shopping to see your orders here.
             </p>
             <Link href="/products">
-              <button className="bg-terracotta-600 hover:bg-terracotta-700 text-white px-6 py-3 font-medium transition-colors">
+              <button className="bg-terracotta-600 hover:bg-terracotta-700 text-white px-6 py-3 font-medium transition-colors cursor-pointer">
                 Start Shopping
               </button>
             </Link>
@@ -249,28 +244,31 @@ export default function BuyerOrdersPage() {
                   placeholder="Search orders..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-3 py-2 border border-stone-300 focus:outline-none focus:ring-2 focus:ring-terracotta-500 focus:border-transparent"
+                  className="w-full pl-10 pr-3 py-2 border border-stone-300 focus:outline-none focus:ring-2 focus:ring-terracotta-500 focus:border-transparent cursor-pointer"
                 />
               </div>
 
               <select
                 value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-                className="w-full px-3 py-2 border border-stone-300 focus:outline-none focus:ring-2 focus:ring-terracotta-500 focus:border-transparent"
+                onChange={(e) => {
+                  setStatusFilter(e.target.value);
+                  setCurrentPage(1);
+                }}
+                className="w-full px-3 py-2 border border-stone-300 focus:outline-none focus:ring-2 focus:ring-terracotta-500 focus:border-transparent cursor-pointer"
               >
                 <option value="all">All Statuses</option>
-                <option value="PENDING">Pending</option>
-                <option value="CONFIRMED">Confirmed</option>
-                <option value="PROCESSING">Processing</option>
-                <option value="SHIPPED">Shipped</option>
-                <option value="DELIVERED">Delivered</option>
-                <option value="CANCELLED">Cancelled</option>
+                <option value="pending">Pending</option>
+                <option value="confirmed">Confirmed</option>
+                <option value="processing">Processing</option>
+                <option value="shipped">Shipped</option>
+                <option value="delivered">Delivered</option>
+                <option value="cancelled">Cancelled</option>
               </select>
 
               <select
                 value={dateFilter}
                 onChange={(e) => setDateFilter(e.target.value)}
-                className="w-full px-3 py-2 border border-stone-300 focus:outline-none focus:ring-2 focus:ring-terracotta-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-stone-300 focus:outline-none focus:ring-2 focus:ring-terracotta-500 focus:border-transparent cursor-pointer"
               >
                 <option value="all">All Time</option>
                 <option value="week">Last Week</option>
@@ -289,35 +287,44 @@ export default function BuyerOrdersPage() {
 
         {/* Orders List */}
         <div className="space-y-6">
-          {filteredOrders.map((order) => (
+          {filteredOrders.map((order: any) => (
             <div
               key={order.id}
               className="bg-white border border-stone-200 shadow-sm"
             >
               <div className="p-6 border-b border-stone-200">
-                <div className="flex justify-between items-start">
+                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start">
                   <div>
                     <h3 className="text-lg font-medium text-stone-900">
-                      Order {order.orderNumber}
+                      Order #{order.id.slice(0, 8)}
                     </h3>
                     <p className="text-sm text-stone-500 mt-1">
-                      Placed on {new Date(order.createdAt).toLocaleDateString()}
+                      Placed on {new Date(order.placedAt).toLocaleDateString()}
                     </p>
                   </div>
-                  <div className="flex items-center space-x-2">
+                  <div className="flex items-center space-x-2 mt-2 sm:mt-0">
                     <span
-                      className={`inline-block px-2 py-1 text-xs font-medium ${
-                        statusColors[order.status]
+                      className={`inline-block px-2 py-1 text-xs font-medium rounded-full ${
+                        statusColors[order.status?.toLowerCase()] ||
+                        "bg-stone-100 text-stone-800"
                       }`}
                     >
-                      {order.status}
+                      {order.status
+                        ? order.status.charAt(0).toUpperCase() +
+                          order.status.slice(1).toLowerCase()
+                        : "Unknown"}
                     </span>
                     <span
-                      className={`inline-block px-2 py-1 text-xs font-medium ${
-                        paymentStatusColors[order.paymentStatus]
+                      className={`inline-block px-2 py-1 text-xs font-medium rounded-full ${
+                        paymentStatusColors[
+                          order.paymentStatus?.toLowerCase()
+                        ] || "bg-stone-100 text-stone-800"
                       }`}
                     >
-                      {order.paymentStatus}
+                      {order.paymentStatus
+                        ? order.paymentStatus.charAt(0).toUpperCase() +
+                          order.paymentStatus.slice(1).toLowerCase()
+                        : "Unknown"}
                     </span>
                   </div>
                 </div>
@@ -326,32 +333,42 @@ export default function BuyerOrdersPage() {
               <div className="p-6">
                 {/* Order Items */}
                 <div className="space-y-4 mb-6">
-                  {order.items.map((item) => (
+                  {order.orderItems?.map((item: any) => (
                     <div key={item.id} className="flex items-center space-x-4">
                       <div className="relative w-16 h-16 flex-shrink-0">
                         <Image
-                          src={item.image || "/placeholder.svg"}
-                          alt={item.name}
+                          src={
+                            item.product?.productImages?.[0] ||
+                            "/placeholder.svg"
+                          }
+                          alt={item.product?.productName || "Product"}
                           fill
-                          className="object-cover"
+                          className="object-cover rounded"
                         />
                       </div>
                       <div className="flex-1">
                         <Link href={`/products/${item.productId}`}>
-                          <h4 className="font-medium text-stone-900 hover:text-orange-600 transition-colors">
-                            {item.name}
+                          <h4 className="font-medium text-stone-900 hover:text-terracotta-600 transition-colors">
+                            {item.product?.productName || "Unknown Product"}
                           </h4>
                         </Link>
                         <p className="text-sm text-stone-500">
-                          By {item.artist}
+                          By{" "}
+                          {item.artist?.storeName ||
+                            item.artist?.fullName ||
+                            "Unknown Artist"}
                         </p>
                         <p className="text-sm text-stone-600">
-                          Qty: {item.quantity} × ${item.price.toFixed(2)}
+                          Category: {item.product?.category || "N/A"}
+                        </p>
+                        <p className="text-sm text-stone-600">
+                          Qty: {item.quantity} × $
+                          {formatPrice(item.priceAtPurchase)}
                         </p>
                       </div>
                       <div className="text-right">
                         <p className="font-medium text-stone-900">
-                          ${(item.quantity * item.price).toFixed(2)}
+                          ${formatPrice(item.quantity * item.priceAtPurchase)}
                         </p>
                       </div>
                     </div>
@@ -361,48 +378,64 @@ export default function BuyerOrdersPage() {
                 <hr className="border-stone-200 my-4" />
 
                 {/* Order Summary */}
-                <div className="flex justify-between items-center mb-4">
-                  <div className="text-sm text-stone-600">
+                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-4">
+                  <div className="text-sm text-stone-600 mb-2 sm:mb-0">
                     <p>
                       Subtotal: $
-                      {(
+                      {formatPrice(
                         order.totalAmount -
-                        order.shippingCost -
-                        order.taxAmount
-                      ).toFixed(2)}
+                          (order.shippingCost || 0) -
+                          (order.taxAmount ||
+                            Math.round(order.totalAmount * 0.08))
+                      )}
                     </p>
-                    <p>Shipping: ${order.shippingCost.toFixed(2)}</p>
-                    <p>Tax: ${order.taxAmount.toFixed(2)}</p>
+                    <p>Shipping: ${formatPrice(order.shippingCost || 0)}</p>
+                    <p>
+                      Tax: $
+                      {formatPrice(
+                        order.taxAmount || Math.round(order.totalAmount * 0.08)
+                      )}
+                    </p>
+                    <p>Payment Method: {order.paymentMethod || "N/A"}</p>
                   </div>
                   <div className="text-right">
                     <p className="text-lg font-medium text-stone-900">
-                      Total: ${order.totalAmount.toFixed(2)}
+                      Total: ${formatPrice(order.totalAmount)}
                     </p>
                   </div>
                 </div>
 
                 {/* Actions */}
-                <div className="flex justify-between items-center pt-4 border-t border-stone-200">
-                  <div className="text-sm text-stone-600">
-                    {order.estimatedDelivery && order.status === "SHIPPED" && (
-                      <p>
-                        <Calendar className="w-4 h-4 inline mr-1" />
-                        Estimated delivery:{" "}
-                        {new Date(order.estimatedDelivery).toLocaleDateString()}
+                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center pt-4 border-t border-stone-200">
+                  <div className="text-sm text-stone-600 mb-2 sm:mb-0">
+                    {order.estimatedDelivery &&
+                      order.status?.toLowerCase() === "shipped" && (
+                        <p>
+                          <Calendar className="w-4 h-4 inline mr-1" />
+                          Estimated delivery:{" "}
+                          {new Date(
+                            order.estimatedDelivery
+                          ).toLocaleDateString()}
+                        </p>
+                      )}
+                    {order.updatedAt && (
+                      <p className="text-xs text-stone-500 mt-1">
+                        Last updated:{" "}
+                        {new Date(order.updatedAt).toLocaleDateString()}
                       </p>
                     )}
                   </div>
                   <div className="flex space-x-2">
-                    <Link href={`/buyer/track-order/${order.id}`}>
-                      <button className="border border-stone-300 text-stone-700 hover:bg-stone-50 px-3 py-1 text-sm font-medium transition-colors">
+                    <Link href={`/Buyer/Orders/${order.id}`}>
+                      <button className="border border-stone-300 text-stone-700 hover:bg-stone-50 px-3 py-1 text-sm font-medium transition-colors cursor-pointer rounded">
                         <Eye className="w-4 h-4 mr-2 inline" />
-                        Track Order
+                        View Details
                       </button>
                     </Link>
-                    {order.paymentStatus === "PAID" && (
+                    {order.paymentStatus?.toLowerCase() === "paid" && (
                       <button
                         onClick={() => downloadInvoice(order.id)}
-                        className="border border-stone-300 text-stone-700 hover:bg-stone-50 px-3 py-1 text-sm font-medium transition-colors"
+                        className="border border-stone-300 text-stone-700 hover:bg-stone-50 px-3 py-1 text-sm font-medium transition-colors cursor-pointer rounded"
                       >
                         <Download className="w-4 h-4 mr-2 inline" />
                         Invoice
@@ -415,7 +448,7 @@ export default function BuyerOrdersPage() {
           ))}
         </div>
 
-        {filteredOrders.length === 0 && (
+        {filteredOrders.length === 0 && orders.length > 0 && (
           <div className="text-center py-16">
             <Package className="w-16 h-16 mx-auto text-stone-300 mb-4" />
             <h3 className="text-lg font-medium text-stone-900 mb-2">
@@ -424,6 +457,35 @@ export default function BuyerOrdersPage() {
             <p className="text-stone-600">
               Try adjusting your filters or search terms.
             </p>
+          </div>
+        )}
+
+        {/* Pagination */}
+        {pagination && pagination.totalPages > 1 && (
+          <div className="flex justify-center items-center space-x-4 mt-8">
+            <button
+              onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+              disabled={!pagination.hasPrev}
+              className="px-4 py-2 border border-stone-300 text-stone-700 hover:bg-stone-50 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed rounded"
+            >
+              Previous
+            </button>
+            <span className="text-stone-600">
+              Page {pagination.currentPage} of {pagination.totalPages}
+              {pagination.totalCount > 0 &&
+                ` (${pagination.totalCount} orders total)`}
+            </span>
+            <button
+              onClick={() =>
+                setCurrentPage((prev) =>
+                  Math.min(pagination.totalPages, prev + 1)
+                )
+              }
+              disabled={!pagination.hasNext}
+              className="px-4 py-2 border border-stone-300 text-stone-700 hover:bg-stone-50 transition-colors cursor-pointer disabled:cursor-not-allowed rounded"
+            >
+              Next
+            </button>
           </div>
         )}
       </div>

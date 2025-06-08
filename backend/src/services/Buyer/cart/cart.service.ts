@@ -42,11 +42,38 @@ export const addToCart = async (
   });
 };
 
-export const getCartByBuyer = async (buyerId: string) => {
-  return await prisma.cart.findMany({
-    where: { buyerId },
-    include: { product: true },
-  });
+export const getCartByBuyerId = async (buyerId: string) => {
+  try {
+    const items = await prisma.cart.findMany({
+      where: { buyerId },
+      include: {
+        product: {
+          include: {
+            artist: {
+              select: {
+                id: true,
+                fullName: true,
+                storeName: true,
+              },
+            },
+          },
+        },
+      },
+    });
+    return items;
+  } catch (error: any) {
+    throw new Error("Failed to get cart items");
+  }
+};
+
+export const clearCart = async (buyerId: string) => {
+  try {
+    await prisma.cart.deleteMany({
+      where: { buyerId },
+    });
+  } catch (error: any) {
+    throw new Error("Failed to clear cart");
+  }
 };
 
 export const updateCartItem = async (
