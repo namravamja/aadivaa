@@ -88,7 +88,13 @@ export const updateOrderStatus = async (
     }
 
     // Validate status values
-    const validStatuses = ["pending", "shipped", "delivered", "cancelled"];
+    const validStatuses = [
+      "pending",
+      "confirmed",
+      "shipped",
+      "delivered",
+      "cancelled",
+    ];
     if (!validStatuses.includes(status)) {
       return res.status(400).json({
         success: false,

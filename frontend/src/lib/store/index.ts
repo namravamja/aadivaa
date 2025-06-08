@@ -15,6 +15,7 @@ import "@/services/api/productApi";
 import "@/services/api/cartApi";
 import "@/services/api/wishlistApi";
 import "@/services/api/orderApi";
+import artistOrderApi from "@/services/api/artistOrderApi";
 
 export const makeStore = () =>
   configureStore({
@@ -35,7 +36,7 @@ export const makeStore = () =>
         ProductApi.middleware,
         CartApi.middleware,
         WishlistApi.middleware,
-        OrderApi.middleware
+        OrderApi.middleware,
       ), // Only include the base API middleware
   });
 
