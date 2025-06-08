@@ -109,7 +109,7 @@ export const getProductsByArtist = async (
 
     res.status(200).json(products);
   } catch (error) {
-    res.status(404).json({ error: (error as Error).message });
+    res.status(400).json({ error: (error as Error).message });
   }
 };
 

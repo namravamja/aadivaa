@@ -43,14 +43,8 @@ export const uploadArtistImages = multer({
   fileFilter,
   limits: { fileSize: 5 * 1024 * 1024 },
 }).fields([
-  { name: "avatar", maxCount: 1 },
   { name: "businessLogo", maxCount: 1 },
   { name: "digitalSignature", maxCount: 1 },
-  // ADD DOCUMENT FIELDS
-  { name: "gstCertificate", maxCount: 1 },
-  { name: "panCard", maxCount: 1 },
-  { name: "businessLicense", maxCount: 1 },
-  { name: "canceledCheque", maxCount: 1 },
 ]);
 
 // 🔹 Document-specific uploader

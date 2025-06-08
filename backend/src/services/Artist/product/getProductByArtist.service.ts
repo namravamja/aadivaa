@@ -10,14 +10,14 @@ export const getProductsByArtist = async (artistId: string) => {
   if (!artist) throw new Error("Artist not found");
 
   const products = await prisma.product.findMany({
-    where: { artistId },
+    where: { artistId: artistId },
     include: {
       artist: {
         select: {
           id: true,
           fullName: true,
-          email: true,
           storeName: true,
+          email: true,
         },
       },
     },

@@ -240,3 +240,4 @@ model SocialLinks {
 
   artist Artist?
 }
+

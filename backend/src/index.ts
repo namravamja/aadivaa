@@ -9,6 +9,7 @@ import { logger } from "./utils/logger";
 import authRoutes from "./routes/common/auth.routes";
 import buyerRoutes from "./routes/Buyer/buyer.routes";
 import artistRoutes from "./routes/Artist/artist.routes";
+import productRouter from "./routes/Artist/product/product.routes";
 
 // Load .env variables
 dotenv.config();
@@ -57,7 +58,7 @@ app.use("/api/buyer", buyerRoutes);
 app.use("/api/artist", artistRoutes);
 
 // Product routes
-app.use("/api", artistRoutes);
+app.use("/api/product", productRouter);
 
 // 404 and error handlers
 app.use(notFound);
