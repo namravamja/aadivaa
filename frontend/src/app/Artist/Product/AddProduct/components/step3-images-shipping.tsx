@@ -165,7 +165,7 @@ export default function Step3ImagesShipping({
 
         <label className="flex flex-col gap-1">
           <span className="text-sm font-medium text-stone-700">
-            Shipping Cost ($)
+            Shipping Cost (₹)
           </span>
           <input
             type="number"

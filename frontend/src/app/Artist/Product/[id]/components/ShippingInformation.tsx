@@ -76,7 +76,7 @@ const ShippingInformation: React.FC<ShippingInformationProps> = ({
             </label>
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <span className="text-gray-500 text-sm">$</span>
+                <span className="text-gray-500 text-sm">₹</span>
               </div>
               <input
                 type="number"
@@ -122,7 +122,7 @@ const ShippingInformation: React.FC<ShippingInformationProps> = ({
           <div className="flex justify-between items-center">
             <span className="text-gray-600">Shipping Cost</span>
             <span className="font-medium text-gray-900">
-              ${Number.parseFloat(product.shippingCost).toFixed(2)}
+              ₹{Number.parseFloat(product.shippingCost).toFixed(2)}
             </span>
           </div>
           <div className="flex justify-between items-center">

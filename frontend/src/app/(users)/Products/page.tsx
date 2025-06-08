@@ -49,10 +49,10 @@ export default function Products({
   // Generate price ranges based on actual product prices
   const priceRanges = [
     { id: "all", name: "All Prices" },
-    { id: "under-50", name: "Under $50" },
-    { id: "50-100", name: "$50 - $100" },
-    { id: "100-200", name: "$100 - $200" },
-    { id: "over-200", name: "Over $200" },
+    { id: "under-50", name: "Under ₹50" },
+    { id: "50-100", name: "₹50 - ₹100" },
+    { id: "100-200", name: "₹100 - ₹200" },
+    { id: "over-200", name: "Over ₹200" },
   ];
 
   if (isLoading) {

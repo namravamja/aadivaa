@@ -205,7 +205,7 @@ export default function ProductCard({ product }: ProductCardProps) {
             {product.name}
           </h3>
           <p className="text-stone-500 text-sm mb-2">By {product.artist}</p>
-          <span className="text-stone-900">${product.price.toFixed(2)}</span>
+          <span className="text-stone-900">₹{product.price.toFixed(2)}</span>
         </div>
       </Link>
     </div>

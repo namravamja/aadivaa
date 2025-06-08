@@ -36,7 +36,7 @@ const PricingInventory: React.FC<PricingInventoryProps> = ({
             </label>
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <span className="text-gray-500 text-sm">$</span>
+                <span className="text-gray-500 text-sm">₹</span>
               </div>
               <input
                 type="number"
@@ -56,7 +56,7 @@ const PricingInventory: React.FC<PricingInventoryProps> = ({
             </label>
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <span className="text-gray-500 text-sm">$</span>
+                <span className="text-gray-500 text-sm">₹</span>
               </div>
               <input
                 type="number"
@@ -98,10 +98,10 @@ const PricingInventory: React.FC<PricingInventoryProps> = ({
         <div className="space-y-4">
           <div className="text-center py-4 border-b border-gray-100">
             <p className="text-3xl font-bold text-terracotta-700 mb-1">
-              ${Number.parseFloat(product.sellingPrice).toFixed(2)}
+              ₹{Number.parseFloat(product.sellingPrice).toFixed(2)}
             </p>
             <p className="text-lg text-gray-500 line-through">
-              ${Number.parseFloat(product.mrp).toFixed(2)}
+              ₹{Number.parseFloat(product.mrp).toFixed(2)}
             </p>
             <p className="text-sm text-green-700 font-medium">
               {calculateDiscount()}% off

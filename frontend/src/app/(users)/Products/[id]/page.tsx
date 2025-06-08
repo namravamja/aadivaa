@@ -200,11 +200,11 @@ export default function ProductDetailPage({
             <div className="mb-6">
               <div className="flex items-center gap-3">
                 <span className="text-2xl font-medium text-stone-900">
-                  ${product.price.toFixed(2)}
+                  ₹{product.price.toFixed(2)}
                 </span>
                 {product.originalPrice > product.price && (
                   <span className="text-lg text-stone-500 line-through">
-                    ${product.originalPrice.toFixed(2)}
+                    ₹{product.originalPrice.toFixed(2)}
                   </span>
                 )}
               </div>
@@ -250,7 +250,7 @@ export default function ProductDetailPage({
                   Shipping Cost
                 </h3>
                 <p className="text-sm text-stone-600">
-                  ${product.shippingCost.toFixed(2)}
+                  ₹{product.shippingCost.toFixed(2)}
                 </p>
               </div>
 
