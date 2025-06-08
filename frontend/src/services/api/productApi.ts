@@ -46,7 +46,7 @@ export const productApi = ProductApi.injectEndpoints({
     }),
 
     getProductByArtist: builder.query({
-      query: () => "/listP",
+      query: () => "/listByArtist",
     }),
 
     // Get all products

@@ -6,18 +6,26 @@ import { uploadProductImages } from "../../../middleware/multer";
 const router = express.Router();
 
 router.get("/list", productController.getAllProducts);
-router.get("/:productId", productController.getProductById);
-
-router.use(verifyToken);
 
 // Product routes
-router.post("/create", uploadProductImages, productController.createProduct);
-router.get("/listByArtist", productController.getProductsByArtist);
+router.post(
+  "/create",
+  verifyToken,
+  uploadProductImages,
+  productController.createProduct
+);
+router.get("/listByArtist", verifyToken, productController.getProductsByArtist);
 router.put(
   "/update/:productId",
+  verifyToken,
   uploadProductImages,
   productController.updateProduct
 );
-router.delete("/delete/:productId", productController.deleteProduct);
+router.delete(
+  "/delete/:productId",
+  verifyToken,
+  productController.deleteProduct
+);
 
+router.get("/:productId", productController.getProductById);
 export default router;
