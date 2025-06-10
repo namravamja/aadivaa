@@ -286,7 +286,7 @@ export default function BuyerCartPage() {
                     <div className="flex-1 min-w-0">
                       <div className="flex justify-between items-start mb-2">
                         <div>
-                          <Link href={`/products/${item.product.id}`}>
+                          <Link href={`/Products/${item.product.id}`}>
                             <h3 className="font-medium text-stone-900 hover:text-terracotta-600 transition-colors">
                               {item.product.productName}
                             </h3>
@@ -350,14 +350,14 @@ export default function BuyerCartPage() {
 
                         <div className="text-right">
                           <p className="font-medium text-stone-900">
-                            $
+                            ₹
                             {(
                               Number.parseFloat(item.product.sellingPrice) *
                               item.quantity
                             ).toFixed(2)}
                           </p>
                           <p className="text-sm text-stone-500">
-                            $
+                            ₹
                             {Number.parseFloat(
                               item.product.sellingPrice
                             ).toFixed(2)}{" "}
@@ -384,30 +384,30 @@ export default function BuyerCartPage() {
                   <div className="flex justify-between">
                     <span className="text-stone-600">Subtotal</span>
                     <span className="text-stone-900">
-                      ${subtotal.toFixed(2)}
+                      ₹{subtotal.toFixed(2)}
                     </span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-stone-600">Shipping</span>
                     <span className="text-stone-900">
-                      {shipping === 0 ? "Free" : `$${shipping.toFixed(2)}`}
+                      {shipping === 0 ? "Free" : `₹${shipping.toFixed(2)}`}
                     </span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-stone-600">Tax</span>
-                    <span className="text-stone-900">${tax.toFixed(2)}</span>
+                    <span className="text-stone-900">₹{tax.toFixed(2)}</span>
                   </div>
                   <hr className="border-stone-200" />
                   <div className="flex justify-between font-medium text-lg">
                     <span className="text-stone-900">Total</span>
-                    <span className="text-stone-900">${total.toFixed(2)}</span>
+                    <span className="text-stone-900">₹{total.toFixed(2)}</span>
                   </div>
                 </div>
 
                 {shipping > 0 && (
                   <div className="bg-blue-50 border border-blue-200 p-3 mb-6">
                     <p className="text-sm text-blue-800">
-                      Add ${(100 - subtotal).toFixed(2)} more for free shipping!
+                      Add ₹{(100 - subtotal).toFixed(2)} more for free shipping!
                     </p>
                   </div>
                 )}

@@ -381,7 +381,7 @@ export default function OrdersPage() {
                   <div className="flex flex-col sm:flex-row gap-2 lg:flex-col lg:items-end">
                     <button
                       onClick={() => handleViewDetails(order.id)}
-                      className="px-4 py-2 bg-terracotta-600 text-white rounded-md hover:bg-terracotta-700 transition-colors flex items-center justify-center text-sm"
+                      className="px-4 py-2 cursor-pointer bg-terracotta-600 text-white rounded-md hover:bg-terracotta-700 transition-colors flex items-center justify-center text-sm"
                     >
                       <Eye className="w-4 h-4 mr-2" />
                       View Details

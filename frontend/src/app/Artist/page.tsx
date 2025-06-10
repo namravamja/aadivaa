@@ -35,7 +35,7 @@ const features = [
       "Showcase your artistry and connect with customers through rich profiles",
     icon: Users,
     color: "sage",
-    href: "/Artist/profile",
+    href: "/Artist/Profile",
     benefits: ["Story telling", "Portfolio showcase", "Customer connection"],
   },
   {
@@ -44,7 +44,7 @@ const features = [
       "Share your journey and expertise through our journal platform",
     icon: FileText,
     color: "clay",
-    href: "/Artist/journal",
+    href: "/Artist/Journal",
     benefits: ["Rich editor", "SEO optimized", "Social sharing"],
   },
   {
@@ -52,7 +52,7 @@ const features = [
     description: "Monitor and respond to customer feedback to build trust",
     icon: Star,
     color: "terracotta",
-    href: "/Artist/reviews",
+    href: "/Artist/Reviews",
     benefits: ["Real-time alerts", "Response tools", "Analytics"],
   },
 ];
@@ -62,28 +62,28 @@ const quickStart = [
     step: "01",
     title: "Set Up Your Profile",
     description: "Create your artist profile and tell your story",
-    href: "/Artist/make-profile",
+    href: "/Artist/MakeProfile",
     icon: UserPlus,
   },
   {
     step: "02",
     title: "Add Your Products",
     description: "Upload your first products to start selling",
-    href: "/Artist/products/new",
+    href: "/Artist/Product/AddProduct",
     icon: Package,
   },
   {
     step: "03",
     title: "Organize Categories",
     description: "Set up product categories for better organization",
-    href: "/Artist/categories",
+    href: "/Artist/Product",
     icon: Settings,
   },
   {
     step: "04",
     title: "Share Your Story",
     description: "Write your first journal article",
-    href: "/Artist/journal/new",
+    href: "/Artist/Journal",
     icon: FileText,
   },
 ];
@@ -156,14 +156,14 @@ export default function ArtistLanding() {
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link
-                href="/Artist/make-profile"
+                href="/Artist/Profile"
                 className="bg-terracotta-600 text-white px-8 py-4 rounded-lg hover:bg-terracotta-700 transition-all duration-300 font-medium flex items-center justify-center group"
               >
                 Get Started
                 <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
               </Link>
               <Link
-                href="/Artist/dashboard"
+                href="/Artist/Dashboard"
                 className="bg-white text-stone-700 px-8 py-4 rounded-lg border border-stone-200 hover:bg-stone-50 transition-all duration-300 font-medium flex items-center justify-center group"
               >
                 <Play className="w-5 h-5 mr-2" />
@@ -342,14 +342,14 @@ export default function ArtistLanding() {
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link
-                href="/Artist/make-profile"
+                href="/Artist/MakeProfile"
                 className="bg-terracotta-600 text-white px-8 py-4 rounded-lg hover:bg-terracotta-700 transition-all duration-300 font-medium flex items-center justify-center group"
               >
                 Create Your Profile
                 <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
               </Link>
               <Link
-                href="/Artist/products"
+                href="/Artist/Product"
                 className="bg-transparent text-white px-8 py-4 rounded-lg border-2 border-white hover:bg-white hover:text-stone-900 transition-all duration-300 font-medium"
               >
                 Explore Features

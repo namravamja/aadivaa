@@ -254,7 +254,7 @@ export default function OrderDetailsPage() {
       <div className="flex items-center mb-6">
         <button
           onClick={handleBackClick}
-          className="flex items-center text-terracotta-600 hover:text-terracotta-700 transition-colors mr-4"
+          className="flex items-center cursor-pointer text-terracotta-600 hover:text-terracotta-700 transition-colors mr-4"
         >
           <ArrowLeft className="w-5 h-5 mr-2" />
           Back to Orders
@@ -301,16 +301,16 @@ export default function OrderDetailsPage() {
                       className="p-1 text-green-600 hover:text-green-700"
                     >
                       {isUpdatingStatus ? (
-                        <Loader2 className="w-4 h-4 animate-spin" />
+                        <Loader2 className="w-4 h-4 animate-spin cursor-pointer" />
                       ) : (
-                        <Save className="w-4 h-4" />
+                        <Save className="w-4 h-4 cursor-pointer" />
                       )}
                     </button>
                     <button
                       onClick={() => setIsEditingStatus(false)}
                       className="p-1 text-red-600 hover:text-red-700"
                     >
-                      <X className="w-4 h-4" />
+                      <X className="w-4 h-4 cursor-pointer" />
                     </button>
                   </div>
                 ) : (
@@ -330,7 +330,7 @@ export default function OrderDetailsPage() {
                       }}
                       className="p-1 text-stone-600 hover:text-stone-700"
                     >
-                      <Edit className="w-4 h-4" />
+                      <Edit className="w-4 h-4 cursor-pointer" />
                     </button>
                   </div>
                 )}
@@ -359,16 +359,16 @@ export default function OrderDetailsPage() {
                       className="p-1 text-green-600 hover:text-green-700"
                     >
                       {isUpdatingPayment ? (
-                        <Loader2 className="w-4 h-4 animate-spin" />
+                        <Loader2 className="w-4 h-4 animate-spin cursor-pointer" />
                       ) : (
-                        <Save className="w-4 h-4" />
+                        <Save className="w-4 h-4 cursor-pointer" />
                       )}
                     </button>
                     <button
                       onClick={() => setIsEditingPayment(false)}
                       className="p-1 text-red-600 hover:text-red-700"
                     >
-                      <X className="w-4 h-4" />
+                      <X className="w-4 h-4 cursor-pointer" />
                     </button>
                   </div>
                 ) : (
@@ -388,7 +388,7 @@ export default function OrderDetailsPage() {
                       }}
                       className="p-1 text-stone-600 hover:text-stone-700"
                     >
-                      <Edit className="w-4 h-4" />
+                      <Edit className="w-4 h-4 cursor-pointer" />
                     </button>
                   </div>
                 )}

@@ -409,7 +409,7 @@ export default function CheckoutPage() {
                         </p>
                       </div>
                       <span className="text-sm font-medium text-stone-900">
-                        $
+                        ₹
                         {(
                           Number.parseFloat(item.product.sellingPrice) *
                           item.quantity
@@ -426,23 +426,23 @@ export default function CheckoutPage() {
                   <div className="flex justify-between text-sm">
                     <span className="text-stone-600">Subtotal</span>
                     <span className="text-stone-900">
-                      ${subtotal.toFixed(2)}
+                      ₹{subtotal.toFixed(2)}
                     </span>
                   </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-stone-600">Shipping</span>
                     <span className="text-stone-900">
-                      {shipping === 0 ? "Free" : `$${shipping.toFixed(2)}`}
+                      {shipping === 0 ? "Free" : `₹${shipping.toFixed(2)}`}
                     </span>
                   </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-stone-600">Tax</span>
-                    <span className="text-stone-900">${tax.toFixed(2)}</span>
+                    <span className="text-stone-900">₹{tax.toFixed(2)}</span>
                   </div>
                   <hr className="border-stone-200" />
                   <div className="flex justify-between font-medium text-lg">
                     <span className="text-stone-900">Total</span>
-                    <span className="text-stone-900">${total.toFixed(2)}</span>
+                    <span className="text-stone-900">₹{total.toFixed(2)}</span>
                   </div>
                 </div>
 
@@ -462,7 +462,7 @@ export default function CheckoutPage() {
                   ) : (
                     <span className="flex items-center justify-center">
                       <CheckCircle className="w-4 h-4 mr-2" />
-                      Place Order - ${total.toFixed(2)}
+                      Place Order - ₹{total.toFixed(2)}
                     </span>
                   )}
                 </button>

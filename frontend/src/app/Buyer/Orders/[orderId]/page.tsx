@@ -345,7 +345,7 @@ export default function OrderDetailsPage() {
                       <p className="text-stone-600">Total</p>
                       <p className="font-medium">
                         {order.totalAmount !== undefined
-                          ? `$${(order.totalAmount / 100).toFixed(2)}`
+                          ? `₹${order.totalAmount.toFixed(2)}`
                           : "-"}
                       </p>
                     </div>
@@ -394,15 +394,14 @@ export default function OrderDetailsPage() {
                       </div>
                       <div className="text-right">
                         <p className="font-medium text-stone-900">
-                          $
+                          ₹
                           {(
-                            (item.quantity || 0) *
-                            ((item.priceAtPurchase || 0) / 100)
+                            (item.quantity || 0) * (item.priceAtPurchase || 0)
                           ).toFixed(2)}
                         </p>
                         <p className="text-sm text-stone-600">
-                          {item.quantity || 0} × $
-                          {((item.priceAtPurchase || 0) / 100).toFixed(2)}
+                          {item.quantity || 0} × ₹
+                          {(item.priceAtPurchase || 0).toFixed(2)}
                         </p>
                       </div>
                     </div>
@@ -438,7 +437,7 @@ export default function OrderDetailsPage() {
                     <div>
                       <p className="text-stone-600">Shipping Cost</p>
                       <p className="font-medium">
-                        $
+                        ₹
                         {(
                           order.orderItems[0].product.shippingCost / 100
                         ).toFixed(2)}
@@ -512,7 +511,7 @@ export default function OrderDetailsPage() {
                     <div className="flex justify-between">
                       <span className="text-stone-600">Subtotal</span>
                       <span className="text-stone-900">
-                        $
+                        ₹
                         {(
                           (order.totalAmount -
                             (order.orderItems?.[0]?.product?.shippingCost ||
@@ -524,7 +523,7 @@ export default function OrderDetailsPage() {
                     <div className="flex justify-between">
                       <span className="text-stone-600">Shipping</span>
                       <span className="text-stone-900">
-                        $
+                        ₹
                         {(
                           (order.orderItems?.[0]?.product?.shippingCost || 0) /
                           100
@@ -534,7 +533,7 @@ export default function OrderDetailsPage() {
                     <div className="flex justify-between font-medium text-base pt-2 border-t border-stone-200">
                       <span className="text-stone-900">Total</span>
                       <span className="text-stone-900">
-                        ${(order.totalAmount / 100).toFixed(2)}
+                        ₹{(order.totalAmount / 100).toFixed(2)}
                       </span>
                     </div>
                   </div>

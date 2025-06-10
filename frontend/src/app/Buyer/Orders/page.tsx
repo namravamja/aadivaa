@@ -347,7 +347,7 @@ export default function BuyerOrdersPage() {
                         />
                       </div>
                       <div className="flex-1">
-                        <Link href={`/products/${item.productId}`}>
+                        <Link href={`/Products/${item.productId}`}>
                           <h4 className="font-medium text-stone-900 hover:text-terracotta-600 transition-colors">
                             {item.product?.productName || "Unknown Product"}
                           </h4>
@@ -362,13 +362,13 @@ export default function BuyerOrdersPage() {
                           Category: {item.product?.category || "N/A"}
                         </p>
                         <p className="text-sm text-stone-600">
-                          Qty: {item.quantity} × $
+                          Qty: {item.quantity} × ₹
                           {formatPrice(item.priceAtPurchase)}
                         </p>
                       </div>
                       <div className="text-right">
                         <p className="font-medium text-stone-900">
-                          ${formatPrice(item.quantity * item.priceAtPurchase)}
+                          ₹{formatPrice(item.quantity * item.priceAtPurchase)}
                         </p>
                       </div>
                     </div>
@@ -381,7 +381,7 @@ export default function BuyerOrdersPage() {
                 <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-4">
                   <div className="text-sm text-stone-600 mb-2 sm:mb-0">
                     <p>
-                      Subtotal: $
+                      Subtotal: ₹
                       {formatPrice(
                         order.totalAmount -
                           (order.shippingCost || 0) -
@@ -389,9 +389,9 @@ export default function BuyerOrdersPage() {
                             Math.round(order.totalAmount * 0.08))
                       )}
                     </p>
-                    <p>Shipping: ${formatPrice(order.shippingCost || 0)}</p>
+                    <p>Shipping: ₹{formatPrice(order.shippingCost || 0)}</p>
                     <p>
-                      Tax: $
+                      Tax: ₹
                       {formatPrice(
                         order.taxAmount || Math.round(order.totalAmount * 0.08)
                       )}
@@ -400,7 +400,7 @@ export default function BuyerOrdersPage() {
                   </div>
                   <div className="text-right">
                     <p className="text-lg font-medium text-stone-900">
-                      Total: ${formatPrice(order.totalAmount)}
+                      Total: ₹{formatPrice(order.totalAmount)}
                     </p>
                   </div>
                 </div>
