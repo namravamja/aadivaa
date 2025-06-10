@@ -1,0 +1,22 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.getArtists = exports.deleteArtist = exports.updateSocialLinks = exports.updateDocuments = exports.updateWarehouseAddress = exports.updateBusinessAddress = exports.updateArtist = exports.getArtist = exports.createArtist = void 0;
+var createArtist_controller_1 = require("./individual/createArtist.controller");
+Object.defineProperty(exports, "createArtist", { enumerable: true, get: function () { return createArtist_controller_1.createArtist; } });
+var getArtist_controller_1 = require("./individual/getArtist.controller");
+Object.defineProperty(exports, "getArtist", { enumerable: true, get: function () { return getArtist_controller_1.getArtist; } });
+var updateArtist_controller_1 = require("./individual/updateArtist.controller");
+Object.defineProperty(exports, "updateArtist", { enumerable: true, get: function () { return updateArtist_controller_1.updateArtist; } });
+var updateBusinessAddress_controller_1 = require("./individual/updateBusinessAddress.controller");
+Object.defineProperty(exports, "updateBusinessAddress", { enumerable: true, get: function () { return updateBusinessAddress_controller_1.updateBusinessAddress; } });
+var updateWarehouseAddress_controller_1 = require("./individual/updateWarehouseAddress.controller");
+Object.defineProperty(exports, "updateWarehouseAddress", { enumerable: true, get: function () { return updateWarehouseAddress_controller_1.updateWarehouseAddress; } });
+var updateDocuments_controller_1 = require("./individual/updateDocuments.controller");
+Object.defineProperty(exports, "updateDocuments", { enumerable: true, get: function () { return updateDocuments_controller_1.updateDocuments; } });
+var updateSocialLinks_controller_1 = require("./individual/updateSocialLinks.controller");
+Object.defineProperty(exports, "updateSocialLinks", { enumerable: true, get: function () { return updateSocialLinks_controller_1.updateSocialLinks; } });
+var deleteArtist_controller_1 = require("./individual/deleteArtist.controller");
+Object.defineProperty(exports, "deleteArtist", { enumerable: true, get: function () { return deleteArtist_controller_1.deleteArtist; } });
+var getArtists_controller_1 = require("./individual/getArtists.controller");
+Object.defineProperty(exports, "getArtists", { enumerable: true, get: function () { return getArtists_controller_1.getArtists; } });
+//# sourceMappingURL=artist.controller.js.map

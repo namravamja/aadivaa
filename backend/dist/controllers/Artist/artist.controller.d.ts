@@ -1,0 +1,9 @@
+export { createArtist } from "./individual/createArtist.controller";
+export { getArtist } from "./individual/getArtist.controller";
+export { updateArtist } from "./individual/updateArtist.controller";
+export { updateBusinessAddress } from "./individual/updateBusinessAddress.controller";
+export { updateWarehouseAddress } from "./individual/updateWarehouseAddress.controller";
+export { updateDocuments } from "./individual/updateDocuments.controller";
+export { updateSocialLinks } from "./individual/updateSocialLinks.controller";
+export { deleteArtist } from "./individual/deleteArtist.controller";
+export { getArtists } from "./individual/getArtists.controller";
