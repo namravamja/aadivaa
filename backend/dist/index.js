@@ -19,6 +19,7 @@ const product_routes_1 = __importDefault(require("./routes/Artist/product/produc
 dotenv_1.default.config();
 const app = (0, express_1.default)();
 const PORT = process.env.PORT || 5000;
+app.set("trust proxy", 1);
 // Security middlewares
 app.use((0, helmet_1.default)());
 app.use((0, cors_1.default)({
