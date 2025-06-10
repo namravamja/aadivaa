@@ -202,53 +202,6 @@ export default function AboutPage() {
           </div>
         </section>
 
-        {/* Team */}
-        <section className="mb-16">
-          <h2 className="text-3xl font-light text-stone-900 mb-12 text-center">
-            Our Team
-          </h2>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-            {[
-              {
-                name: "Elena Martinez",
-                role: "Founder & CEO",
-                image: "/Profile.jpg",
-              },
-              {
-                name: "Michael Thompson",
-                role: "Director of Artisan Relations",
-                image: "/Profile.jpg",
-              },
-              {
-                name: "Sarah Johnson",
-                role: "Head of Marketing",
-                image: "/Profile.jpg",
-              },
-              {
-                name: "David Wilson",
-                role: "Operations Manager",
-                image: "/Profile.jpg",
-              },
-            ].map((member, index) => (
-              <div key={index} className="text-center">
-                <div className="relative h-64 w-full mb-4 overflow-hidden">
-                  <Image
-                    src={member.image || "/placeholder.svg"}
-                    alt={member.name}
-                    fill
-                    className="object-cover"
-                  />
-                </div>
-                <h3 className="font-medium text-stone-900 mb-1">
-                  {member.name}
-                </h3>
-                <p className="text-stone-500">{member.role}</p>
-              </div>
-            ))}
-          </div>
-        </section>
-
         {/* Call to Action */}
         <section className="bg-terracotta-600 text-white p-12 text-center">
           <h2 className="text-3xl font-light mb-4">Join Our Mission</h2>
@@ -258,13 +211,13 @@ export default function AboutPage() {
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link
-              href="/products"
+              href="/Products"
               className="px-8 py-3 bg-white text-terracotta-600 font-medium hover:bg-stone-100 transition-colors"
             >
               Shop Collection
             </Link>
             <Link
-              href="/contact"
+              href="/About"
               className="px-8 py-3 border border-white text-white font-medium hover:bg-terracotta-700 transition-colors"
             >
               Contact Us

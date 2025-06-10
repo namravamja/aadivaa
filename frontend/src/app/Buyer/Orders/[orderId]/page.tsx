@@ -51,7 +51,7 @@ const ConfirmationDialog = ({
     switch (variant) {
       case "danger":
         return {
-          icon: <X className="w-6 h-6 text-red-600" />,
+          icon: <X className="w-6 h-6 text-red-600 cursor-pointer" />,
           confirmButton: "bg-red-600 hover:bg-red-700 text-white",
           iconBg: "bg-red-100",
         };
@@ -93,14 +93,14 @@ const ConfirmationDialog = ({
             <button
               onClick={onClose}
               disabled={isLoading}
-              className="px-4 py-2 border border-stone-300 text-stone-700 hover:bg-stone-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-4 py-2 border border-stone-300 text-stone-700 hover:bg-stone-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
             >
               {cancelText}
             </button>
             <button
               onClick={onConfirm}
               disabled={isLoading}
-              className={`px-4 py-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${variantStyles.confirmButton}`}
+              className={`px-4 py-2 cursor-pointer transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${variantStyles.confirmButton}`}
             >
               {isLoading ? "Processing..." : confirmText}
             </button>
@@ -256,7 +256,7 @@ export default function OrderDetailsPage() {
             >
               Retry
             </button>
-            <Link href="/orders">
+            <Link href="/Buyer/Orders">
               <button className="border border-stone-300 text-stone-700 hover:bg-stone-50 px-6 py-3 font-medium transition-colors cursor-pointer">
                 View All Orders
               </button>
@@ -274,7 +274,7 @@ export default function OrderDetailsPage() {
           {/* Breadcrumb */}
           <div className="mb-8">
             <Link
-              href="/orders"
+              href="/Buyer/Orders"
               className="flex items-center text-stone-600 hover:text-terracotta-600 transition-colors"
             >
               <ArrowLeft className="w-4 h-4 mr-2" />
@@ -367,8 +367,7 @@ export default function OrderDetailsPage() {
                       <div className="relative w-20 h-20 flex-shrink-0">
                         <Image
                           src={
-                            item.product?.productImages?.[0] ||
-                            "/placeholder.svg"
+                            item.product?.productImages?.[0] || "/Profile.jpg"
                           }
                           alt={item.product?.productName || "Product"}
                           fill
@@ -490,13 +489,13 @@ export default function OrderDetailsPage() {
                   </button>
                 )}
 
-                <Link href="/orders">
+                <Link href="/Buyer/Orders">
                   <button className="w-full px-4 py-3 border border-stone-300 text-stone-700 hover:bg-stone-50 transition-colors cursor-pointer mb-4">
                     View All Orders
                   </button>
                 </Link>
 
-                <Link href="/products">
+                <Link href="/Products">
                   <button className="w-full px-4 py-3 bg-terracotta-600 hover:bg-terracotta-700 text-white transition-colors cursor-pointer">
                     Continue Shopping
                   </button>

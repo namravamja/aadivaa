@@ -84,7 +84,7 @@ export default function ArtistSpotlight() {
             Featured Artists
           </h2>
           <Link
-            href="/artists"
+            href="/Artists"
             className="flex items-center text-stone-900 hover:text-terracotta-600 transition-colors"
           >
             View all <ArrowRight className="w-4 h-4 ml-2" />
@@ -95,7 +95,7 @@ export default function ArtistSpotlight() {
           {artists.slice(0, 3).map((artist: ArtistData) => (
             <Link
               key={artist.id}
-              href={`/artist/${artist.id}`}
+              href={`/Artists/${artist.id}`}
               className="group"
             >
               <div className="relative aspect-square overflow-hidden mb-4 sm:mb-6">

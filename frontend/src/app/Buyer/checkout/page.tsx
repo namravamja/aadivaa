@@ -107,7 +107,7 @@ export default function CheckoutPage() {
       });
 
       // Redirect to order confirmation page
-      router.push(`/orders/${result.data.id}`);
+      router.push(`/Buyer/Orders/${result.data.id}`);
     } catch (error: any) {
       console.error("Error placing order:", error);
       const errorMessage =
@@ -174,7 +174,7 @@ export default function CheckoutPage() {
             <p className="text-stone-600 mb-8">
               Add some items to your cart before proceeding to checkout.
             </p>
-            <Link href="/products">
+            <Link href="/Products">
               <button className="bg-terracotta-600 hover:bg-terracotta-700 text-white px-6 py-3 font-medium transition-colors cursor-pointer">
                 Start Shopping
               </button>
@@ -198,12 +198,12 @@ export default function CheckoutPage() {
             <p className="text-stone-600 mb-8">
               Please update your address first before proceeding to checkout.
             </p>
-            <Link href="/profile/addresses">
+            <Link href="/Buyer/Profile">
               <button className="bg-terracotta-600 hover:bg-terracotta-700 text-white px-6 py-3 font-medium transition-colors cursor-pointer mr-4">
                 Add Address
               </button>
             </Link>
-            <Link href="/cart">
+            <Link href="/Buyer/Cart">
               <button className="border border-stone-300 text-stone-700 hover:bg-stone-50 px-6 py-3 font-medium transition-colors cursor-pointer">
                 Back to Cart
               </button>
@@ -220,7 +220,7 @@ export default function CheckoutPage() {
         {/* Breadcrumb */}
         <div className="mb-8">
           <Link
-            href="/cart"
+            href="/Buyer/Cart"
             className="flex items-center text-stone-600 hover:text-terracotta-600 transition-colors"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
@@ -243,7 +243,7 @@ export default function CheckoutPage() {
                       Shipping Address
                     </h2>
                   </div>
-                  <Link href="/profile/addresses">
+                  <Link href="/Buyer/Profile">
                     <button
                       type="button"
                       className="flex items-center text-terracotta-600 hover:text-terracotta-700 text-sm font-medium cursor-pointer"
@@ -310,7 +310,7 @@ export default function CheckoutPage() {
                   <div className="text-center py-8 bg-stone-50 rounded-md">
                     <MapPin className="w-12 h-12 mx-auto text-stone-300 mb-3" />
                     <p className="text-stone-600 mb-4">No addresses found</p>
-                    <Link href="/profile/addresses">
+                    <Link href="/Buyer/Profile">
                       <button
                         type="button"
                         className="bg-terracotta-600 hover:bg-terracotta-700 text-white px-4 py-2 text-sm font-medium transition-colors cursor-pointer"

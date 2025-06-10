@@ -15,13 +15,13 @@ export default function CallToAction() {
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link
-              href="/signup"
+              href="/Signup"
               className="px-6 sm:px-8 py-3 bg-terracotta-600 text-white font-medium hover:bg-terracotta-700 transition-colors"
             >
               Create Account
             </Link>
             <Link
-              href="/donate"
+              href="/Products"
               className="px-6 sm:px-8 py-3 border border-stone-900 text-stone-900 font-medium hover:bg-stone-50 transition-colors"
             >
               Support Artisans

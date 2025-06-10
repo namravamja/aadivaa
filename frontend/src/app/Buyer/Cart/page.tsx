@@ -12,7 +12,6 @@ import {
   Trash2,
   User,
 } from "lucide-react";
-import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import {
   useGetCartQuery,
@@ -23,7 +22,6 @@ import { useAuth } from "@/hooks/useAuth";
 
 export default function BuyerCartPage() {
   const [isLoading, setIsLoading] = useState(false);
-  const router = useRouter();
   const { isAuthenticated, isLoading: authLoading } = useAuth();
 
   // RTK Query hooks - only run if authenticated
@@ -207,7 +205,7 @@ export default function BuyerCartPage() {
             >
               Retry
             </button>
-            <Link href="/products">
+            <Link href="/Products">
               <button className="border border-stone-300 text-stone-700 hover:bg-stone-50 px-6 py-3 font-medium transition-colors">
                 Start Shopping
               </button>
@@ -231,7 +229,7 @@ export default function BuyerCartPage() {
               Discover our beautiful handcrafted items and add them to your
               cart.
             </p>
-            <Link href="/products">
+            <Link href="/Products">
               <button className="bg-terracotta-600 hover:bg-terracotta-700 text-white px-6 py-3 font-medium transition-colors cursor-pointer">
                 Start Shopping
               </button>
@@ -419,7 +417,7 @@ export default function BuyerCartPage() {
                   </button>
                 </Link>
 
-                <Link href="/products">
+                <Link href="/Products">
                   <button className="w-full border border-stone-300 text-stone-700 hover:bg-stone-50 px-6 py-3 font-medium transition-colors cursor-pointer">
                     Continue Shopping
                   </button>

@@ -13,7 +13,7 @@ export default function HeroSection() {
             Supporting tribal communities through contemporary craft and design.
           </p>
           <Link
-            href="/products"
+            href="/Products"
             className="inline-flex items-center justify-center px-6 sm:px-8 py-3 text-base font-medium text-white bg-terracotta-600 hover:bg-terracotta-700 transition-colors duration-300"
           >
             Explore Collection

@@ -191,7 +191,7 @@ export default function BuyerOrdersPage() {
             >
               Retry
             </button>
-            <Link href="/products">
+            <Link href="/Products">
               <button className="border border-stone-300 text-stone-700 hover:bg-stone-50 px-6 py-3 font-medium transition-colors cursor-pointer">
                 Continue Shopping
               </button>
@@ -214,7 +214,7 @@ export default function BuyerOrdersPage() {
             <p className="text-stone-600 mb-8">
               Start shopping to see your orders here.
             </p>
-            <Link href="/products">
+            <Link href="/Products">
               <button className="bg-terracotta-600 hover:bg-terracotta-700 text-white px-6 py-3 font-medium transition-colors cursor-pointer">
                 Start Shopping
               </button>
