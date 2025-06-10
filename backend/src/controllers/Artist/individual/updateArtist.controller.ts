@@ -13,10 +13,8 @@ export const updateArtist = async (
     const userId = req.user?.id;
     if (!userId) throw new Error("Unauthorized");
 
-    // Create a new update data object
     const updateData: any = {};
 
-    // Exclude nested objects that now have separate routes
     const excludedFields = [
       "businessAddress",
       "warehouseAddress",
@@ -24,11 +22,9 @@ export const updateArtist = async (
       "socialLinks",
     ];
 
-    // Copy all fields from the request body except excluded ones
     for (const key in req.body) {
       if (!excludedFields.includes(key)) {
         try {
-          // Try to parse JSON strings (for objects and arrays)
           if (
             typeof req.body[key] === "string" &&
             (req.body[key].startsWith("{") || req.body[key].startsWith("["))
@@ -38,22 +34,23 @@ export const updateArtist = async (
             updateData[key] = req.body[key];
           }
         } catch (e) {
-          // If parsing fails, use the original value
           updateData[key] = req.body[key];
         }
       }
     }
 
-    // Handle file uploads if present (only for artist main fields)
     const files = req.files as {
       [fieldname: string]: Express.Multer.File[];
     };
 
-    if (files?.digitalSignature?.[0])
+    if (files?.digitalSignature?.[0]) {
       updateData.digitalSignature = files.digitalSignature[0].path;
+    }
 
-    // console.log("Update data:", updateData);
-    // console.log("Files received:", files);
+    // ✅ Add this block to support business logo
+    if (files?.businessLogo?.[0]) {
+      updateData.businessLogo = files.businessLogo[0].path;
+    }
 
     const artist = await artistService.updateArtistMain(userId, updateData);
     res.json({

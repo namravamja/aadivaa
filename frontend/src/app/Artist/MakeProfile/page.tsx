@@ -75,6 +75,7 @@ interface ProfileData {
   };
   termsAgreed: boolean;
   digitalSignature: string;
+  profileProgress?: number;
 }
 
 export default function MakeProfile() {
@@ -161,6 +162,7 @@ export default function MakeProfile() {
     },
     termsAgreed: false,
     digitalSignature: "",
+    profileProgress: 0,
   });
 
   // Add state to track original data for comparison
@@ -227,6 +229,7 @@ export default function MakeProfile() {
           // Fix: Ensure termsAgreed is always a boolean
           termsAgreed: Boolean(artistData.termsAgreed),
           digitalSignature: artistData.digitalSignature || "",
+          profileProgress: artistData.profileProgress || 0,
         };
 
         setProfileData(loadedData);
@@ -472,8 +475,59 @@ export default function MakeProfile() {
   // Prepare data for API submission with proper type conversion
   const prepareDataForSubmission = (data: ProfileData) => {
     try {
+      // Calculate profile progress
+      const calculateProgress = () => {
+        try {
+          let completed = 0;
+          const total = 23; // Total required fields across all steps
+
+          // Step 1: Seller Account & Business Basics (9 fields)
+          if (data?.fullName?.trim()) completed++;
+          if (data?.storeName?.trim()) completed++;
+          if (data?.email?.trim()) completed++;
+          if (data?.mobile?.trim()) completed++;
+          if (data?.businessType?.trim()) completed++;
+          if (data?.businessRegistrationNumber?.trim()) completed++;
+          if (
+            Array.isArray(data?.productCategories) &&
+            data.productCategories.length > 0
+          )
+            completed++;
+
+          // Step 2: Address, Banking & Tax Details (11 fields)
+          if (data?.businessAddress?.street?.trim()) completed++;
+          if (data?.businessAddress?.city?.trim()) completed++;
+          if (data?.businessAddress?.state?.trim()) completed++;
+          if (data?.businessAddress?.country?.trim()) completed++;
+          if (data?.businessAddress?.pinCode?.trim()) completed++;
+          if (data?.bankAccountName?.trim()) completed++;
+          if (data?.bankName?.trim()) completed++;
+          if (data?.accountNumber?.trim()) completed++;
+          if (data?.ifscCode?.trim()) completed++;
+          if (data?.gstNumber?.trim()) completed++;
+          if (data?.panNumber?.trim()) completed++;
+
+          // Step 3: Preferences, Logistics & Agreement (5 fields)
+          if (data?.shippingType?.trim()) completed++;
+          if (Array.isArray(data?.serviceAreas) && data.serviceAreas.length > 0)
+            completed++;
+          if (data?.inventoryVolume?.trim()) completed++;
+          if (data?.returnPolicy?.trim()) completed++;
+          if (data?.termsAgreed) completed++;
+
+          return Math.round((completed / total) * 100);
+        } catch (error) {
+          console.error("Error calculating progress:", error);
+          return 0;
+        }
+      };
+
+      const profileProgress = calculateProgress();
+
       return {
         ...data,
+        // Include profile progress
+        profileProgress,
         // Ensure boolean fields are properly converted - keep as actual booleans
         termsAgreed: Boolean(data.termsAgreed),
         warehouseAddress: {
@@ -558,11 +612,14 @@ export default function MakeProfile() {
         if (hasOtherFiles) {
           const formData = new FormData();
 
-          // Add all regular data fields to FormData
+          // Add all regular data fields to FormData (except profileProgress)
           Object.entries(submissionData).forEach(([key, value]) => {
             if (key === "termsAgreed") {
               // Send as JSON boolean, not string
               formData.append(key, JSON.stringify(Boolean(value)));
+            } else if (key === "profileProgress") {
+              // Skip profileProgress in FormData - will send separately
+              return;
             } else if (typeof value !== "object" || value === null) {
               formData.append(key, String(value));
             }
@@ -612,7 +669,15 @@ export default function MakeProfile() {
             }
           });
 
+          // First upload the files
           await updateArtist(formData).unwrap();
+
+          // Then update the profileProgress separately as JSON
+          if (submissionData.profileProgress !== undefined) {
+            await updateArtist({
+              profileProgress: submissionData.profileProgress,
+            }).unwrap();
+          }
         } else {
           // No other files, just send regular JSON data
           await updateArtist(submissionData).unwrap();
@@ -664,7 +729,16 @@ export default function MakeProfile() {
       }
 
       // Prepare Step 1 data
-      const step1Data = {
+      const step1Data: {
+        fullName: string;
+        storeName: string;
+        email: string;
+        mobile: string;
+        businessType: string;
+        businessRegistrationNumber: string;
+        productCategories: string[];
+        profileProgress?: number;
+      } = {
         fullName: profileData.fullName,
         storeName: profileData.storeName,
         email: profileData.email,
@@ -674,7 +748,16 @@ export default function MakeProfile() {
         productCategories: profileData.productCategories,
       };
 
-      const originalStep1Data = {
+      const originalStep1Data: {
+        fullName: string;
+        storeName: string;
+        email: string;
+        mobile: string;
+        businessType: string;
+        businessRegistrationNumber: string;
+        productCategories: string[];
+        profileProgress?: number;
+      } = {
         fullName: originalData.fullName,
         storeName: originalData.storeName,
         email: originalData.email,
@@ -683,6 +766,61 @@ export default function MakeProfile() {
         businessRegistrationNumber: originalData.businessRegistrationNumber,
         productCategories: originalData.productCategories,
       };
+
+      // Calculate profile progress
+      const calculateProgress = () => {
+        try {
+          let completed = 0;
+          const total = 23;
+
+          // Step 1: Seller Account & Business Basics (9 fields)
+          if (profileData?.fullName?.trim()) completed++;
+          if (profileData?.storeName?.trim()) completed++;
+          if (profileData?.email?.trim()) completed++;
+          if (profileData?.mobile?.trim()) completed++;
+          if (profileData?.businessType?.trim()) completed++;
+          if (profileData?.businessRegistrationNumber?.trim()) completed++;
+          if (
+            Array.isArray(profileData?.productCategories) &&
+            profileData.productCategories.length > 0
+          )
+            completed++;
+
+          // Step 2: Address, Banking & Tax Details (11 fields)
+          if (profileData?.businessAddress?.street?.trim()) completed++;
+          if (profileData?.businessAddress?.city?.trim()) completed++;
+          if (profileData?.businessAddress?.state?.trim()) completed++;
+          if (profileData?.businessAddress?.country?.trim()) completed++;
+          if (profileData?.businessAddress?.pinCode?.trim()) completed++;
+          if (profileData?.bankAccountName?.trim()) completed++;
+          if (profileData?.bankName?.trim()) completed++;
+          if (profileData?.accountNumber?.trim()) completed++;
+          if (profileData?.ifscCode?.trim()) completed++;
+          if (profileData?.gstNumber?.trim()) completed++;
+          if (profileData?.panNumber?.trim()) completed++;
+
+          // Step 3: Preferences, Logistics & Agreement (5 fields)
+          if (profileData?.shippingType?.trim()) completed++;
+          if (
+            Array.isArray(profileData?.serviceAreas) &&
+            profileData.serviceAreas.length > 0
+          )
+            completed++;
+          if (profileData?.inventoryVolume?.trim()) completed++;
+          if (profileData?.returnPolicy?.trim()) completed++;
+          if (profileData?.termsAgreed) completed++;
+
+          return Math.round((completed / total) * 100);
+        } catch (error) {
+          console.error("Error calculating progress:", error);
+          return 0;
+        }
+      };
+
+      const profileProgress = calculateProgress();
+
+      // Add profileProgress to step1Data
+      step1Data.profileProgress = profileProgress;
 
       // Check if data has changed
       const hasBusinessLogoFile = uploadedFiles.businessLogo;
@@ -702,6 +840,9 @@ export default function MakeProfile() {
         Object.entries(step1Data).forEach(([key, value]) => {
           if (key === "productCategories") {
             formData.append(key, JSON.stringify(value));
+          } else if (key === "profileProgress") {
+            // Don't include profileProgress in FormData - send it separately
+            return;
           } else {
             formData.append(key, String(value));
           }
@@ -710,7 +851,15 @@ export default function MakeProfile() {
         // Add business logo file to FormData
         formData.append("businessLogo", hasBusinessLogoFile);
 
+        // First upload the file
         await updateArtist(formData).unwrap();
+
+        // Then update the profileProgress separately as JSON
+        if (step1Data.profileProgress !== undefined) {
+          await updateArtist({
+            profileProgress: step1Data.profileProgress,
+          }).unwrap();
+        }
       } else {
         // Get only changed fields
         const changedFields = getChangedFields(step1Data, originalStep1Data);
@@ -841,12 +990,65 @@ export default function MakeProfile() {
         panNumber: originalData.panNumber,
       };
 
+      // Calculate profile progress
+      const calculateProgress = () => {
+        try {
+          let completed = 0;
+          const total = 23;
+
+          // Step 1: Seller Account & Business Basics (9 fields)
+          if (profileData?.fullName?.trim()) completed++;
+          if (profileData?.storeName?.trim()) completed++;
+          if (profileData?.email?.trim()) completed++;
+          if (profileData?.mobile?.trim()) completed++;
+          if (profileData?.businessType?.trim()) completed++;
+          if (profileData?.businessRegistrationNumber?.trim()) completed++;
+          if (
+            Array.isArray(profileData?.productCategories) &&
+            profileData.productCategories.length > 0
+          )
+            completed++;
+
+          // Step 2: Address, Banking & Tax Details (11 fields)
+          if (profileData?.businessAddress?.street?.trim()) completed++;
+          if (profileData?.businessAddress?.city?.trim()) completed++;
+          if (profileData?.businessAddress?.state?.trim()) completed++;
+          if (profileData?.businessAddress?.country?.trim()) completed++;
+          if (profileData?.businessAddress?.pinCode?.trim()) completed++;
+          if (profileData?.bankAccountName?.trim()) completed++;
+          if (profileData?.bankName?.trim()) completed++;
+          if (profileData?.accountNumber?.trim()) completed++;
+          if (profileData?.ifscCode?.trim()) completed++;
+          if (profileData?.gstNumber?.trim()) completed++;
+          if (profileData?.panNumber?.trim()) completed++;
+
+          // Step 3: Preferences, Logistics & Agreement (5 fields)
+          if (profileData?.shippingType?.trim()) completed++;
+          if (
+            Array.isArray(profileData?.serviceAreas) &&
+            profileData.serviceAreas.length > 0
+          )
+            completed++;
+          if (profileData?.inventoryVolume?.trim()) completed++;
+          if (profileData?.returnPolicy?.trim()) completed++;
+          if (profileData?.termsAgreed) completed++;
+
+          return Math.round((completed / total) * 100);
+        } catch (error) {
+          console.error("Error calculating progress:", error);
+          return 0;
+        }
+      };
+
+      const profileProgress = calculateProgress();
+
       if (hasDataChanged(bankingData, originalBankingData)) {
         try {
           const changedFields = getChangedFields(
             bankingData,
             originalBankingData
           );
+          changedFields.profileProgress = profileProgress; // This should already be a number from calculateProgress
           await updateArtist(changedFields).unwrap();
           toast.success("Banking details saved!");
           hasChanges = true;
@@ -868,6 +1070,7 @@ export default function MakeProfile() {
                 businessAddress: profileData.businessAddress,
                 warehouseAddress: profileData.warehouseAddress,
                 ...bankingData,
+                profileProgress: profileProgress,
               }
             : null
         );
@@ -919,6 +1122,7 @@ export default function MakeProfile() {
         returnPolicy: string;
         termsAgreed: boolean;
         digitalSignature?: string;
+        profileProgress?: number;
       } = {
         shippingType: profileData.shippingType,
         inventoryVolume: profileData.inventoryVolume,
@@ -941,6 +1145,58 @@ export default function MakeProfile() {
         digitalSignature: originalData.digitalSignature,
       };
 
+      // Calculate profile progress
+      const calculateProgress = () => {
+        try {
+          let completed = 0;
+          const total = 23;
+
+          // Step 1: Seller Account & Business Basics (9 fields)
+          if (profileData?.fullName?.trim()) completed++;
+          if (profileData?.storeName?.trim()) completed++;
+          if (profileData?.email?.trim()) completed++;
+          if (profileData?.mobile?.trim()) completed++;
+          if (profileData?.businessType?.trim()) completed++;
+          if (profileData?.businessRegistrationNumber?.trim()) completed++;
+          if (
+            Array.isArray(profileData?.productCategories) &&
+            profileData.productCategories.length > 0
+          )
+            completed++;
+
+          // Step 2: Address, Banking & Tax Details (11 fields)
+          if (profileData?.businessAddress?.street?.trim()) completed++;
+          if (profileData?.businessAddress?.city?.trim()) completed++;
+          if (profileData?.businessAddress?.state?.trim()) completed++;
+          if (profileData?.businessAddress?.country?.trim()) completed++;
+          if (profileData?.businessAddress?.pinCode?.trim()) completed++;
+          if (profileData?.bankAccountName?.trim()) completed++;
+          if (profileData?.bankName?.trim()) completed++;
+          if (profileData?.accountNumber?.trim()) completed++;
+          if (profileData?.ifscCode?.trim()) completed++;
+          if (profileData?.gstNumber?.trim()) completed++;
+          if (profileData?.panNumber?.trim()) completed++;
+
+          // Step 3: Preferences, Logistics & Agreement (5 fields)
+          if (profileData?.shippingType?.trim()) completed++;
+          if (
+            Array.isArray(profileData?.serviceAreas) &&
+            profileData.serviceAreas.length > 0
+          )
+            completed++;
+          if (profileData?.inventoryVolume?.trim()) completed++;
+          if (profileData?.returnPolicy?.trim()) completed++;
+          if (profileData?.termsAgreed) completed++;
+
+          return Math.round((completed / total) * 100);
+        } catch (error) {
+          console.error("Error calculating progress:", error);
+          return 0;
+        }
+      };
+
+      const profileProgress = calculateProgress();
+
       // Check if we have digital signature file to upload
       const hasDigitalSignatureFile = uploadedFiles.digitalSignature;
       if (
@@ -949,7 +1205,10 @@ export default function MakeProfile() {
       ) {
         try {
           // STEP 1: First update all data fields WITHOUT the file
-          const dataToUpdate = { ...preferencesData };
+          const dataToUpdate = {
+            ...preferencesData,
+            profileProgress: profileProgress, // This should already be a number from calculateProgress
+          };
 
           // If we have a file, don't include digitalSignature in the first update
           if (hasDigitalSignatureFile) {
@@ -987,6 +1246,7 @@ export default function MakeProfile() {
                 ...prev,
                 socialLinks: profileData.socialLinks,
                 ...preferencesData,
+                profileProgress: profileProgress,
               }
             : null
         );

@@ -2,9 +2,12 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { Menu, X, User } from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
+import { Menu, X, LogOut } from "lucide-react";
+import toast from "react-hot-toast";
 import LanguageSelector from "@/components/LanguageSelector";
+import { useGetartistQuery } from "@/services/api/artistApi"; // Adjust import path as needed
+import { useLogoutMutation } from "@/services/api/authApi";
 
 const navigation = [
   { name: "Home", href: "/Artist" },
@@ -16,23 +19,125 @@ const navigation = [
   { name: "Journal", href: "/Artist/Journal" },
 ];
 
+interface ArtistData {
+  fullName?: string;
+  storeName?: string;
+  businessLogo?: string;
+  [key: string]: any;
+}
+
+interface ApiError {
+  status?: number;
+  data?: any;
+  [key: string]: any;
+}
+
 export default function ArtistNavbar() {
+  const router = useRouter();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [menuVisible, setMenuVisible] = useState(false);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [hasTriedAuth, setHasTriedAuth] = useState(false);
   const pathname = usePathname();
+
+  // Fetch artist data
+  const {
+    data: artistData,
+    isLoading,
+    isError,
+    error,
+    refetch,
+  } = useGetartistQuery(undefined);
+
+  // Handle logout mutation
+  const [logout] = useLogoutMutation();
+
+  // Track when we've tried authentication
+  useEffect(() => {
+    if (isError || artistData) {
+      setHasTriedAuth(true);
+    }
+  }, [isError, artistData]);
+
+  // Determine authentication state
+  const isAuthenticated = !isError && !!artistData && hasTriedAuth;
+  const apiError = error as ApiError | undefined;
+
+  // Extract artist data
+  const artist =
+    isAuthenticated && artistData
+      ? {
+          name: (artistData as ArtistData).fullName || "Artist",
+          storeName: (artistData as ArtistData).storeName || "",
+          image: (artistData as ArtistData).businessLogo || "/Profile.jpg",
+        }
+      : null;
 
   // Handle menu opening and closing with animation
   useEffect(() => {
     if (isMenuOpen) {
       setMenuVisible(true);
     } else {
-      // Delay hiding the menu until after the animation completes
       const timer = setTimeout(() => {
         setMenuVisible(false);
-      }, 300); // Match this to the CSS transition duration
+      }, 300);
       return () => clearTimeout(timer);
     }
   }, [isMenuOpen]);
+
+  const handleLogout = () => {
+    if (showLogoutConfirm) {
+      performLogout();
+    } else {
+      setShowLogoutConfirm(true);
+      toast("Click logout again to confirm", {
+        icon: "⚠️",
+        duration: 3000,
+      });
+
+      setTimeout(() => {
+        setShowLogoutConfirm(false);
+      }, 3000);
+    }
+  };
+
+  const performLogout = async () => {
+    setIsLoggingOut(true);
+    const loadingToastId = toast.loading("Logging out...");
+
+    try {
+      await logout({}).unwrap();
+      router.push("/");
+      toast.dismiss(loadingToastId);
+      toast.success("Successfully logged out!", {
+        duration: 2000,
+      });
+
+      refetch();
+    } catch (err: any) {
+      console.error("Logout failed:", err);
+      toast.dismiss(loadingToastId);
+
+      const errorMessage =
+        err?.data?.message ||
+        err?.message ||
+        "Failed to logout. Please try again.";
+      toast.error(errorMessage, {
+        duration: 4000,
+      });
+    } finally {
+      setIsLoggingOut(false);
+      setShowLogoutConfirm(false);
+    }
+  };
+
+  const handleImageError = (
+    e: React.SyntheticEvent<HTMLImageElement, Event>
+  ) => {
+    const target = e.currentTarget;
+    target.style.display = "none";
+  };
 
   return (
     <>
@@ -70,12 +175,57 @@ export default function ArtistNavbar() {
             {/* Desktop Actions - responsive spacing and sizing */}
             <div className="hidden md:flex items-center space-x-3 lg:space-x-5 xl:space-x-7">
               <LanguageSelector />
-              <button
-                className="text-stone-600 hover:text-terracotta-600 transition-colors duration-300"
-                aria-label="Search"
-              >
-                <User className="w-4 h-4 sm:w-5 sm:h-5" />
-              </button>
+
+              {/* Artist Profile Section */}
+              {isLoading && !hasTriedAuth ? (
+                <div className="flex items-center justify-center">
+                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-terracotta-600"></div>
+                </div>
+              ) : artist ? (
+                <div className="relative group py-2">
+                  <div className="flex items-center cursor-pointer p-1 rounded-md hover:bg-stone-50 transition-colors duration-300 gap-2">
+                    <span className="text-sm text-stone-600 hidden lg:inline">
+                      My Account
+                    </span>
+                    {artist.image ? (
+                      <img
+                        src={artist.image}
+                        alt={artist.name}
+                        className="w-7 h-7 lg:w-8 lg:h-8 rounded-full object-cover border-2 border-stone-200 group-hover:border-terracotta-600 transition-colors duration-300"
+                        onError={handleImageError}
+                      />
+                    ) : (
+                      <div className="w-7 h-7 lg:w-8 lg:h-8 bg-stone-200 rounded-full flex items-center justify-center group-hover:bg-terracotta-100 transition-colors duration-300">
+                        <span className="text-stone-600 text-xs font-medium">
+                          {(artist.storeName || artist.name)
+                            .charAt(0)
+                            .toUpperCase()}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Hover dropdown menu */}
+                  <div className="absolute right-0 mt-2 w-48 lg:w-52 bg-white border border-stone-100 rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 transform origin-top-right scale-95 group-hover:scale-100 z-50">
+                    <div className="px-4 py-3 border-b border-stone-100">
+                      <p className="text-xs lg:text-sm font-medium text-stone-900">
+                        {artist.storeName || artist.name}
+                      </p>
+                    </div>
+                    <button
+                      onClick={handleLogout}
+                      disabled={isLoggingOut}
+                      className={`flex items-center cursor-pointer w-full text-left px-4 py-3 text-xs lg:text-sm text-stone-700 hover:bg-stone-50 hover:text-terracotta-600 transition-colors duration-200 rounded-b-lg disabled:opacity-50 disabled:cursor-not-allowed ${
+                        showLogoutConfirm ? "bg-red-50 text-red-700" : ""
+                      }`}
+                      type="button"
+                    >
+                      <LogOut className="w-4 h-4 mr-3 flex-shrink-0" />
+                      {showLogoutConfirm ? "Click again to confirm" : "Logout"}
+                    </button>
+                  </div>
+                </div>
+              ) : null}
             </div>
 
             {/* Mobile Menu Button - better spacing for small devices */}
@@ -127,16 +277,57 @@ export default function ArtistNavbar() {
                   </Link>
                 ))}
 
-                <div className="border-t border-stone-200 pt-5 mt-2 flex flex-col space-y-5 bg-stone-50 -mx-4 px-4 pb-6 rounded-b-lg">
-                  <Link
-                    href="/login"
-                    className="text-stone-900 text-lg sm:text-xl font-light flex items-center gap-3 hover:text-terracotta-600 transition-colors duration-300 p-2 hover:bg-white rounded-md"
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    <User className="w-4 h-4 sm:w-5 sm:h-5" />
-                    <span>Account</span>
-                  </Link>
-                </div>
+                {/* Mobile Artist Profile Section */}
+                {artist && (
+                  <div className="border-t border-stone-200 pt-5 mt-2 flex flex-col space-y-5 bg-stone-50 -mx-4 px-4 pb-6 rounded-b-lg">
+                    <div className="flex items-center gap-3 p-3 bg-white rounded-lg">
+                      {artist.image ? (
+                        <img
+                          src={artist.image}
+                          alt={artist.name}
+                          className="w-8 h-8 sm:w-9 sm:h-9 md:w-10 md:h-10 rounded-full object-cover border-2 border-stone-200 flex-shrink-0"
+                          onError={handleImageError}
+                        />
+                      ) : (
+                        <div className="w-8 h-8 sm:w-9 sm:h-9 md:w-10 md:h-10 bg-stone-200 rounded-full flex items-center justify-center flex-shrink-0">
+                          <span className="text-stone-600 text-sm font-medium">
+                            {(artist.storeName || artist.name)
+                              .charAt(0)
+                              .toUpperCase()}
+                          </span>
+                        </div>
+                      )}
+                      <div className="flex flex-col">
+                        <span className="text-stone-900 font-medium text-sm sm:text-base truncate">
+                          {artist.name}
+                        </span>
+                        {artist.storeName && (
+                          <span className="text-stone-500 text-xs sm:text-sm truncate">
+                            {artist.storeName}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    <button
+                      onClick={handleLogout}
+                      disabled={isLoggingOut}
+                      className={`text-stone-900 text-base sm:text-lg md:text-xl font-light flex items-center gap-3 hover:text-terracotta-600 transition-colors duration-300 p-3 hover:bg-white rounded-lg w-full text-left cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${
+                        showLogoutConfirm
+                          ? "bg-red-50 border border-red-200"
+                          : ""
+                      }`}
+                      type="button"
+                    >
+                      <LogOut className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 flex-shrink-0" />
+                      <span>
+                        {showLogoutConfirm
+                          ? "Click again to confirm"
+                          : "Logout"}
+                      </span>
+                    </button>
+                  </div>
+                )}
               </nav>
             </div>
           )}

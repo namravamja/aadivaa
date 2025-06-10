@@ -1,5 +1,7 @@
 "use client";
 
+import type React from "react";
+
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -12,15 +14,21 @@ import {
   Truck,
   ShoppingBag,
   Heart,
-  LucideIcon,
+  type LucideIcon,
 } from "lucide-react";
 import { useGetBuyerQuery } from "@/services/api/buyerApi";
 import { useLogoutMutation } from "@/services/api/authApi";
+import { useGetCartQuery } from "@/services/api/cartApi";
+import { useGetWishlistQuery } from "@/services/api/wishlistApi";
 
 // Types
 interface UserMenuProps {
   isMobile?: boolean;
   onClose?: () => void;
+}
+
+interface ProfilePhotoProps {
+  className?: string;
 }
 
 interface MenuItem {
@@ -61,9 +69,55 @@ const mobileActionItems: ActionMenuItem[] = [
   { name: "Wishlist", href: "/Buyer/Wishlist", icon: Heart },
 ];
 
+// Profile Photo Component for Navbar
+export function ProfilePhoto({ className = "w-8 h-8" }: ProfilePhotoProps) {
+  const { data: buyerData, isLoading, isError } = useGetBuyerQuery(undefined);
+
+  const [hasTriedAuth, setHasTriedAuth] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (isError || buyerData) {
+      setHasTriedAuth(true);
+    }
+  }, [isError, buyerData]);
+
+  const isAuthenticated: boolean = !isError && !!buyerData && hasTriedAuth;
+
+  const user: User | null =
+    isAuthenticated && buyerData
+      ? {
+          name: (buyerData as BuyerData).firstName || "User",
+          image: (buyerData as BuyerData).avatar || "/Profile.jpg",
+        }
+      : null;
+
+  const handleImageError = (
+    e: React.SyntheticEvent<HTMLImageElement, Event>
+  ): void => {
+    const target = e.currentTarget;
+    target.style.display = "none";
+  };
+
+  if (!isAuthenticated) return null;
+
+  return user?.image ? (
+    <img
+      src={user.image || "/placeholder.svg"}
+      alt={user.name}
+      className={`${className} rounded-full object-cover border-2 border-stone-200`}
+      onError={handleImageError}
+    />
+  ) : (
+    <div
+      className={`${className} bg-stone-200 rounded-full flex items-center justify-center`}
+    >
+      <User className="w-4 h-4 text-stone-600" />
+    </div>
+  );
+}
+
 export default function UserMenu({ isMobile = false, onClose }: UserMenuProps) {
   const router = useRouter();
-  const [cartCount, setCartCount] = useState<number>(3);
   const [hasTriedAuth, setHasTriedAuth] = useState<boolean>(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState<boolean>(false);
   const [isLoggingOut, setIsLoggingOut] = useState<boolean>(false);
@@ -77,6 +131,25 @@ export default function UserMenu({ isMobile = false, onClose }: UserMenuProps) {
     refetch,
   } = useGetBuyerQuery(undefined);
 
+  // Determine authentication state
+  const isAuthenticated: boolean = !isError && !!buyerData && hasTriedAuth;
+
+  const { data: cartData, isLoading: cartLoading } = useGetCartQuery(
+    undefined,
+    {
+      skip: !isAuthenticated,
+      refetchOnFocus: true,
+      refetchOnReconnect: true,
+    }
+  );
+
+  const { data: wishlistData, isLoading: wishlistLoading } =
+    useGetWishlistQuery(undefined, {
+      skip: !isAuthenticated,
+      refetchOnFocus: true,
+      refetchOnReconnect: true,
+    });
+
   // Handle logout mutation
   const [logout] = useLogoutMutation();
 
@@ -86,10 +159,6 @@ export default function UserMenu({ isMobile = false, onClose }: UserMenuProps) {
       setHasTriedAuth(true);
     }
   }, [isError, buyerData]);
-
-  // Determine authentication state
-  const isAuthenticated: boolean = !isError && !!buyerData && hasTriedAuth;
-  const apiError = error as ApiError | undefined;
 
   // console.log("Auth status:", {
   //   isAuthenticated,
@@ -105,6 +174,14 @@ export default function UserMenu({ isMobile = false, onClose }: UserMenuProps) {
           image: (buyerData as BuyerData).avatar || "/Profile.jpg",
         }
       : null;
+
+  const cartItems = cartData || [];
+  const wishlistItems = wishlistData || [];
+  const actualCartCount = cartItems.reduce(
+    (total: number, item: any) => total + item.quantity,
+    0
+  );
+  const actualWishlistCount = wishlistItems.length;
 
   const handleLogout = (): void => {
     if (showLogoutConfirm) {
@@ -204,24 +281,6 @@ export default function UserMenu({ isMobile = false, onClose }: UserMenuProps) {
 
     return (
       <>
-        <div className="flex items-center gap-3 p-3 bg-stone-50 rounded-lg">
-          {user?.image ? (
-            <img
-              src={user.image}
-              alt={user.name}
-              className="w-8 h-8 sm:w-9 sm:h-9 md:w-10 md:h-10 rounded-full object-cover border-2 border-stone-200 flex-shrink-0"
-              onError={handleImageError}
-            />
-          ) : (
-            <div className="w-8 h-8 sm:w-9 sm:h-9 md:w-10 md:h-10 bg-stone-200 rounded-full flex items-center justify-center flex-shrink-0">
-              <User className="w-4 h-4 sm:w-5 sm:h-5 text-stone-600" />
-            </div>
-          )}
-          <span className="text-stone-900 font-medium text-sm sm:text-base md:text-lg truncate">
-            {user?.name || "User"}
-          </span>
-        </div>
-
         {userMenuItems.map((item: MenuItem) => {
           const IconComponent = item.icon;
           return (
@@ -239,6 +298,19 @@ export default function UserMenu({ isMobile = false, onClose }: UserMenuProps) {
 
         {mobileActionItems.map((item: ActionMenuItem) => {
           const IconComponent = item.icon;
+          const isCartItem = item.name === "Cart";
+          const isWishlistItem = item.name === "Wishlist";
+          const badgeCount = isCartItem
+            ? actualCartCount
+            : isWishlistItem
+            ? actualWishlistCount
+            : 0;
+          const isLoadingCount = isCartItem
+            ? cartLoading
+            : isWishlistItem
+            ? wishlistLoading
+            : false;
+
           return (
             <Link
               key={item.name}
@@ -248,11 +320,14 @@ export default function UserMenu({ isMobile = false, onClose }: UserMenuProps) {
             >
               <div className="relative flex-shrink-0">
                 <IconComponent className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6" />
-                {item.showBadge && cartCount > 0 && (
-                  <span className="absolute -top-2 -right-2 bg-terracotta-600 text-white text-[9px] sm:text-[10px] w-4 h-4 sm:w-5 sm:h-5 flex items-center justify-center rounded-full font-medium shadow-sm">
-                    {cartCount > 99 ? "99+" : cartCount}
-                  </span>
-                )}
+                {item.showBadge &&
+                  !isLoadingCount &&
+                  isAuthenticated &&
+                  badgeCount > 0 && (
+                    <span className="absolute -top-2 -right-2 bg-terracotta-600 text-white text-[9px] sm:text-[10px] w-4 h-4 sm:w-5 sm:h-5 flex items-center justify-center rounded-full font-medium shadow-sm">
+                      {badgeCount > 99 ? "99+" : badgeCount}
+                    </span>
+                  )}
               </div>
               <span>{item.name}</span>
             </Link>
@@ -278,16 +353,23 @@ export default function UserMenu({ isMobile = false, onClose }: UserMenuProps) {
   if (!isAuthenticated) {
     return (
       <div className="relative group">
-        <Link
-          href="/Buyer/login"
-          className="text-stone-600 hover:text-terracotta-600 transition-colors duration-300 p-1 rounded-md hover:bg-stone-50"
-          aria-label="Login"
-        >
-          <User className="w-4 h-4 lg:w-5 lg:h-5" />
-        </Link>
-        <div className="absolute right-0 mt-2 px-3 py-1 bg-stone-800 text-white text-xs rounded opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 whitespace-nowrap z-50">
-          Login
-          <div className="absolute -top-1 right-3 w-2 h-2 bg-stone-800 rotate-45"></div>
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-stone-600 hidden lg:inline">
+            My Account
+          </span>
+          <div className="text-stone-600 hover:text-terracotta-600 transition-colors duration-300 p-1 rounded-md hover:bg-stone-50 cursor-pointer">
+            <User className="w-4 h-4 lg:w-5 lg:h-5" />
+          </div>
+        </div>
+
+        {/* Hover dropdown with login button */}
+        <div className="absolute right-0 mt-2 w-32 bg-white border border-stone-100 rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 transform origin-top-right scale-95 group-hover:scale-100 z-50">
+          <Link
+            href="/Buyer/login"
+            className="flex items-center justify-center px-4 py-3 text-sm text-stone-700 hover:bg-stone-50 hover:text-terracotta-600 transition-colors duration-200 rounded-lg font-medium"
+          >
+            Login
+          </Link>
         </div>
       </div>
     );
@@ -296,10 +378,13 @@ export default function UserMenu({ isMobile = false, onClose }: UserMenuProps) {
   // Logged in user - hover dropdown
   return (
     <div className="relative group py-2">
-      <div className="flex items-center cursor-pointer p-1 rounded-md hover:bg-stone-50 transition-colors duration-300">
+      <div className="flex items-center cursor-pointer p-1 rounded-md hover:bg-stone-50 transition-colors duration-300 gap-2">
+        <span className="text-sm text-stone-600 hidden lg:inline">
+          My Account
+        </span>
         {user?.image ? (
           <img
-            src={user.image}
+            src={user.image || "/placeholder.svg"}
             alt={user.name}
             className="w-7 h-7 lg:w-8 lg:h-8 rounded-full object-cover border-2 border-stone-200 group-hover:border-terracotta-600 transition-colors duration-300"
             onError={handleImageError}

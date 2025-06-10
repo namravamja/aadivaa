@@ -3,50 +3,64 @@
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Heart, Plus, ArrowRight } from "lucide-react";
+import { ArrowRight } from "lucide-react";
+import { useGetAllProductsQuery } from "@/services/api/productApi"; // Update with your actual API path
 
-// Mock data - in a real app, this would come from RTK Query
-const products = [
-  {
-    id: "1",
-    name: "Beaded Necklace",
-    price: 45.99,
-    image: "/Profile.jpg", // Adjust path as needed
-    artist: "Maya Johnson",
-  },
-  {
-    id: "2",
-    name: "Woven Wall Hanging",
-    price: 89.99,
-    image: "/Profile.jpg",
-    artist: "Tomas Rivera",
-  },
-  {
-    id: "3",
-    name: "Ceramic Vase",
-    price: 65.0,
-    image: "/Profile.jpg",
-    artist: "Leila White",
-  },
-  {
-    id: "4",
-    name: "Leather Pouch",
-    price: 35.5,
-    image: "/Profile.jpg",
-    artist: "Daniel Black",
-  },
-];
+// Define the product type based on your API response
+interface Product {
+  id: string;
+  productName: string;
+  category: string;
+  shortDescription: string;
+  sellingPrice: string;
+  mrp: string;
+  availableStock: string;
+  skuCode: string;
+  productImages: string[];
+  weight: string;
+  length: string;
+  width: string;
+  height: string;
+  shippingCost: string;
+  deliveryTimeEstimate: string;
+  createdAt: string;
+  updatedAt: string;
+}
 
 export default function BestSellingProducts() {
-  const [wishlist, setWishlist] = useState<string[]>([]);
+  // Fetch products using RTK Query
+  const {
+    data: products = [],
+    isLoading,
+    error,
+  } = useGetAllProductsQuery(undefined);
 
-  const toggleWishlist = (productId: string) => {
-    setWishlist((prev) =>
-      prev.includes(productId)
-        ? prev.filter((id) => id !== productId)
-        : [...prev, productId]
+  // Display only first 4 products for featured section
+  const featuredProducts = products.slice(0, 4);
+
+  if (isLoading) {
+    return (
+      <section className="py-16 sm:py-20 md:py-24 bg-stone-50">
+        <div className="container mx-auto px-4">
+          <div className="flex justify-center items-center h-64">
+            <div className="text-stone-600">Loading products...</div>
+          </div>
+        </div>
+      </section>
     );
-  };
+  }
+
+  if (error) {
+    return (
+      <section className="py-16 sm:py-20 md:py-24 bg-stone-50">
+        <div className="container mx-auto px-4">
+          <div className="flex justify-center items-center h-64">
+            <div className="text-red-600">Error loading products</div>
+          </div>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="py-16 sm:py-20 md:py-24 bg-stone-50">
@@ -56,7 +70,7 @@ export default function BestSellingProducts() {
             Featured Products
           </h2>
           <Link
-            href="/products"
+            href="/Products"
             className="flex items-center text-stone-900 hover:text-terracotta-600 transition-colors"
           >
             View all <ArrowRight className="w-4 h-4 ml-2" />
@@ -64,57 +78,45 @@ export default function BestSellingProducts() {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8">
-          {products.map((product) => (
-            <div key={product.id} className="group">
+          {featuredProducts.map((product: Product) => (
+            <Link
+              key={product.id}
+              href={`/Products/${product.id}`}
+              className="group cursor-pointer"
+            >
               <div className="relative aspect-square mb-4 bg-stone-100">
                 <Image
-                  src={product.image || "/placeholder.svg"}
-                  alt={product.name}
+                  src={product.productImages[0] || "/placeholder.svg"}
+                  alt={product.productName}
                   fill
-                  className="object-cover"
+                  className="object-cover group-hover:scale-105 transition-transform duration-300"
                 />
-                <button
-                  onClick={() => toggleWishlist(product.id)}
-                  className={`absolute top-4 right-4 p-2 rounded-full ${
-                    wishlist.includes(product.id)
-                      ? "bg-terracotta-600 text-white"
-                      : "bg-white text-stone-900 opacity-0 group-hover:opacity-100"
-                  } transition-all duration-300`}
-                  aria-label={
-                    wishlist.includes(product.id)
-                      ? "Remove from wishlist"
-                      : "Add to wishlist"
-                  }
-                >
-                  <Heart
-                    className={`w-4 h-4 ${
-                      wishlist.includes(product.id) ? "fill-white" : ""
-                    }`}
-                  />
-                </button>
-                <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                  <button
-                    className="bg-white text-stone-900 px-4 sm:px-6 py-2 sm:py-3 font-medium flex items-center"
-                    aria-label="Add to cart"
-                  >
-                    <Plus className="w-4 h-4 mr-2" /> Add to Cart
-                  </button>
-                </div>
               </div>
               <div>
-                <Link href={`/products/${product.id}`}>
-                  <h3 className="font-medium text-stone-900 mb-1 hover:text-terracotta-600 transition-colors">
-                    {product.name}
-                  </h3>
-                </Link>
-                <p className="text-stone-500 text-sm mb-2">
-                  By {product.artist}
+                <h3 className="font-medium text-stone-900 mb-1 group-hover:text-terracotta-600 transition-colors">
+                  {product.productName}
+                </h3>
+                <p className="text-stone-500 text-sm mb-1">
+                  {product.category}
                 </p>
-                <span className="text-stone-900">
-                  ${product.price.toFixed(2)}
-                </span>
+                <p className="text-stone-400 text-xs mb-2 line-clamp-2">
+                  {product.shortDescription}
+                </p>
+                <div className="flex items-center gap-2">
+                  <span className="text-stone-900 font-medium">
+                    ${parseFloat(product.sellingPrice).toFixed(2)}
+                  </span>
+                  {product.mrp !== product.sellingPrice && (
+                    <span className="text-stone-400 text-sm line-through">
+                      ${parseFloat(product.mrp).toFixed(2)}
+                    </span>
+                  )}
+                </div>
+                {parseInt(product.availableStock) === 0 && (
+                  <p className="text-red-500 text-xs mt-1">Out of Stock</p>
+                )}
               </div>
-            </div>
+            </Link>
           ))}
         </div>
       </div>

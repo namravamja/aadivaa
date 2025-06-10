@@ -8,7 +8,9 @@ import DesktopNavigation from "../Navbar/components/DesktopNavigation";
 import ActionButtons from "../Navbar/components/ActionButtons";
 import UserMenu from "../Navbar/components/UserMenu";
 import MobileMenu from "../Navbar/components/MobileMenu";
-import { NavigationItem } from "../Navbar/components/types";
+import type { NavigationItem } from "../Navbar/components/types";
+import { ProfilePhoto } from "../Navbar/components/UserMenu";
+import { useAuth } from "@/hooks/useAuth";
 
 const navigation: NavigationItem[] = [
   { name: "Home", href: "/" },
@@ -29,6 +31,7 @@ const navigation: NavigationItem[] = [
 export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const { isAuthenticated } = useAuth();
 
   const closeMenu = () => {
     setIsMenuOpen(false);
@@ -161,7 +164,11 @@ export default function Navbar() {
                 className="flex items-center text-stone-600 hover:text-terracotta-600 transition-colors duration-300 p-1 rounded-md hover:bg-stone-50"
                 aria-label="User menu"
               >
-                <User className="w-5 h-5 sm:w-6 sm:h-6" />
+                {isAuthenticated ? (
+                  <ProfilePhoto className="w-5 h-5 sm:w-6 sm:h-6" />
+                ) : (
+                  <User className="w-5 h-5 sm:w-6 sm:h-6" />
+                )}
               </button>
 
               {/* Mobile User Dropdown */}
