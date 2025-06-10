@@ -19,7 +19,7 @@ const navigation: NavigationItem[] = [
   {
     name: "Become Seller",
     children: [
-      { name: "How to be a seller?", href: "/Artist/HowTo" },
+      { name: "How to be a seller?", href: "/HowTo" },
       { name: "Go to dashboard", href: "/Artist/login" },
     ],
     href: "",
