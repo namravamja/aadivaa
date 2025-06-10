@@ -6,6 +6,10 @@ import { uploadProductImages } from "../../../middleware/multer";
 const router = express.Router();
 
 router.get("/list", productController.getAllProducts);
+router.get(
+  "/listByArtistId/:artistId",
+  productController.getProductsByArtistId
+);
 
 // Product routes
 router.post(

@@ -113,6 +113,19 @@ export const getProductsByArtist = async (
   }
 };
 
+export const getProductsByArtistId = async (req: Request, res: Response) => {
+  try {
+    const { artistId } = req.params;
+    if (!artistId) throw new Error("Unauthorized");
+
+    const products = await productService.getProductsByArtist(artistId);
+
+    res.status(200).json(products);
+  } catch (error) {
+    res.status(400).json({ error: (error as Error).message });
+  }
+};
+
 // Delete product
 export const deleteProduct = async (
   req: AuthenticatedRequest,

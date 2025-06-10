@@ -49,6 +49,10 @@ export const productApi = ProductApi.injectEndpoints({
       query: () => "/listByArtist",
     }),
 
+    getProductByArtistId: builder.query({
+      query: (artistId) => `/listByArtistId/${artistId}`,
+    }),
+
     // Get all products
     getAllProducts: builder.query({
       query: () => "/list",
@@ -72,6 +76,7 @@ export const {
   useCreateProductMutation,
   useUpdateProductMutation,
   useGetProductByArtistQuery,
+  useGetProductByArtistIdQuery,
   useGetAllProductsQuery,
   useGetProductByIdQuery,
   useDeleteProductMutation,
