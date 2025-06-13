@@ -13,12 +13,14 @@ export const signupBuyer = async (req: Request, res: Response) => {
 export const loginBuyer = async (req: Request, res: Response) => {
   try {
     const { token } = await authService.loginBuyer(req.body);
+
     res.cookie("token", token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
+      secure: true,
       sameSite: "none",
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
+
     res.json({ message: "Login successful" });
   } catch (err) {
     res.status(401).json({ error: (err as Error).message });
