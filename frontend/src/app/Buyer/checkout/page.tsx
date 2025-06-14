@@ -28,20 +28,20 @@ export default function CheckoutPage() {
   const router = useRouter();
   const { isAuthenticated, isLoading: authLoading, user } = useAuth();
 
-  // Get buyer data for addresses
   const {
     data: buyerData,
     isLoading: isBuyerLoading,
     error: buyerError,
+    refetch: refetchBuyer,
   } = useGetBuyerQuery(undefined, {
     skip: !isAuthenticated,
   });
 
-  // Get cart data
   const {
     data: cartData,
     isLoading: isLoadingCart,
     error: cartError,
+    refetch: refetchCart,
   } = useGetCartQuery(undefined, {
     skip: !isAuthenticated,
   });
@@ -53,9 +53,6 @@ export default function CheckoutPage() {
 
   const addressIds = addresses.map((address: any) => address.id);
 
-  console.log(addressIds[0]);
-
-  // Calculate totals
   const subtotal = cartItems.reduce(
     (sum: number, item: any) =>
       sum + Number.parseFloat(item.product.sellingPrice) * item.quantity,
@@ -87,11 +84,9 @@ export default function CheckoutPage() {
     setIsLoading(true);
 
     try {
-      // Format the order data properly for the API
       const orderData = {
         addressIds: addressIds[0],
         paymentMethod,
-        // Add buyer connection for Prisma
         buyer: {
           connect: {
             id: user?.id || buyerData?.id,
@@ -101,12 +96,15 @@ export default function CheckoutPage() {
 
       const result = await createOrder(orderData).unwrap();
 
+      // ✅ Refetch cart and buyer data after placing order
+      await refetchCart();
+      await refetchBuyer();
+
       toast.success("Order placed successfully!", {
         duration: 3000,
         icon: "🎉",
       });
 
-      // Redirect to order confirmation page
       router.push(`/Buyer/Orders/${result.data.id}`);
     } catch (error: any) {
       console.error("Error placing order:", error);
@@ -119,7 +117,6 @@ export default function CheckoutPage() {
       setIsLoading(false);
     }
   };
-
   // Show login prompt if not authenticated
   if (!authLoading && !isAuthenticated) {
     return (

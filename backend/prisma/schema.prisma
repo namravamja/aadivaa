@@ -8,8 +8,8 @@ datasource db {
 }
 
 model Buyer {
-  id                    String    @id @default(uuid())
-  email                 String    @unique
+  id                    String     @id @default(uuid())
+  email                 String     @unique
   password              String
   firstName             String?
   lastName              String?
@@ -18,103 +18,117 @@ model Buyer {
   dateOfBirth           DateTime?
   gender                String?
   addresses             Address[]
-  createdAt             DateTime  @default(now())
-  updatedAt             DateTime  @updatedAt
-  isAuthenticated       Boolean   @default(false)
-  forgotPasswordToken   String?   @unique
+  wishlistItems         Wishlist[]
+  cartItems             Cart[]
+  orders                Order[]
+  createdAt             DateTime   @default(now())
+  updatedAt             DateTime   @updatedAt
+  isAuthenticated       Boolean    @default(false)
+  forgotPasswordToken   String?    @unique
   forgotPasswordExpires DateTime?
-  verifyToken           String?   @unique
+  verifyToken           String?    @unique
   verifyExpires         DateTime?
-  isVerified            Boolean   @default(false)
-
-  wishlistItems Wishlist[]
-  cartItems     Cart[]
-  orders        Order[]
+  isVerified            Boolean    @default(false)
 }
 
 model Wishlist {
-  id      String @id @default(uuid())
-  buyer   Buyer  @relation(fields: [buyerId], references: [id])
-  buyerId String
-
-  product   Product @relation(fields: [productId], references: [id])
+  id        String   @id @default(uuid())
+  buyer     Buyer    @relation(fields: [buyerId], references: [id], onDelete: Cascade)
+  buyerId   String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
   productId String
-
   createdAt DateTime @default(now())
 
-  @@unique([buyerId, productId]) // Prevent duplicate wishlist entries
+  @@unique([buyerId, productId])
 }
 
 model Cart {
-  id      String @id @default(uuid())
-  buyer   Buyer  @relation(fields: [buyerId], references: [id])
-  buyerId String
-
-  product   Product @relation(fields: [productId], references: [id])
+  id        String   @id @default(uuid())
+  buyer     Buyer    @relation(fields: [buyerId], references: [id], onDelete: Cascade)
+  buyerId   String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
   productId String
-
-  quantity Int @default(0) // How many of this product are in the cart
-
+  quantity  Int      @default(0)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@unique([buyerId, productId]) // Prevent duplicate cart entries
+  @@unique([buyerId, productId])
 }
 
 model OrderItem {
-  id      String @id @default(uuid())
-  order   Order  @relation(fields: [orderId], references: [id])
-  orderId String
-
-  product   Product @relation(fields: [productId], references: [id])
-  productId String
-
+  id              String  @id @default(uuid())
+  order           Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  orderId         String
+  product         Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  productId       String
   quantity        Int
   priceAtPurchase Float
-
-  artist   Artist @relation(fields: [artistId], references: [id])
-  artistId String
+  artist          Artist  @relation(fields: [artistId], references: [id], onDelete: Cascade)
+  artistId        String
 }
 
 model Order {
-  id      String @id @default(uuid())
-  buyer   Buyer  @relation(fields: [buyerId], references: [id])
-  buyerId String
-
-  orderItems OrderItem[]
-
+  id                String      @id @default(uuid())
+  buyer             Buyer       @relation(fields: [buyerId], references: [id], onDelete: Cascade)
+  buyerId           String
+  orderItems        OrderItem[]
   totalAmount       Float
-  status            String  @default("pending") // pending, shipped, delivered, cancelled
-  shippingAddress   Address @relation(fields: [shippingAddressId], references: [id])
-  shippingAddressId Int
+  status            String      @default("pending")
+  shippingAddress   Address?    @relation("ShippingAddressRelation", fields: [shippingAddressId], references: [id], onDelete: SetNull)
+  shippingAddressId Int?
   paymentMethod     String
-  paymentStatus     String  @default("unpaid") // unpaid, paid, failed
-
-  placedAt  DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  paymentStatus     String      @default("unpaid")
+  placedAt          DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
 }
 
 model Address {
   id         Int     @id @default(autoincrement())
   firstName  String
   lastName   String
-  company    String? // Optional
+  company    String?
   street     String?
-  apartment  String? // Optional
+  apartment  String?
   city       String
   state      String
   postalCode String
   country    String
   phone      String?
-  buyer      Buyer   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  buyer      Buyer   @relation(fields: [userId], references: [id], onDelete: Cascade) // ✅ Correct place for onDelete
   userId     String
   isDefault  Boolean @default(false)
+  orders     Order[] @relation("ShippingAddressRelation")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  Order     Order[]
 
   @@map("buyer_addresses")
+}
+
+model Product {
+  id                   String   @id @default(uuid())
+  productName          String
+  category             String
+  shortDescription     String
+  sellingPrice         String
+  mrp                  String
+  availableStock       String
+  skuCode              String
+  productImages        String[]
+  weight               String
+  length               String
+  width                String
+  height               String
+  shippingCost         String
+  deliveryTimeEstimate String
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  artist    Artist      @relation(fields: [artistId], references: [id], onDelete: Cascade)
+  artistId  String
+  Wishlist  Wishlist[]
+  Cart      Cart[]
+  OrderItem OrderItem[]
 }
 
 model Artist {
@@ -131,39 +145,33 @@ model Artist {
   productCategories          String[]
   businessLogo               String?
 
-  businessAddress   BusinessAddress? @relation(fields: [businessAddressId], references: [id])
-  businessAddressId String?          @unique
-
-  warehouseAddress   WarehouseAddress? @relation(fields: [warehouseAddressId], references: [id])
+  businessAddress    BusinessAddress?  @relation(fields: [businessAddressId], references: [id], onDelete: SetNull)
+  businessAddressId  String?           @unique
+  warehouseAddress   WarehouseAddress? @relation(fields: [warehouseAddressId], references: [id], onDelete: SetNull)
   warehouseAddressId String?           @unique
+  documents          Documents?        @relation(fields: [documentsId], references: [id], onDelete: SetNull)
+  documentsId        String?           @unique
+  socialLinks        SocialLinks?      @relation(fields: [socialLinksId], references: [id], onDelete: SetNull)
+  socialLinksId      String?           @unique
 
-  bankAccountName String?
-  bankName        String?
-  accountNumber   String?
-  ifscCode        String?
-  upiId           String?
-  gstNumber       String?
-  panNumber       String?
-
-  documents   Documents? @relation(fields: [documentsId], references: [id])
-  documentsId String?    @unique
-
-  shippingType    String?
-  serviceAreas    String[]
-  inventoryVolume String?
-  supportContact  String?
-  returnPolicy    String?
-  workingHours    String?
-
-  socialLinks   SocialLinks? @relation(fields: [socialLinksId], references: [id])
-  socialLinksId String?      @unique
-
-  termsAgreed      Boolean?
-  digitalSignature String?
-  createdAt        DateTime  @default(now())
-  updatedAt        DateTime? @updatedAt
-  isAuthenticated  Boolean   @default(false)
-
+  bankAccountName       String?
+  bankName              String?
+  accountNumber         String?
+  ifscCode              String?
+  upiId                 String?
+  gstNumber             String?
+  panNumber             String?
+  shippingType          String?
+  serviceAreas          String[]
+  inventoryVolume       String?
+  supportContact        String?
+  returnPolicy          String?
+  workingHours          String?
+  termsAgreed           Boolean?
+  digitalSignature      String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime? @updatedAt
+  isAuthenticated       Boolean   @default(false)
   forgotPasswordToken   String?   @unique
   forgotPasswordExpires DateTime?
   verifyToken           String?   @unique
@@ -172,36 +180,6 @@ model Artist {
 
   products   Product[]
   orderItems OrderItem[]
-}
-
-model Product {
-  id               String @id @default(uuid())
-  productName      String
-  category         String
-  shortDescription String
-
-  sellingPrice   String
-  mrp            String
-  availableStock String
-  skuCode        String
-
-  productImages String[] // Array of image URLs
-
-  weight               String
-  length               String
-  width                String
-  height               String
-  shippingCost         String
-  deliveryTimeEstimate String
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  artist    Artist      @relation(fields: [artistId], references: [id])
-  artistId  String
-  Wishlist  Wishlist[]
-  Cart      Cart[]
-  OrderItem OrderItem[]
 }
 
 model BusinessAddress {

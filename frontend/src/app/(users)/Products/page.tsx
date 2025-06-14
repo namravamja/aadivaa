@@ -26,7 +26,9 @@ export default function Products({
     data: productsData,
     isLoading,
     error,
-  } = useGetAllProductsQuery(undefined);
+  } = useGetAllProductsQuery(undefined, {
+    refetchOnMountOrArgChange: true,
+  });
 
   console.log(productsData);
 

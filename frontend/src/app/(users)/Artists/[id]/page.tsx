@@ -110,7 +110,9 @@ export default function ArtistDetailPage({
     data: artists,
     isLoading: artistsLoading,
     error: artistsError,
-  } = useGetartistsQuery(undefined);
+  } = useGetartistsQuery(undefined, {
+    refetchOnMountOrArgChange: true,
+  });
 
   // Find the specific artist
   const artist = artists?.find((a: ProfileData) => a.id === id);
