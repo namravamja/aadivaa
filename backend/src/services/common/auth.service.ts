@@ -22,7 +22,7 @@ export const signupBuyer = async (data: SignupData) => {
   });
   if (existing) throw new Error("Email already registered");
 
-  const hashed = await hashPassword(data.password);
+  const hashed: string = await hashPassword(data.password);
 
   const buyer = await prisma.buyer.create({
     data: { ...data, password: hashed },
