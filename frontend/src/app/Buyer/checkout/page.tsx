@@ -1,7 +1,7 @@
 "use client";
 
 import type React from "react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -35,6 +35,7 @@ export default function CheckoutPage() {
     refetch: refetchBuyer,
   } = useGetBuyerQuery(undefined, {
     skip: !isAuthenticated,
+    refetchOnMountOrArgChange: true,
   });
 
   const {
@@ -44,12 +45,26 @@ export default function CheckoutPage() {
     refetch: refetchCart,
   } = useGetCartQuery(undefined, {
     skip: !isAuthenticated,
+    refetchOnMountOrArgChange: true,
   });
 
   const [createOrder] = useCreateOrderMutation();
 
   const cartItems = cartData || [];
   const addresses = buyerData?.addresses || [];
+  console.log(addresses);
+
+  // Effect to set default address when addresses are loaded
+  useEffect(() => {
+    if (addresses.length > 0) {
+      const defaultAddressIndex = addresses.findIndex(
+        (address: any) => address.isDefault
+      );
+      if (defaultAddressIndex !== -1) {
+        setSelectedAddressIndex(defaultAddressIndex);
+      }
+    }
+  }, [addresses]);
 
   const addressIds = addresses.map((address: any) => address.id);
 

@@ -130,8 +130,6 @@ export default function OrderDetailsPage() {
     skip: !isAuthenticated || !orderId,
   });
 
-  console.log(orderResponse);
-
   const [cancelOrder, { isLoading: isCancelling }] = useCancelOrderMutation();
 
   // Extract the actual order data from the response
@@ -511,28 +509,20 @@ export default function OrderDetailsPage() {
                       <span className="text-stone-600">Subtotal</span>
                       <span className="text-stone-900">
                         ₹
-                        {(
-                          (order.totalAmount -
-                            (order.orderItems?.[0]?.product?.shippingCost ||
-                              0)) /
-                          100
-                        ).toFixed(2)}
+                        {order.totalAmount -
+                          (order.orderItems?.[0]?.product?.shippingCost || 0)}
                       </span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-stone-600">Shipping</span>
                       <span className="text-stone-900">
-                        ₹
-                        {(
-                          (order.orderItems?.[0]?.product?.shippingCost || 0) /
-                          100
-                        ).toFixed(2)}
+                        ₹{order.orderItems?.[0]?.product?.shippingCost || 0}
                       </span>
                     </div>
                     <div className="flex justify-between font-medium text-base pt-2 border-t border-stone-200">
                       <span className="text-stone-900">Total</span>
                       <span className="text-stone-900">
-                        ₹{(order.totalAmount / 100).toFixed(2)}
+                        ₹{order.totalAmount}
                       </span>
                     </div>
                   </div>

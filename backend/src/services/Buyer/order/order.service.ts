@@ -104,7 +104,8 @@ export const createOrderFromCart = async (
         return newOrder;
       },
       {
-        timeout: 10000,
+        timeout: 20000, // increase from 10000
+        maxWait: 10000,
       }
     );
 

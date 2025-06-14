@@ -275,7 +275,7 @@ export default function BuyerWishlist() {
                 {/* Price */}
                 <div className="col-span-1 md:col-span-2 text-left md:text-center">
                   <span className="text-stone-900">
-                    ${Number.parseFloat(item.product.sellingPrice).toFixed(2)}
+                    ₹{Number.parseFloat(item.product.sellingPrice).toFixed(2)}
                   </span>
                 </div>
 
