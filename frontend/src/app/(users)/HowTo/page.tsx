@@ -1,7 +1,12 @@
+"use client";
+
 import Link from "next/link";
 import { CheckCircle, ArrowRight, HelpCircle } from "lucide-react";
+import { useAuthModal } from "@/app/(auth)/components/auth-modal-provider";
 
 export default function BecomeAnArtistPage() {
+  const { openArtistSignup } = useAuthModal();
+
   return (
     <main className="pt-24 pb-16">
       <div className="container mx-auto px-4 sm:px-6">
@@ -222,12 +227,14 @@ export default function BecomeAnArtistPage() {
                       information, craft specialization, and background. Include
                       photos of your work and a brief artist statement.
                     </p>
-                    <Link
-                      href="/Artist/signup"
-                      className="inline-flex items-center text-terracotta-600 hover:text-terracotta-700"
+                    <button
+                      onClick={() => {
+                        openArtistSignup();
+                      }}
+                      className="inline-flex items-center cursor-pointer text-terracotta-600 hover:text-terracotta-700"
                     >
                       Start Application <ArrowRight className="ml-2 w-4 h-4" />
-                    </Link>
+                    </button>
                   </div>
                   <div className="absolute left-0 md:left-1/2 transform md:-translate-x-1/2 flex items-center justify-center w-8 h-8 rounded-full bg-terracotta-600 text-white z-10 order-1 md:order-2">
                     1
@@ -666,12 +673,14 @@ export default function BecomeAnArtistPage() {
             authentic craftsmanship.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link
-              href="/Artist/signup"
-              className="px-8 py-3 bg-terracotta-600 text-white font-medium hover:bg-terracotta-700 transition-colors"
+            <button
+              onClick={() => {
+                openArtistSignup();
+              }}
+              className="px-8 cursor-pointer py-3 bg-terracotta-600 text-white font-medium hover:bg-terracotta-700 transition-colors"
             >
               Start Your Application
-            </Link>
+            </button>
             <Link
               href="/About"
               className="px-8 py-3 border border-white text-white font-medium hover:bg-stone-800 transition-colors"

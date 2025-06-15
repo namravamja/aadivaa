@@ -20,6 +20,7 @@ import { useGetCartQuery } from "@/services/api/cartApi";
 import { useCreateOrderMutation } from "@/services/api/orderApi";
 import { useGetBuyerQuery } from "@/services/api/buyerApi";
 import { useAuth } from "@/hooks/useAuth";
+import { useAuthModal } from "@/app/(auth)/components/auth-modal-provider";
 
 export default function CheckoutPage() {
   const [isLoading, setIsLoading] = useState(false);
@@ -27,6 +28,7 @@ export default function CheckoutPage() {
   const [paymentMethod, setPaymentMethod] = useState("card");
   const router = useRouter();
   const { isAuthenticated, isLoading: authLoading, user } = useAuth();
+  const { openBuyerLogin } = useAuthModal();
 
   const {
     data: buyerData,
@@ -132,6 +134,12 @@ export default function CheckoutPage() {
       setIsLoading(false);
     }
   };
+
+  // Handle login button click
+  const handleLoginClick = () => {
+    openBuyerLogin();
+  };
+
   // Show login prompt if not authenticated
   if (!authLoading && !isAuthenticated) {
     return (
@@ -145,9 +153,15 @@ export default function CheckoutPage() {
             <p className="text-stone-600 mb-8">
               Please login to proceed with checkout.
             </p>
-            <Link href="/Buyer/login">
-              <button className="bg-terracotta-600 hover:bg-terracotta-700 text-white px-6 py-3 font-medium transition-colors cursor-pointer">
-                Login to Continue
+            <button
+              onClick={handleLoginClick}
+              className="bg-terracotta-600 hover:bg-terracotta-700 text-white px-6 py-3 font-medium transition-colors cursor-pointer mr-4"
+            >
+              Login to Continue
+            </button>
+            <Link href="/Buyer/Cart">
+              <button className="border border-stone-300 text-stone-700 hover:bg-stone-50 px-6 py-3 font-medium transition-colors cursor-pointer">
+                Back to Cart
               </button>
             </Link>
           </div>

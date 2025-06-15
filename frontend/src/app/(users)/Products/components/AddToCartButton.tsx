@@ -2,14 +2,14 @@
 
 import { useState } from "react";
 import { ShoppingBag, Check } from "lucide-react";
-import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import { useAddToCartMutation, useGetCartQuery } from "@/services/api/cartApi";
 import { useAuth } from "@/hooks/useAuth";
+import { useAuthModal } from "@/app/(auth)/components/auth-modal-provider";
 
 type AddToCartButtonProps = {
   productId: string;
-  stockCount: number; // Add stockCount prop
+  stockCount: number;
   disabled?: boolean;
 };
 
@@ -20,8 +20,8 @@ export default function AddToCartButton({
 }: AddToCartButtonProps) {
   const [quantity, setQuantity] = useState(1);
   const [isAdded, setIsAdded] = useState(false);
-  const router = useRouter();
   const { isAuthenticated, isLoading: authLoading } = useAuth();
+  const { openBuyerLogin } = useAuthModal();
 
   const { refetch: refetchCart } = useGetCartQuery(undefined, {
     skip: !isAuthenticated,
@@ -51,10 +51,10 @@ export default function AddToCartButton({
   const handleAddToCart = async () => {
     if (!isAuthenticated) {
       toast.error("Please login to add items to your cart", {
-        duration: 3000,
+        duration: 1000,
         icon: "🔒",
       });
-      router.push("/Buyer/login");
+      openBuyerLogin(); // 👈 Show login modal too
       return;
     }
 
@@ -76,11 +76,7 @@ export default function AddToCartButton({
           icon: "🛒",
         }
       );
-
-      // Refetch cart data after mutation
       await refetchCart();
-
-      // Reset the button state after 2 seconds
       setTimeout(() => {
         setIsAdded(false);
       }, 2000);
@@ -122,16 +118,15 @@ export default function AddToCartButton({
         </button>
       </div>
 
-      {/* Stock indicator */}
       <div className="text-xs text-stone-500 mb-2">
         {stockCount > 0 ? `${stockCount} in stock` : "Out of stock"}
       </div>
 
       <button
         onClick={handleAddToCart}
-        disabled={disabled || isLoading || !isAuthenticated || stockCount === 0}
+        disabled={disabled || isLoading || stockCount === 0}
         className={`flex items-center justify-center px-6 py-3 font-medium transition-colors cursor-pointer ${
-          disabled || !isAuthenticated || stockCount === 0
+          disabled || stockCount === 0
             ? "bg-stone-300 text-stone-500 cursor-not-allowed"
             : isAdded
             ? "bg-green-600 text-white"

@@ -234,7 +234,6 @@ export default function MakeProfile() {
 
         setProfileData(loadedData);
         setOriginalData(loadedData); // Store original data for comparison
-        toast.success("Profile data loaded successfully");
       } catch (err) {
         console.error("Error loading artist data:", err);
         toast.error("Failed to load profile data. Please refresh the page.");

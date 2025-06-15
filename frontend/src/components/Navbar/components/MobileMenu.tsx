@@ -1,10 +1,11 @@
 "use client";
 
+import type React from "react";
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ChevronDown } from "lucide-react";
-import { NavigationItem } from "./types";
+import type { NavigationItem } from "./types";
 
 interface MobileMenuProps {
   navigation: NavigationItem[];
@@ -22,6 +23,14 @@ export default function MobileMenu({
 
   const toggleSubmenu = (name: string) => {
     setOpenSubmenu(openSubmenu === name ? null : name);
+  };
+
+  const handleItemClick = (item: NavigationItem, e: React.MouseEvent) => {
+    if (item.onClick) {
+      e.preventDefault();
+      item.onClick();
+      onClose();
+    }
   };
 
   return (
@@ -75,20 +84,34 @@ export default function MobileMenu({
                   }`}
                 >
                   <div className="ml-4 pl-4 flex flex-col space-y-2 border-l-2 border-stone-200">
-                    {item.children.map((child) => (
-                      <Link
-                        key={child.name}
-                        href={child.href}
-                        className={`text-base sm:text-lg md:text-xl py-2 px-3 rounded-md transition-colors duration-300 ${
-                          pathname === child.href
-                            ? "text-terracotta-600 bg-terracotta-50"
-                            : "text-stone-700 hover:text-terracotta-600 hover:bg-stone-50"
-                        }`}
-                        onClick={onClose}
-                      >
-                        {child.name}
-                      </Link>
-                    ))}
+                    {item.children.map((child) =>
+                      child.onClick ? (
+                        <button
+                          key={child.name}
+                          onClick={(e) => handleItemClick(child, e)}
+                          className={`text-base sm:text-lg md:text-xl py-2 px-3 rounded-md transition-colors duration-300 text-left w-full ${
+                            pathname === child.href
+                              ? "text-terracotta-600 bg-terracotta-50"
+                              : "text-stone-700 hover:text-terracotta-600 hover:bg-stone-50"
+                          }`}
+                        >
+                          {child.name}
+                        </button>
+                      ) : (
+                        <Link
+                          key={child.name}
+                          href={child.href}
+                          className={`text-base sm:text-lg md:text-xl py-2 px-3 rounded-md transition-colors duration-300 ${
+                            pathname === child.href
+                              ? "text-terracotta-600 bg-terracotta-50"
+                              : "text-stone-700 hover:text-terracotta-600 hover:bg-stone-50"
+                          }`}
+                          onClick={onClose}
+                        >
+                          {child.name}
+                        </Link>
+                      )
+                    )}
                   </div>
                 </div>
               </div>

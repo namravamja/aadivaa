@@ -14,6 +14,7 @@ import {
 } from "@/services/api/wishlistApi";
 import { useAddToCartMutation, useGetCartQuery } from "@/services/api/cartApi";
 import { useAuth } from "@/hooks/useAuth";
+import { useAuthModal } from "@/app/(auth)/components/auth-modal-provider";
 
 type Product = {
   id: string;
@@ -34,8 +35,8 @@ export default function ProductCard({ product }: ProductCardProps) {
   const [isAddedToCart, setIsAddedToCart] = useState(false);
   const router = useRouter();
   const { isAuthenticated, isLoading: authLoading } = useAuth();
+  const { openBuyerLogin } = useAuthModal(); // 👈 buyer login modal
 
-  // RTK Query hooks - only run if authenticated
   const { data: wishlistData, refetch: refetchWishlist } = useGetWishlistQuery(
     undefined,
     {
@@ -55,7 +56,6 @@ export default function ProductCard({ product }: ProductCardProps) {
   const [removeFromWishlist] = useRemoveFromWishlistMutation();
   const [addToCart, { isLoading: isAddingToCart }] = useAddToCartMutation();
 
-  // Check if product is in wishlist when data loads
   useEffect(() => {
     if (wishlistData && isAuthenticated) {
       const isInWishlist = wishlistData.some(
@@ -70,9 +70,10 @@ export default function ProductCard({ product }: ProductCardProps) {
 
     if (!isAuthenticated) {
       toast.error("Please login to add items to your wishlist", {
-        duration: 3000,
+        duration: 1000,
         icon: "🔒",
       });
+      openBuyerLogin();
       return;
     }
 
@@ -92,15 +93,11 @@ export default function ProductCard({ product }: ProductCardProps) {
           icon: "❤️",
         });
       }
-      // Refetch wishlist data after mutation
       await refetchWishlist();
     } catch (error: any) {
-      console.error("Error updating wishlist:", error);
       const errorMessage =
         error?.data?.message || error?.message || "Something went wrong";
-      toast.error(errorMessage, {
-        duration: 3000,
-      });
+      toast.error(errorMessage, { duration: 3000 });
     }
   };
 
@@ -109,9 +106,10 @@ export default function ProductCard({ product }: ProductCardProps) {
 
     if (!isAuthenticated) {
       toast.error("Please login to add items to your cart", {
-        duration: 3000,
+        duration: 1000,
         icon: "🔒",
       });
+      openBuyerLogin();
       return;
     }
 
@@ -122,25 +120,13 @@ export default function ProductCard({ product }: ProductCardProps) {
         duration: 2000,
         icon: "🛒",
       });
-
-      // Refetch cart data after mutation
       await refetchCart();
-
-      // Reset the button state after 2 seconds
-      setTimeout(() => {
-        setIsAddedToCart(false);
-      }, 2000);
+      setTimeout(() => setIsAddedToCart(false), 2000);
     } catch (error: any) {
-      console.error("Error adding to cart:", error);
       const errorMessage =
         error?.data?.message || error?.message || "Something went wrong";
-      toast.error(errorMessage, {
-        duration: 3000,
-      });
-      // Reset the button state after 2 seconds even if there's an error
-      setTimeout(() => {
-        setIsAddedToCart(false);
-      }, 2000);
+      toast.error(errorMessage, { duration: 3000 });
+      setTimeout(() => setIsAddedToCart(false), 2000);
     }
   };
 
@@ -193,7 +179,7 @@ export default function ProductCard({ product }: ProductCardProps) {
                 </>
               ) : (
                 <>
-                  <Plus className="w-4 h-4 mr-2 " /> Add to Cart
+                  <Plus className="w-4 h-4 mr-2" /> Add to Cart
                 </>
               )}
             </button>

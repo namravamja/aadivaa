@@ -20,6 +20,7 @@ import { useGetBuyerQuery } from "@/services/api/buyerApi";
 import { useLogoutMutation } from "@/services/api/authApi";
 import { useGetCartQuery } from "@/services/api/cartApi";
 import { useGetWishlistQuery } from "@/services/api/wishlistApi";
+import { useAuthModal } from "@/app/(auth)/components/auth-modal-provider";
 
 // Types
 interface UserMenuProps {
@@ -122,6 +123,9 @@ export default function UserMenu({ isMobile = false, onClose }: UserMenuProps) {
   const [showLogoutConfirm, setShowLogoutConfirm] = useState<boolean>(false);
   const [isLoggingOut, setIsLoggingOut] = useState<boolean>(false);
 
+  // Add the auth modal hook
+  const { openBuyerLogin } = useAuthModal();
+
   // Fetch buyer data - RTK Query will handle error states automatically
   const {
     data: buyerData,
@@ -160,12 +164,6 @@ export default function UserMenu({ isMobile = false, onClose }: UserMenuProps) {
     }
   }, [isError, buyerData]);
 
-  // console.log("Auth status:", {
-  //   isAuthenticated,
-  //   hasTriedAuth,
-  //   errorStatus: apiError?.status,
-  // });
-
   // Extract user data from RTK query response
   const user: User | null =
     isAuthenticated && buyerData
@@ -182,6 +180,14 @@ export default function UserMenu({ isMobile = false, onClose }: UserMenuProps) {
     0
   );
   const actualWishlistCount = wishlistItems.length;
+
+  // Handle buyer login modal
+  const handleBuyerLogin = (): void => {
+    openBuyerLogin();
+    if (onClose) {
+      onClose(); // Close the menu if it's mobile
+    }
+  };
 
   const handleLogout = (): void => {
     if (showLogoutConfirm) {
@@ -265,17 +271,17 @@ export default function UserMenu({ isMobile = false, onClose }: UserMenuProps) {
   }
 
   if (isMobile) {
-    // Show login if not authenticated or got 401
+    // Show login button if not authenticated or got 401
     if (!isAuthenticated) {
       return (
-        <Link
-          href="/Buyer/login"
-          className="text-stone-900 text-base sm:text-lg md:text-xl font-light flex items-center gap-3 hover:text-terracotta-600 transition-colors duration-300 p-3 hover:bg-stone-50 rounded-lg"
-          onClick={onClose}
+        <button
+          onClick={handleBuyerLogin}
+          className="text-stone-900 text-base sm:text-lg md:text-xl font-light flex items-center gap-3 hover:text-terracotta-600 transition-colors  duration-300 p-3 hover:bg-stone-50 rounded-lg w-full text-left"
+          type="button"
         >
           <User className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 flex-shrink-0" />
-          <span>Login</span>
-        </Link>
+          <span className="cursor-pointer">Login</span>
+        </button>
       );
     }
 
@@ -364,12 +370,13 @@ export default function UserMenu({ isMobile = false, onClose }: UserMenuProps) {
 
         {/* Hover dropdown with login button */}
         <div className="absolute right-0 mt-2 w-32 bg-white border border-stone-100 rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 transform origin-top-right scale-95 group-hover:scale-100 z-50">
-          <Link
-            href="/Buyer/login"
-            className="flex items-center justify-center px-4 py-3 text-sm text-stone-700 hover:bg-stone-50 hover:text-terracotta-600 transition-colors duration-200 rounded-lg font-medium"
+          <button
+            onClick={handleBuyerLogin}
+            className="flex items-center justify-center px-4 py-3 text-sm text-stone-700 hover:bg-stone-50 hover:text-terracotta-600 cursor-pointer transition-colors duration-200 rounded-lg font-medium w-full"
+            type="button"
           >
             Login
-          </Link>
+          </button>
         </div>
       </div>
     );

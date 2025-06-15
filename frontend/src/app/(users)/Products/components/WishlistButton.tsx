@@ -10,6 +10,7 @@ import {
   useGetWishlistQuery,
 } from "@/services/api/wishlistApi";
 import { useAuth } from "@/hooks/useAuth";
+import { useAuthModal } from "@/app/(auth)/components/auth-modal-provider";
 
 type WishlistButtonProps = {
   productId: string;
@@ -19,8 +20,8 @@ export default function WishlistButton({ productId }: WishlistButtonProps) {
   const [isWishlisted, setIsWishlisted] = useState(false);
   const router = useRouter();
   const { isAuthenticated, isLoading: authLoading } = useAuth();
+  const { openBuyerLogin } = useAuthModal();
 
-  // RTK Query hooks - only run if authenticated
   const {
     data: wishlistData,
     isLoading: isLoadingWishlist,
@@ -35,7 +36,6 @@ export default function WishlistButton({ productId }: WishlistButtonProps) {
   const [removeFromWishlist, { isLoading: isRemoving }] =
     useRemoveFromWishlistMutation();
 
-  // Check if product is in wishlist when data loads
   useEffect(() => {
     if (wishlistData && isAuthenticated) {
       const isInWishlist = wishlistData.some(
@@ -48,9 +48,10 @@ export default function WishlistButton({ productId }: WishlistButtonProps) {
   const toggleWishlist = async () => {
     if (!isAuthenticated) {
       toast.error("Please login to add items to your wishlist", {
-        duration: 3000,
+        duration: 1000,
         icon: "🔒",
       });
+      openBuyerLogin(); // <-- 🔑 open login modal
       return;
     }
 
@@ -70,7 +71,6 @@ export default function WishlistButton({ productId }: WishlistButtonProps) {
           icon: "❤️",
         });
       }
-      // Refetch wishlist data after mutation
       await refetchWishlist();
     } catch (error: any) {
       console.error("Error updating wishlist:", error);

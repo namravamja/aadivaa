@@ -19,10 +19,12 @@ import {
   useRemoveFromCartMutation,
 } from "@/services/api/cartApi";
 import { useAuth } from "@/hooks/useAuth";
+import { useAuthModal } from "@/app/(auth)/components/auth-modal-provider";
 
 export default function BuyerCartPage() {
   const [isLoading, setIsLoading] = useState(false);
   const { isAuthenticated, isLoading: authLoading } = useAuth();
+  const { openBuyerLogin } = useAuthModal();
 
   // RTK Query hooks - only run if authenticated
   const {
@@ -135,7 +137,7 @@ export default function BuyerCartPage() {
   const tax = subtotal * 0.08;
   const total = subtotal + shipping + tax;
 
-  // Show login prompt if not authenticated
+  // Show login prompt if not authenticated - UPDATED TO USE MODAL
   if (!authLoading && !isAuthenticated) {
     return (
       <main className="pt-24 pb-16">
@@ -148,11 +150,12 @@ export default function BuyerCartPage() {
             <p className="text-stone-600 mb-8">
               Please login to view your shopping cart.
             </p>
-            <Link href="/Buyer/login">
-              <button className="bg-terracotta-600 hover:bg-terracotta-700 text-white px-6 py-3 font-medium transition-colors cursor-pointer">
-                Login to Continue
-              </button>
-            </Link>
+            <button
+              onClick={openBuyerLogin}
+              className="bg-terracotta-600 hover:bg-terracotta-700 text-white px-6 py-3 font-medium transition-colors cursor-pointer"
+            >
+              Login to Continue
+            </button>
           </div>
         </div>
       </main>

@@ -4,7 +4,6 @@ import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { X, ShoppingBag, Heart, ArrowLeft, User } from "lucide-react";
-import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import {
   useGetWishlistQuery,
@@ -12,11 +11,12 @@ import {
 } from "@/services/api/wishlistApi";
 import { useAddToCartMutation, useGetCartQuery } from "@/services/api/cartApi";
 import { useAuth } from "@/hooks/useAuth";
+import { useAuthModal } from "@/app/(auth)/components/auth-modal-provider";
 
 export default function BuyerWishlist() {
   const [addedToCart, setAddedToCart] = useState<Record<string, boolean>>({});
-  const router = useRouter();
   const { isAuthenticated, isLoading: authLoading } = useAuth();
+  const { openBuyerLogin } = useAuthModal();
 
   // RTK Query hooks - only run if authenticated
   const {
@@ -101,12 +101,12 @@ export default function BuyerWishlist() {
             <p className="text-stone-600 mb-6">
               Please login to view your wishlist.
             </p>
-            <Link
-              href="/Buyer/login"
-              className="inline-block px-6 py-3 bg-terracotta-600 text-white font-medium hover:bg-terracotta-700 transition-colors"
+            <button
+              onClick={openBuyerLogin}
+              className="inline-block cursor-pointer px-6 py-3 bg-terracotta-600 text-white font-medium hover:bg-terracotta-700 transition-colors"
             >
               Login to Continue
-            </Link>
+            </button>
           </div>
         </div>
       </main>

@@ -11,27 +11,34 @@ import MobileMenu from "../Navbar/components/MobileMenu";
 import type { NavigationItem } from "../Navbar/components/types";
 import { ProfilePhoto } from "../Navbar/components/UserMenu";
 import { useAuth } from "@/hooks/useAuth";
-
-const navigation: NavigationItem[] = [
-  { name: "Home", href: "/" },
-  { name: "Shop", href: "/Products" },
-  { name: "Artists", href: "/Artists" },
-  {
-    name: "Become Seller",
-    children: [
-      { name: "How to be a seller?", href: "/HowTo" },
-      { name: "Go to dashboard", href: "/Artist/login" },
-    ],
-    href: "",
-  },
-  { name: "About", href: "/About" },
-  { name: "Journal", href: "/Journal" },
-];
+import { useAuthModal } from "@/app/(auth)/components/auth-modal-provider";
 
 export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const { isAuthenticated } = useAuth();
+  const { openArtistLogin } = useAuthModal();
+
+  // Define navigation inside component to access openArtistLogin
+  const navigation: NavigationItem[] = [
+    { name: "Home", href: "/" },
+    { name: "Shop", href: "/Products" },
+    { name: "Artists", href: "/Artists" },
+    {
+      name: "Become Seller",
+      children: [
+        { name: "How to be a seller?", href: "/HowTo" },
+        {
+          name: "Go to dashboard",
+          href: "",
+          onClick: openArtistLogin,
+        },
+      ],
+      href: "",
+    },
+    { name: "About", href: "/About" },
+    { name: "Journal", href: "/Journal" },
+  ];
 
   const closeMenu = () => {
     setIsMenuOpen(false);

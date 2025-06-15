@@ -13,13 +13,14 @@ import {
   X,
   AlertTriangle,
 } from "lucide-react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import toast from "react-hot-toast";
 import {
   useGetOrderByIdQuery,
   useCancelOrderMutation,
 } from "@/services/api/orderApi";
 import { useAuth } from "@/hooks/useAuth";
+import { useAuthModal } from "@/app/(auth)/components/auth-modal-provider";
 
 // Custom Confirmation Dialog Component
 type ConfirmationDialogProps = {
@@ -113,9 +114,9 @@ const ConfirmationDialog = ({
 
 export default function OrderDetailsPage() {
   const params = useParams();
-  const router = useRouter();
   const orderId = params.orderId as string;
   const { isAuthenticated, isLoading: authLoading } = useAuth();
+  const { openBuyerLogin } = useAuthModal();
 
   // State for confirmation dialog
   const [showCancelDialog, setShowCancelDialog] = useState(false);
@@ -206,11 +207,12 @@ export default function OrderDetailsPage() {
             <p className="text-stone-600 mb-8">
               Please login to view order details.
             </p>
-            <Link href="/Buyer/login">
-              <button className="bg-terracotta-600 hover:bg-terracotta-700 text-white px-6 py-3 font-medium transition-colors cursor-pointer">
-                Login to Continue
-              </button>
-            </Link>
+            <button
+              onClick={openBuyerLogin}
+              className="bg-terracotta-600 hover:bg-terracotta-700 text-white px-6 py-3 font-medium transition-colors cursor-pointer"
+            >
+              Login to Continue
+            </button>
           </div>
         </div>
       </main>

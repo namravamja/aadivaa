@@ -27,7 +27,7 @@ export default function StoreProvider({ children }: { children: ReactNode }) {
             fontSize: "14px",
             fontWeight: "500",
             padding: "12px 16px",
-            maxWidth: "400px",
+            maxWidth: "800px",
           },
           success: {
             style: {
