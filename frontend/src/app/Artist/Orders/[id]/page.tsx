@@ -12,12 +12,11 @@ import {
   Save,
   X,
   Loader2,
-  AlertTriangle,
-  CheckCircle,
 } from "lucide-react";
 import Image from "next/image";
 import { useParams, useRouter } from "next/navigation";
 import { useState, useEffect, useRef, useMemo } from "react";
+import toast from "react-hot-toast";
 import {
   useGetArtistOrderByIdQuery,
   useUpdateOrderStatusMutation,
@@ -28,58 +27,12 @@ import {
   useGetProductByArtistQuery,
 } from "@/services/api/productApi";
 
-// Toast notification component
-interface ToastProps {
-  message: string;
-  type: "success" | "error" | "warning";
-  onClose: () => void;
-}
-
 export interface ProductData {
   id: string;
   availableStock: string;
   productName?: string;
   skuCode?: string;
 }
-
-const Toast = ({ message, type, onClose }: ToastProps) => {
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      onClose();
-    }, 5000);
-    return () => clearTimeout(timer);
-  }, [onClose]);
-
-  const bgColor = {
-    success: "bg-green-100 border-green-300 text-green-800",
-    error: "bg-red-100 border-red-300 text-red-800",
-    warning: "bg-yellow-100 border-yellow-300 text-yellow-800",
-  };
-
-  const Icon = {
-    success: CheckCircle,
-    error: X,
-    warning: AlertTriangle,
-  };
-
-  const IconComponent = Icon[type];
-
-  return (
-    <div
-      className={`fixed top-4 right-4 p-4 border rounded-md shadow-md z-50 ${bgColor[type]} max-w-md`}
-    >
-      <div className="flex items-start gap-3">
-        <IconComponent className="w-5 h-5 flex-shrink-0 mt-0.5" />
-        <div className="flex-1">
-          <p className="text-sm font-medium">{message}</p>
-        </div>
-        <button onClick={onClose} className="text-current hover:opacity-70">
-          <X className="w-4 h-4" />
-        </button>
-      </div>
-    </div>
-  );
-};
 
 // Updated interface to match the actual API response
 interface OrderData {
@@ -164,12 +117,6 @@ export default function OrderDetailsPage() {
     useState<OrderData["status"]>("pending");
   const [selectedPaymentStatus, setSelectedPaymentStatus] =
     useState<OrderData["paymentStatus"]>("unpaid");
-
-  // Toast state
-  const [toast, setToast] = useState<{
-    message: string;
-    type: "success" | "error" | "warning";
-  } | null>(null);
 
   // Track previous status values for stock management
   const prevStatusRef = useRef<{
@@ -300,10 +247,7 @@ export default function OrderDetailsPage() {
             )
             .join(", ");
 
-          setToast({
-            message: `Insufficient stock for: ${insufficientProducts}`,
-            type: "warning",
-          });
+          toast.error(`Insufficient stock for: ${insufficientProducts}`);
 
           // Revert the status change if stock is insufficient
           if (shouldDecrease) {
@@ -349,12 +293,11 @@ export default function OrderDetailsPage() {
         // Refetch products to get updated stock data
         refetchProducts();
 
-        setToast({
-          message: `Stock ${
+        toast.success(
+          `Stock ${
             shouldDecrease ? "decreased" : "restored"
-          } successfully for ${order.orderItems.length} product(s)`,
-          type: "success",
-        });
+          } successfully for ${order.orderItems.length} product(s)`
+        );
       } catch (error) {
         console.error("Failed to update stock:", error);
 
@@ -371,21 +314,17 @@ export default function OrderDetailsPage() {
           ) {
             const errorData = error.data.error as any;
             if (errorData.name === "PrismaClientValidationError") {
-              setToast({
-                message:
-                  "Data validation error. The API may expect different data types. Check console for details.",
-                type: "error",
-              });
+              toast.error(
+                "Data validation error. The API may expect different data types. Check console for details."
+              );
               return;
             }
           }
         }
 
-        setToast({
-          message:
-            "Failed to update stock. Please check the console for details.",
-          type: "error",
-        });
+        toast.error(
+          "Failed to update stock. Please check the console for details."
+        );
 
         // Refresh order data and products to ensure UI is in sync
         refetch();
@@ -515,10 +454,9 @@ export default function OrderDetailsPage() {
               )
               .join(", ");
 
-            setToast({
-              message: `Cannot mark as ${selectedStatus}. Insufficient stock for: ${insufficientProducts}`,
-              type: "warning",
-            });
+            toast.error(
+              `Cannot mark as ${selectedStatus}. Insufficient stock for: ${insufficientProducts}`
+            );
             return;
           }
         }
@@ -532,16 +470,10 @@ export default function OrderDetailsPage() {
       setIsEditingStatus(false);
       refetch();
 
-      setToast({
-        message: "Order status updated successfully",
-        type: "success",
-      });
+      toast.success("Order status updated successfully");
     } catch (error) {
       console.error("Failed to update order status:", error);
-      setToast({
-        message: "Failed to update order status. Please try again.",
-        type: "error",
-      });
+      toast.error("Failed to update order status. Please try again.");
     }
   };
 
@@ -570,10 +502,9 @@ export default function OrderDetailsPage() {
             )
             .join(", ");
 
-          setToast({
-            message: `Cannot mark as paid. Insufficient stock for: ${insufficientProducts}`,
-            type: "warning",
-          });
+          toast.error(
+            `Cannot mark as paid. Insufficient stock for: ${insufficientProducts}`
+          );
           return;
         }
       }
@@ -586,16 +517,10 @@ export default function OrderDetailsPage() {
       setIsEditingPayment(false);
       refetch();
 
-      setToast({
-        message: "Payment status updated successfully",
-        type: "success",
-      });
+      toast.success("Payment status updated successfully");
     } catch (error) {
       console.error("Failed to update payment status:", error);
-      setToast({
-        message: "Failed to update payment status. Please try again.",
-        type: "error",
-      });
+      toast.error("Failed to update payment status. Please try again.");
     }
   };
 
@@ -651,15 +576,6 @@ export default function OrderDetailsPage() {
 
   return (
     <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8 max-w-4xl">
-      {/* Toast Notification */}
-      {toast && (
-        <Toast
-          message={toast.message}
-          type={toast.type}
-          onClose={() => setToast(null)}
-        />
-      )}
-
       {/* Stock Update Loading Indicator */}
       {isUpdatingStock && (
         <div className="fixed top-4 left-1/2 transform -translate-x-1/2 bg-blue-100 border border-blue-300 text-blue-800 px-4 py-2 rounded-md shadow-md z-40">
