@@ -85,22 +85,6 @@ export const createOrderFromCart = async (
           },
         });
 
-        for (const cartItem of cartItems) {
-          const currentStock = parseInt(cartItem.product.availableStock);
-          const newStock = currentStock - cartItem.quantity;
-
-          if (newStock < 0) {
-            throw new Error(
-              `Insufficient stock for product: ${cartItem.product.productName}`
-            );
-          }
-
-          await tx.product.update({
-            where: { id: cartItem.productId },
-            data: { availableStock: newStock.toString() },
-          });
-        }
-
         return newOrder;
       },
       {
