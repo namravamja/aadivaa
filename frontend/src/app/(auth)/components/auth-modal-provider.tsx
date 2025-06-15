@@ -1,10 +1,10 @@
 "use client";
 
 import { createContext, useContext, useState, type ReactNode } from "react";
-import ArtistLoginModal from "../Artist/login/page";
-import BuyerLoginModal from "../Buyer/login/page";
-import ArtistSignupModal from "../Artist/signup/page";
-import BuyerSignupModal from "../Buyer/signup/page";
+import ArtistLoginModal from "../Artist/login/login";
+import BuyerLoginModal from "../Buyer/login/login";
+import ArtistSignupModal from "../Artist/signup/signup";
+import BuyerSignupModal from "../Buyer/signup/signup";
 
 interface AuthModalContextType {
   openArtistLogin: () => void;

@@ -1,6 +1,11 @@
+"use client";
+
+import { useAuthModal } from "@/app/(auth)/components/auth-modal-provider";
 import Link from "next/link";
 
 export default function CallToAction() {
+  const { openArtistSignup } = useAuthModal();
+
   return (
     <section className="py-16 sm:py-20 md:py-24 bg-white">
       <div className="container mx-auto px-4">
@@ -14,12 +19,12 @@ export default function CallToAction() {
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link
-              href="/Signup"
-              className="px-6 sm:px-8 py-3 bg-terracotta-600 text-white font-medium hover:bg-terracotta-700 transition-colors"
+            <button
+              onClick={openArtistSignup}
+              className="px-6 cursor-pointer sm:px-8 py-3 bg-terracotta-600 text-white font-medium hover:bg-terracotta-700 transition-colors"
             >
               Create Account
-            </Link>
+            </button>
             <Link
               href="/Products"
               className="px-6 sm:px-8 py-3 border border-stone-900 text-stone-900 font-medium hover:bg-stone-50 transition-colors"
