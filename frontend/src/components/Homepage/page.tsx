@@ -6,7 +6,7 @@ import CallToAction from "@/components/Homepage/components/CallToAction";
 
 export default function HomePage() {
   return (
-    <main className="pt-20">
+    <main className="xl:pt-20 lg:pt-16 md:pt-16 pt-14">
       <HeroSection />
       <BestSellingProducts />
       <ArtistSpotlight />
