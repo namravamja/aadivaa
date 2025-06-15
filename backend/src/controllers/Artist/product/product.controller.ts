@@ -150,3 +150,29 @@ export const deleteProduct = async (
     res.status(400).json({ error: (error as Error).message });
   }
 };
+
+export const updateStockOnly = async (
+  req: AuthenticatedRequest,
+  res: Response
+) => {
+  try {
+    const artistId = req.user?.id;
+    if (!artistId) throw new Error("Unauthorized");
+
+    const { productId, availableStock } = req.body;
+
+    if (!productId || !availableStock) {
+      throw new Error("productId and availableStock are required");
+    }
+
+    const updatedProduct = await productService.updateProductStockOnly(
+      productId,
+      artistId,
+      availableStock
+    );
+
+    res.status(200).json(updatedProduct);
+  } catch (error) {
+    res.status(400).json({ error: (error as Error).message });
+  }
+};

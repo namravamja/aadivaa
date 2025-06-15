@@ -41,8 +41,21 @@ export default function BuyerCartPage() {
 
   const cartItems = cartData || [];
 
-  const updateQuantity = async (productId: string, newQuantity: number) => {
+  const updateQuantity = async (
+    productId: string,
+    newQuantity: number,
+    maxStock: number
+  ) => {
     if (newQuantity < 1) return;
+
+    // Check if new quantity exceeds available stock
+    if (newQuantity > maxStock) {
+      toast.error(`Only ${maxStock} items available in stock`, {
+        duration: 3000,
+        icon: "⚠️",
+      });
+      return;
+    }
 
     setIsLoading(true);
     try {
@@ -266,108 +279,140 @@ export default function BuyerCartPage() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Cart Items */}
           <div className="lg:col-span-2 space-y-4">
-            {cartItems.map((item: any) => (
-              <div key={item.id} className="bg-white border border-stone-200">
-                <div className="p-6">
-                  <div className="flex items-center space-x-4">
-                    <div className="relative w-20 h-20 flex-shrink-0">
-                      <Image
-                        src={
-                          item.product.productImages?.[0] || "/placeholder.svg"
-                        }
-                        alt={item.product.productName}
-                        fill
-                        className="object-cover"
-                      />
-                    </div>
+            {cartItems.map((item: any) => {
+              const availableStock = Number.parseInt(
+                item.product.availableStock
+              );
+              const isQuantityAtMax = item.quantity >= availableStock;
+              const isOutOfStock = availableStock === 0;
 
-                    <div className="flex-1 min-w-0">
-                      <div className="flex justify-between items-start mb-2">
-                        <div>
-                          <Link href={`/Products/${item.product.id}`}>
-                            <h3 className="font-medium text-stone-900 hover:text-terracotta-600 transition-colors">
-                              {item.product.productName}
-                            </h3>
-                          </Link>
-                          <p className="text-sm text-stone-500">
-                            By{" "}
-                            {item.product.artist?.fullName || "Unknown Artist"}
-                          </p>
-                          <span className="inline-block bg-stone-100 text-stone-800 text-xs px-2 py-1 mt-1">
-                            {item.product.category}
-                          </span>
-                        </div>
-                        <button
-                          onClick={() => removeItem(item.productId)}
-                          disabled={isLoading}
-                          className="text-stone-400 hover:text-red-600 p-1 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                          <X className="w-4 h-4" />
-                        </button>
+              return (
+                <div key={item.id} className="bg-white border border-stone-200">
+                  <div className="p-6">
+                    <div className="flex items-center space-x-4">
+                      <div className="relative w-20 h-20 flex-shrink-0">
+                        <Image
+                          src={
+                            item.product.productImages?.[0] ||
+                            "/placeholder.svg"
+                          }
+                          alt={item.product.productName}
+                          fill
+                          className="object-cover"
+                        />
                       </div>
 
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-3">
-                          <div className="flex items-center border border-stone-300">
-                            <button
-                              onClick={() =>
-                                updateQuantity(
-                                  item.productId,
-                                  item.quantity - 1
-                                )
-                              }
-                              disabled={isLoading || item.quantity <= 1}
-                              className="h-8 w-8 flex items-center justify-center hover:bg-stone-50 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                              <Minus className="w-3 h-3" />
-                            </button>
-                            <span className="px-3 py-1 text-sm font-medium min-w-[2rem] text-center">
-                              {item.quantity}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex justify-between items-start mb-2">
+                          <div>
+                            <Link href={`/Products/${item.product.id}`}>
+                              <h3 className="font-medium text-stone-900 hover:text-terracotta-600 transition-colors">
+                                {item.product.productName}
+                              </h3>
+                            </Link>
+                            <p className="text-sm text-stone-500">
+                              By{" "}
+                              {item.product.artist?.fullName ||
+                                "Unknown Artist"}
+                            </p>
+                            <span className="inline-block bg-stone-100 text-stone-800 text-xs px-2 py-1 mt-1">
+                              {item.product.category}
                             </span>
-                            <button
-                              onClick={() =>
-                                updateQuantity(
-                                  item.productId,
-                                  item.quantity + 1
-                                )
-                              }
-                              disabled={
-                                isLoading ||
-                                item.quantity >=
-                                  Number.parseInt(item.product.availableStock)
-                              }
-                              className="h-8 w-8 flex items-center justify-center hover:bg-stone-50 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                              <Plus className="w-3 h-3" />
-                            </button>
                           </div>
-                          <span className="text-xs text-stone-500">
-                            {item.product.availableStock} in stock
-                          </span>
+                          <button
+                            onClick={() => removeItem(item.productId)}
+                            disabled={isLoading}
+                            className="text-stone-400 hover:text-red-600 p-1 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
                         </div>
 
-                        <div className="text-right">
-                          <p className="font-medium text-stone-900">
-                            ₹
-                            {(
-                              Number.parseFloat(item.product.sellingPrice) *
-                              item.quantity
-                            ).toFixed(2)}
-                          </p>
-                          <p className="text-sm text-stone-500">
-                            ₹
-                            {Number.parseFloat(
-                              item.product.sellingPrice
-                            ).toFixed(2)}{" "}
-                            each
-                          </p>
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-3">
+                            <div className="flex items-center border border-stone-300">
+                              <button
+                                onClick={() =>
+                                  updateQuantity(
+                                    item.productId,
+                                    item.quantity - 1,
+                                    availableStock
+                                  )
+                                }
+                                disabled={isLoading || item.quantity <= 1}
+                                className="h-8 w-8 flex items-center justify-center hover:bg-stone-50 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                              >
+                                <Minus className="w-3 h-3" />
+                              </button>
+                              <span className="px-3 py-1 text-sm font-medium min-w-[2rem] text-center">
+                                {item.quantity}
+                              </span>
+                              <button
+                                onClick={() =>
+                                  updateQuantity(
+                                    item.productId,
+                                    item.quantity + 1,
+                                    availableStock
+                                  )
+                                }
+                                disabled={
+                                  isLoading || isQuantityAtMax || isOutOfStock
+                                }
+                                className="h-8 w-8 flex items-center justify-center hover:bg-stone-50 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                                title={
+                                  isQuantityAtMax
+                                    ? `Maximum quantity reached (${availableStock} available)`
+                                    : isOutOfStock
+                                    ? "Out of stock"
+                                    : "Increase quantity"
+                                }
+                              >
+                                <Plus className="w-3 h-3" />
+                              </button>
+                            </div>
+                            <div className="text-xs">
+                              <span
+                                className={`${
+                                  isOutOfStock
+                                    ? "text-red-500"
+                                    : "text-stone-500"
+                                }`}
+                              >
+                                {isOutOfStock
+                                  ? "Out of stock"
+                                  : `${availableStock} in stock`}
+                              </span>
+                              {isQuantityAtMax && !isOutOfStock && (
+                                <span className="text-amber-600 block">
+                                  Maximum reached
+                                </span>
+                              )}
+                            </div>
+                          </div>
+
+                          <div className="text-right">
+                            <p className="font-medium text-stone-900">
+                              ₹
+                              {(
+                                Number.parseFloat(item.product.sellingPrice) *
+                                item.quantity
+                              ).toFixed(2)}
+                            </p>
+                            <p className="text-sm text-stone-500">
+                              ₹
+                              {Number.parseFloat(
+                                item.product.sellingPrice
+                              ).toFixed(2)}{" "}
+                              each
+                            </p>
+                          </div>
                         </div>
                       </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
           {/* Order Summary */}

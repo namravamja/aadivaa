@@ -45,6 +45,17 @@ export const productApi = ProductApi.injectEndpoints({
       },
     }),
 
+    updateStock: builder.mutation({
+      query: ({ productId, availableStock }) => ({
+        url: `/updateStock`,
+        method: "PATCH",
+        body: {
+          productId,
+          availableStock,
+        },
+      }),
+    }),
+
     getProductByArtist: builder.query({
       query: () => "/listByArtist",
     }),
@@ -76,6 +87,7 @@ export const {
   useCreateProductMutation,
   useUpdateProductMutation,
   useGetProductByArtistQuery,
+  useUpdateStockMutation,
   useGetProductByArtistIdQuery,
   useGetAllProductsQuery,
   useGetProductByIdQuery,

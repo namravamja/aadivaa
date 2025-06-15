@@ -12,15 +12,74 @@ import {
   Save,
   X,
   Loader2,
+  AlertTriangle,
+  CheckCircle,
 } from "lucide-react";
 import Image from "next/image";
 import { useParams, useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import {
   useGetArtistOrderByIdQuery,
   useUpdateOrderStatusMutation,
   useUpdateOrderPaymentStatusMutation,
 } from "@/services/api/artistOrderApi";
+import {
+  useUpdateStockMutation,
+  useGetProductByArtistQuery,
+} from "@/services/api/productApi";
+
+// Toast notification component
+interface ToastProps {
+  message: string;
+  type: "success" | "error" | "warning";
+  onClose: () => void;
+}
+
+export interface ProductData {
+  id: string;
+  availableStock: string;
+  productName?: string;
+  skuCode?: string;
+}
+
+const Toast = ({ message, type, onClose }: ToastProps) => {
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      onClose();
+    }, 5000);
+    return () => clearTimeout(timer);
+  }, [onClose]);
+
+  const bgColor = {
+    success: "bg-green-100 border-green-300 text-green-800",
+    error: "bg-red-100 border-red-300 text-red-800",
+    warning: "bg-yellow-100 border-yellow-300 text-yellow-800",
+  };
+
+  const Icon = {
+    success: CheckCircle,
+    error: X,
+    warning: AlertTriangle,
+  };
+
+  const IconComponent = Icon[type];
+
+  return (
+    <div
+      className={`fixed top-4 right-4 p-4 border rounded-md shadow-md z-50 ${bgColor[type]} max-w-md`}
+    >
+      <div className="flex items-start gap-3">
+        <IconComponent className="w-5 h-5 flex-shrink-0 mt-0.5" />
+        <div className="flex-1">
+          <p className="text-sm font-medium">{message}</p>
+        </div>
+        <button onClick={onClose} className="text-current hover:opacity-70">
+          <X className="w-4 h-4" />
+        </button>
+      </div>
+    </div>
+  );
+};
 
 // Updated interface to match the actual API response
 interface OrderData {
@@ -60,6 +119,7 @@ interface OrderData {
       length?: string;
       width?: string;
       height?: string;
+      availableStock?: number;
     };
   }>;
   shippingAddress: {
@@ -81,6 +141,17 @@ interface OrderData {
   };
 }
 
+interface StockValidationResult {
+  isValid: boolean;
+  insufficientItems: Array<{
+    productId: string;
+    productName: string;
+    requiredQuantity: number;
+    availableStock: number;
+    shortfall: number;
+  }>;
+}
+
 export default function OrderDetailsPage() {
   const params = useParams();
   const router = useRouter();
@@ -94,6 +165,21 @@ export default function OrderDetailsPage() {
   const [selectedPaymentStatus, setSelectedPaymentStatus] =
     useState<OrderData["paymentStatus"]>("unpaid");
 
+  // Toast state
+  const [toast, setToast] = useState<{
+    message: string;
+    type: "success" | "error" | "warning";
+  } | null>(null);
+
+  // Track previous status values for stock management
+  const prevStatusRef = useRef<{
+    status: OrderData["status"] | null;
+    paymentStatus: OrderData["paymentStatus"] | null;
+  }>({
+    status: null,
+    paymentStatus: null,
+  });
+
   // RTK Query hooks
   const {
     data: response,
@@ -105,11 +191,239 @@ export default function OrderDetailsPage() {
     useUpdateOrderStatusMutation();
   const [updateOrderPaymentStatus, { isLoading: isUpdatingPayment }] =
     useUpdateOrderPaymentStatusMutation();
+  const [updateStock, { isLoading: isUpdatingStock }] =
+    useUpdateStockMutation();
+  const {
+    data: productData,
+    isLoading: isLoadingProducts,
+    refetch: refetchProducts,
+  } = useGetProductByArtistQuery(undefined, {
+    refetchOnMountOrArgChange: true,
+  });
 
   // Extract order data from response
   const order = response?.data;
+  const products: ProductData[] = (productData ?? []) as ProductData[];
 
-  // Helper functions
+  // Create a product lookup map for efficient access
+  const productMap = useMemo(() => {
+    const map = new Map<string, ProductData>();
+    products.forEach((product) => {
+      map.set(product.id, product);
+    });
+    return map;
+  }, [products]);
+
+  // Function to get current stock for a product
+  const getCurrentStock = (productId: string): number => {
+    const product = productMap.get(productId);
+    return product ? Number(product.availableStock) || 0 : 0;
+  };
+
+  // Function to validate stock before updating using real product data
+  const validateStockAvailability = async (
+    orderItems: OrderData["orderItems"],
+    shouldDecrease: boolean
+  ): Promise<StockValidationResult> => {
+    if (!shouldDecrease) {
+      // If we're increasing stock (restoring), no validation needed
+      return { isValid: true, insufficientItems: [] };
+    }
+
+    const insufficientItems: StockValidationResult["insufficientItems"] = [];
+
+    for (const item of orderItems) {
+      // Get current stock from products API data
+      const currentStock = getCurrentStock(item.productId);
+      const requiredQuantity = Number(item.quantity) || 0;
+
+      if (currentStock < requiredQuantity) {
+        insufficientItems.push({
+          productId: item.productId,
+          productName: item.product.productName,
+          requiredQuantity,
+          availableStock: currentStock,
+          shortfall: requiredQuantity - currentStock,
+        });
+      }
+    }
+
+    return {
+      isValid: insufficientItems.length === 0,
+      insufficientItems,
+    };
+  };
+
+  // Stock management logic
+  useEffect(() => {
+    if (!order || !products.length) return;
+
+    const currentStatus = order.status;
+    const currentPaymentStatus = order.paymentStatus;
+    const prevStatus = prevStatusRef.current.status;
+    const prevPaymentStatus = prevStatusRef.current.paymentStatus;
+
+    // Skip on initial load
+    if (prevStatus === null || prevPaymentStatus === null) {
+      prevStatusRef.current = {
+        status: currentStatus,
+        paymentStatus: currentPaymentStatus,
+      };
+      return;
+    }
+
+    // Define statuses that affect stock
+    const stockAffectingStatuses = ["confirmed", "shipped", "delivered"];
+
+    // Check if stock should be decreased (order is now in a stock-affecting status and paid)
+    const wasStockDecreased =
+      stockAffectingStatuses.includes(prevStatus) &&
+      prevPaymentStatus === "paid";
+    const shouldStockBeDecreased =
+      stockAffectingStatuses.includes(currentStatus) &&
+      currentPaymentStatus === "paid";
+
+    // Handle stock updates for each order item
+    const updateStockForItems = async (shouldDecrease: boolean) => {
+      try {
+        // Validate stock availability before decreasing using real product data
+        const validation = await validateStockAvailability(
+          order.orderItems,
+          shouldDecrease
+        );
+
+        if (!validation.isValid) {
+          const insufficientProducts = validation.insufficientItems
+            .map(
+              (item) =>
+                `${item.productName} (need ${item.requiredQuantity}, have ${item.availableStock})`
+            )
+            .join(", ");
+
+          setToast({
+            message: `Insufficient stock for: ${insufficientProducts}`,
+            type: "warning",
+          });
+
+          // Revert the status change if stock is insufficient
+          if (shouldDecrease) {
+            refetch(); // Refresh to get the original status
+          }
+          return;
+        }
+
+        // Process each item individually with proper error handling
+        const stockUpdatePromises = order.orderItems.map(
+          async (item: OrderData["orderItems"][number]) => {
+            // Ensure quantity is a proper number
+            const quantity = Number(item.quantity);
+            if (isNaN(quantity) || quantity <= 0) {
+              throw new Error(
+                `Invalid quantity for product ${item.productId}: ${item.quantity}`
+              );
+            }
+
+            // Get current stock for this product
+            const currentStock = getCurrentStock(item.productId);
+
+            // Calculate new absolute stock value
+            const newStock = shouldDecrease
+              ? currentStock - quantity
+              : currentStock + quantity;
+
+            // Ensure stock doesn't go below 0
+            const finalStock = Math.max(0, newStock);
+
+            // Create the payload with absolute stock value as STRING
+            const payload = {
+              productId: String(item.productId),
+              availableStock: String(finalStock), // Convert to string since Prisma expects String
+            };
+
+            return updateStock(payload).unwrap();
+          }
+        );
+
+        await Promise.all(stockUpdatePromises);
+
+        // Refetch products to get updated stock data
+        refetchProducts();
+
+        setToast({
+          message: `Stock ${
+            shouldDecrease ? "decreased" : "restored"
+          } successfully for ${order.orderItems.length} product(s)`,
+          type: "success",
+        });
+      } catch (error) {
+        console.error("Failed to update stock:", error);
+
+        // Enhanced error logging
+        if (error && typeof error === "object") {
+          console.error("Full error object:", JSON.stringify(error, null, 2));
+
+          // Check if it's a validation error
+          if (
+            "data" in error &&
+            error.data &&
+            typeof error.data === "object" &&
+            "error" in error.data
+          ) {
+            const errorData = error.data.error as any;
+            if (errorData.name === "PrismaClientValidationError") {
+              setToast({
+                message:
+                  "Data validation error. The API may expect different data types. Check console for details.",
+                type: "error",
+              });
+              return;
+            }
+          }
+        }
+
+        setToast({
+          message:
+            "Failed to update stock. Please check the console for details.",
+          type: "error",
+        });
+
+        // Refresh order data and products to ensure UI is in sync
+        refetch();
+        refetchProducts();
+      }
+    };
+
+    // Determine if stock needs to be updated
+    const wasStockDecreasedCheck =
+      stockAffectingStatuses.includes(prevStatus) &&
+      prevPaymentStatus === "paid";
+    const shouldStockBeDecreasedCheck =
+      stockAffectingStatuses.includes(currentStatus) &&
+      currentPaymentStatus === "paid";
+
+    if (!wasStockDecreasedCheck && shouldStockBeDecreasedCheck) {
+      // Order moved to a stock-affecting status with payment - decrease stock
+      updateStockForItems(true);
+    } else if (wasStockDecreasedCheck && !shouldStockBeDecreasedCheck) {
+      // Order moved away from stock-affecting status or payment changed - restore stock
+      updateStockForItems(false);
+    }
+
+    // Update previous values
+    prevStatusRef.current = {
+      status: currentStatus,
+      paymentStatus: currentPaymentStatus,
+    };
+  }, [
+    order,
+    order?.status,
+    order?.paymentStatus,
+    products,
+    updateStock,
+    refetch,
+    refetchProducts,
+  ]);
+
   const getOrderProgress = (status: OrderData["status"]) => {
     const steps = ["pending", "confirmed", "shipped", "delivered"];
     const currentIndex = steps.indexOf(status);
@@ -173,40 +487,127 @@ export default function OrderDetailsPage() {
     router.push("/Artist/Orders");
   };
 
-  // Handle status update
+  // Handle status update with stock validation using real product data
   const handleStatusUpdate = async () => {
     try {
+      // Define statuses that require stock validation
+      const stockRequiredStatuses = ["confirmed", "shipped", "delivered"];
+
+      // If changing to a status that requires stock validation
+      if (stockRequiredStatuses.includes(selectedStatus)) {
+        // For delivered status, also check if payment is paid
+        const shouldValidateStock =
+          selectedStatus === "delivered"
+            ? order?.paymentStatus === "paid"
+            : true;
+
+        if (shouldValidateStock) {
+          const validation = await validateStockAvailability(
+            order.orderItems,
+            true
+          );
+
+          if (!validation.isValid) {
+            const insufficientProducts = validation.insufficientItems
+              .map(
+                (item) =>
+                  `${item.productName} (need ${item.requiredQuantity}, have ${item.availableStock})`
+              )
+              .join(", ");
+
+            setToast({
+              message: `Cannot mark as ${selectedStatus}. Insufficient stock for: ${insufficientProducts}`,
+              type: "warning",
+            });
+            return;
+          }
+        }
+      }
+
       await updateOrderStatus({
         orderId,
         status: selectedStatus,
       }).unwrap();
+
       setIsEditingStatus(false);
       refetch();
+
+      setToast({
+        message: "Order status updated successfully",
+        type: "success",
+      });
     } catch (error) {
       console.error("Failed to update order status:", error);
+      setToast({
+        message: "Failed to update order status. Please try again.",
+        type: "error",
+      });
     }
   };
 
-  // Handle payment status update
+  // Handle payment status update with stock validation using real product data
   const handlePaymentStatusUpdate = async () => {
     try {
+      // Define statuses that when combined with "paid" require stock validation
+      const stockRequiredStatuses = ["confirmed", "shipped", "delivered"];
+
+      // If changing to paid and order status requires stock validation
+      if (
+        selectedPaymentStatus === "paid" &&
+        order?.status &&
+        stockRequiredStatuses.includes(order.status)
+      ) {
+        const validation = await validateStockAvailability(
+          order.orderItems,
+          true
+        );
+
+        if (!validation.isValid) {
+          const insufficientProducts = validation.insufficientItems
+            .map(
+              (item) =>
+                `${item.productName} (need ${item.requiredQuantity}, have ${item.availableStock})`
+            )
+            .join(", ");
+
+          setToast({
+            message: `Cannot mark as paid. Insufficient stock for: ${insufficientProducts}`,
+            type: "warning",
+          });
+          return;
+        }
+      }
+
       await updateOrderPaymentStatus({
         orderId,
         paymentStatus: selectedPaymentStatus,
       }).unwrap();
+
       setIsEditingPayment(false);
       refetch();
+
+      setToast({
+        message: "Payment status updated successfully",
+        type: "success",
+      });
     } catch (error) {
       console.error("Failed to update payment status:", error);
+      setToast({
+        message: "Failed to update payment status. Please try again.",
+        type: "error",
+      });
     }
   };
 
   // Loading state
-  if (isLoading) {
+  if (isLoading || isLoadingProducts) {
     return (
       <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8 max-w-4xl">
         <div className="flex items-center justify-center min-h-[400px]">
           <Loader2 className="w-8 h-8 animate-spin text-terracotta-600" />
+          <span className="ml-2 text-terracotta-600">
+            Loading order and product data...
+          </span>
         </div>
       </div>
     );
@@ -250,6 +651,25 @@ export default function OrderDetailsPage() {
 
   return (
     <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8 max-w-4xl">
+      {/* Toast Notification */}
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
+        />
+      )}
+
+      {/* Stock Update Loading Indicator */}
+      {isUpdatingStock && (
+        <div className="fixed top-4 left-1/2 transform -translate-x-1/2 bg-blue-100 border border-blue-300 text-blue-800 px-4 py-2 rounded-md shadow-md z-40">
+          <div className="flex items-center gap-2">
+            <Loader2 className="w-4 h-4 animate-spin" />
+            <span className="text-sm">Updating stock...</span>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex items-center mb-6">
         <button
@@ -449,51 +869,78 @@ export default function OrderDetailsPage() {
             Order Items
           </h2>
           <div className="space-y-4">
-            {order.orderItems.map((item: OrderData["orderItems"][number]) => (
-              <div
-                key={item.id}
-                className="flex items-center gap-4 p-4 bg-stone-50 rounded-md"
-              >
-                <div className="w-16 h-16 sm:w-20 sm:h-20 flex-shrink-0">
-                  <Image
-                    src={item.product.productImages?.[0] || "/placeholder.svg"}
-                    alt={item.product.productName}
-                    width={80}
-                    height={80}
-                    className="w-full h-full object-cover rounded-md"
-                  />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <h3 className="text-sm sm:text-base font-medium text-stone-900 truncate">
-                    {item.product.productName}
-                  </h3>
-                  <p className="text-sm text-stone-600">
-                    SKU: {item.product.skuCode}
-                  </p>
-                  <p className="text-sm text-stone-600">
-                    Category: {item.product.category}
-                  </p>
-                  <p className="text-sm text-stone-600">
-                    Quantity: {item.quantity}
-                  </p>
-                  {item.product.weight && (
+            {order.orderItems.map((item: OrderData["orderItems"][number]) => {
+              // Get current stock from products API
+              const currentStock = getCurrentStock(item.productId);
+              const requiredQuantity = Number(item.quantity);
+
+              return (
+                <div
+                  key={item.id}
+                  className="flex items-center gap-4 p-4 bg-stone-50 rounded-md"
+                >
+                  <div className="w-16 h-16 sm:w-20 sm:h-20 flex-shrink-0">
+                    <Image
+                      src={
+                        item.product.productImages?.[0] || "/placeholder.svg"
+                      }
+                      alt={item.product.productName}
+                      width={80}
+                      height={80}
+                      className="w-full h-full object-cover rounded-md"
+                    />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-sm sm:text-base font-medium text-stone-900 truncate">
+                      {item.product.productName}
+                    </h3>
                     <p className="text-sm text-stone-600">
-                      Weight: {item.product.weight}kg
+                      SKU: {item.product.skuCode}
                     </p>
-                  )}
-                </div>
-                <div className="text-right">
-                  <p className="text-sm sm:text-base font-medium text-stone-900">
-                    ₹{item.priceAtPurchase.toFixed(2)}
-                  </p>
-                  {item.quantity > 1 && (
-                    <p className="text-xs text-stone-600">
-                      ₹{(item.priceAtPurchase / item.quantity).toFixed(2)} each
+                    <p className="text-sm text-stone-600">
+                      Category: {item.product.category}
                     </p>
-                  )}
+                    <p className="text-sm text-stone-600">
+                      Quantity: {item.quantity}
+                    </p>
+
+                    {/* Display current stock from products API */}
+                    <p
+                      className={`text-sm ${
+                        currentStock < requiredQuantity
+                          ? "text-red-600"
+                          : "text-green-600"
+                      }`}
+                    >
+                      Current Stock: {currentStock}
+                      {currentStock < requiredQuantity && (
+                        <span className="ml-2 text-red-600 font-medium">
+                          (Insufficient: need {requiredQuantity - currentStock}{" "}
+                          more)
+                        </span>
+                      )}
+                    </p>
+
+                    {item.product.weight && (
+                      <p className="text-sm text-stone-600">
+                        Weight: {item.product.weight}kg
+                      </p>
+                    )}
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm sm:text-base font-medium text-stone-900">
+                      ₹{item.priceAtPurchase.toFixed(2)}
+                    </p>
+                    {requiredQuantity > 1 && (
+                      <p className="text-xs text-stone-600">
+                        ₹{(item.priceAtPurchase / requiredQuantity).toFixed(2)}{" "}
+                        each
+                      </p>
+                    )}
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
           {/* Order Total */}

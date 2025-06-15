@@ -283,6 +283,7 @@ export default function ProductDetailPage({
 
             <div className="flex flex-col sm:flex-row gap-4">
               <AddToCartButton
+                stockCount={product.stockCount}
                 productId={product.id}
                 disabled={!product.inStock}
               />

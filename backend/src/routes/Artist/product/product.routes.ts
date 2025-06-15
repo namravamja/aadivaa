@@ -32,4 +32,6 @@ router.delete(
 );
 
 router.get("/:productId", productController.getProductById);
+
+router.patch("/updateStock", verifyToken, productController.updateStockOnly);
 export default router;

@@ -9,11 +9,13 @@ import { useAuth } from "@/hooks/useAuth";
 
 type AddToCartButtonProps = {
   productId: string;
+  stockCount: number; // Add stockCount prop
   disabled?: boolean;
 };
 
 export default function AddToCartButton({
   productId,
+  stockCount,
   disabled = false,
 }: AddToCartButtonProps) {
   const [quantity, setQuantity] = useState(1);
@@ -36,7 +38,14 @@ export default function AddToCartButton({
   };
 
   const increaseQuantity = () => {
-    setQuantity(quantity + 1);
+    if (quantity < stockCount) {
+      setQuantity(quantity + 1);
+    } else {
+      toast.error(`Only ${stockCount} items available in stock`, {
+        duration: 2000,
+        icon: "⚠️",
+      });
+    }
   };
 
   const handleAddToCart = async () => {
@@ -46,6 +55,14 @@ export default function AddToCartButton({
         icon: "🔒",
       });
       router.push("/Buyer/login");
+      return;
+    }
+
+    if (quantity > stockCount) {
+      toast.error(`Cannot add more than ${stockCount} items`, {
+        duration: 2000,
+        icon: "⚠️",
+      });
       return;
     }
 
@@ -97,7 +114,7 @@ export default function AddToCartButton({
         <button
           type="button"
           onClick={increaseQuantity}
-          disabled={disabled || !isAuthenticated}
+          disabled={disabled || !isAuthenticated || quantity >= stockCount}
           className="px-4 py-2 text-stone-600 hover:bg-stone-100 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
           aria-label="Increase quantity"
         >
@@ -105,11 +122,16 @@ export default function AddToCartButton({
         </button>
       </div>
 
+      {/* Stock indicator */}
+      <div className="text-xs text-stone-500 mb-2">
+        {stockCount > 0 ? `${stockCount} in stock` : "Out of stock"}
+      </div>
+
       <button
         onClick={handleAddToCart}
-        disabled={disabled || isLoading || !isAuthenticated}
+        disabled={disabled || isLoading || !isAuthenticated || stockCount === 0}
         className={`flex items-center justify-center px-6 py-3 font-medium transition-colors cursor-pointer ${
-          disabled || !isAuthenticated
+          disabled || !isAuthenticated || stockCount === 0
             ? "bg-stone-300 text-stone-500 cursor-not-allowed"
             : isAdded
             ? "bg-green-600 text-white"
@@ -127,7 +149,11 @@ export default function AddToCartButton({
         ) : (
           <>
             <ShoppingBag className="w-5 h-5 mr-2" />
-            {!isAuthenticated ? "Login to Add to Cart" : "Add to Cart"}
+            {!isAuthenticated
+              ? "Login to Add to Cart"
+              : stockCount === 0
+              ? "Out of Stock"
+              : "Add to Cart"}
           </>
         )}
       </button>
