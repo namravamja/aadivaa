@@ -36,7 +36,7 @@ export default function AboutPage() {
               Our Story
             </h2>
             <p className="text-stone-600 leading-relaxed">
-              Tribal Crafts was founded in 2018 with a simple yet powerful
+              Aadivaa Earth was founded in 2025 with a simple yet powerful
               mission: to connect indigenous artisans with global markets while
               preserving cultural heritage and supporting sustainable
               livelihoods.
@@ -46,10 +46,10 @@ export default function AboutPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
             <div>
               <p className="text-stone-600 mb-4 leading-relaxed">
-                Our journey began when our founder, Elena Martinez, traveled
-                through Native American reservations and witnessed the
-                incredible craftsmanship being practiced, often with limited
-                opportunities for economic sustainability.
+                Our journey began when our founder, Namra Vamja, traveled
+                through Indian reservations and witnessed the incredible
+                craftsmanship being practiced, often with limited opportunities
+                for economic sustainability.
               </p>
               <p className="text-stone-600 mb-4 leading-relaxed">
                 Inspired by the artisans she met and their stories, Elena
@@ -58,7 +58,7 @@ export default function AboutPage() {
                 significance behind each piece.
               </p>
               <p className="text-stone-600 leading-relaxed">
-                Today, Tribal Crafts partners with over 50 artisans from various
+                Today, Aadivaa Earth partners with over 50 artisans from various
                 indigenous communities, providing them with fair compensation,
                 business training, and a global platform to share their craft
                 and cultural heritage.
@@ -66,9 +66,10 @@ export default function AboutPage() {
             </div>
             <div className="relative h-80 md:h-96">
               <Image
-                src="/about/founder.jpg"
-                alt="Tribal Crafts founder"
-                fill
+                src="/founder.png"
+                alt="Aadivaa Earth founder"
+                width={900}
+                height={600}
                 className="object-cover"
               />
             </div>
@@ -193,7 +194,7 @@ export default function AboutPage() {
             </div>
             <div className="relative h-80 md:h-96 order-1 md:order-2">
               <Image
-                src="/about/impact.jpg"
+                src="/community.jpg "
                 alt="Community impact"
                 fill
                 className="object-cover"

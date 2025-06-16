@@ -57,6 +57,7 @@ export default function BuyerOrdersPage() {
       skip: !isAuthenticated,
       refetchOnFocus: true,
       refetchOnReconnect: true,
+      refetchOnMountOrArgChange: true,
     }
   );
 

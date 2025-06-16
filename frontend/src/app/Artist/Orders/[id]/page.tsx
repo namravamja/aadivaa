@@ -798,7 +798,7 @@ export default function OrderDetailsPage() {
                   <div className="w-16 h-16 sm:w-20 sm:h-20 flex-shrink-0">
                     <Image
                       src={
-                        item.product.productImages?.[0] || "/placeholder.svg"
+                        item.product.productImages?.[0] || "/Profile.jpg"
                       }
                       alt={item.product.productName}
                       width={80}

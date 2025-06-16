@@ -331,7 +331,7 @@ export default function Step1BusinessBasics({
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-4">
                 <img
-                  src={logoPreview || "/placeholder.svg"}
+                  src={logoPreview || "/Profile.jpg"}
                   alt="Logo preview"
                   className="w-16 h-16 object-cover rounded-md border"
                 />

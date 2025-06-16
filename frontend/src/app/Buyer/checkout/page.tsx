@@ -419,7 +419,7 @@ export default function CheckoutPage() {
                         <Image
                           src={
                             item.product.productImages?.[0] ||
-                            "/placeholder.svg"
+                            "/Profile.jpg"
                           }
                           alt={item.product.productName}
                           fill

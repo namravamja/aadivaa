@@ -34,7 +34,7 @@ const ProductImages: React.FC<ProductImagesProps> = ({
           <div className="aspect-square relative bg-gray-100 overflow-hidden">
             {previewImages.length > 0 ? (
               <img
-                src={previewImages[selectedImageIndex] || "/placeholder.svg"}
+                src={previewImages[selectedImageIndex] || "/Profile.jpg"}
                 alt="Product preview"
                 className="object-contain w-full h-full"
               />
@@ -60,7 +60,7 @@ const ProductImages: React.FC<ProductImagesProps> = ({
                   }`}
                 >
                   <img
-                    src={image || "/placeholder.svg"}
+                    src={image || "/Profile.jpg"}
                     alt={`Product image ${index + 1}`}
                     className="object-cover w-full h-full"
                   />
@@ -94,7 +94,7 @@ const ProductImages: React.FC<ProductImagesProps> = ({
           <div className="aspect-square relative bg-gray-100 overflow-hidden">
             <img
               src={
-                product.productImages[selectedImageIndex] || "/placeholder.svg"
+                product.productImages[selectedImageIndex] || "/Profile.jpg"
               }
               alt="Product"
               className="object-contain w-full h-full"
@@ -114,7 +114,7 @@ const ProductImages: React.FC<ProductImagesProps> = ({
                   }`}
                 >
                   <img
-                    src={image || "/placeholder.svg"}
+                    src={image || "/Profile.jpg"}
                     alt={`Product image ${index + 1}`}
                     className="object-cover w-full h-full"
                   />

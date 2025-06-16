@@ -232,7 +232,7 @@ export default function ArtistReviews() {
               <div className="flex items-start mb-4 lg:mb-0">
                 <div className="relative w-16 h-16 mr-4 flex-shrink-0">
                   <Image
-                    src={review.productImage || "/placeholder.svg"}
+                    src={review.productImage || "/Profile.jpg"}
                     alt={review.productName}
                     fill
                     className="object-cover rounded"

@@ -85,7 +85,7 @@ export default function BestSellingProducts() {
             >
               <div className="relative aspect-square mb-4 bg-stone-100">
                 <Image
-                  src={product.productImages[0] || "/placeholder.svg"}
+                  src={product.productImages[0] || "/Profile.jpg"}
                   alt={product.productName}
                   fill
                   className="object-cover group-hover:scale-105 transition-transform duration-300"

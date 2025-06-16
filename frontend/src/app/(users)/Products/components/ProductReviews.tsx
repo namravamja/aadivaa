@@ -132,7 +132,7 @@ export default function ProductReviews({ productId }: ProductReviewsProps) {
               <div className="flex items-center mb-4">
                 <div className="relative w-10 h-10 rounded-full overflow-hidden mr-3">
                   <Image
-                    src={review.userImage || "/placeholder.svg"}
+                    src={review.userImage || "/Profile.jpg"}
                     alt={review.userName}
                     fill
                     className="object-cover"

@@ -549,7 +549,7 @@ export default function ArtistDashboard() {
                       <div className="flex items-center">
                         <div className="relative w-8 h-8 mr-3 rounded-full overflow-hidden">
                           <Image
-                            src={order.image || "/placeholder.svg"}
+                            src={order.image || "/Profile.jpg"}
                             alt={order.customer}
                             fill
                             className="object-cover"
@@ -629,7 +629,7 @@ export default function ArtistDashboard() {
                       <div className="flex items-center">
                         <div className="relative w-8 h-8 mr-3 rounded overflow-hidden">
                           <Image
-                            src={product.image || "/placeholder.svg"}
+                            src={product.image || "/Profile.jpg"}
                             alt={product.name}
                             fill
                             className="object-cover"

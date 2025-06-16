@@ -238,7 +238,7 @@ export default function ArtistJournal() {
               <div className="flex flex-col lg:flex-row">
                 <div className="relative w-full lg:w-48 h-32 lg:h-32 mr-0 lg:mr-6 mb-4 lg:mb-0 flex-shrink-0">
                   <Image
-                    src={article.image || "/placeholder.svg"}
+                    src={article.image || "/Profile.jpg"}
                     alt={article.title}
                     fill
                     className="object-cover rounded"

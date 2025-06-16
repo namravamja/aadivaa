@@ -50,7 +50,7 @@ export default function ProductsGrid({
     name: product.productName,
     price: Number.parseFloat(product.sellingPrice),
     originalPrice: Number.parseFloat(product.mrp),
-    image: product.productImages[0] || "/placeholder.svg?height=300&width=300",
+    image: product.productImages[0] || "/Profile.jpg?height=300&width=300",
     images: product.productImages,
     artist: "Artisan", // You might want to add artist info to your API
     category: product.category.toLowerCase().replace(/\s+/g, "-"),

@@ -493,7 +493,7 @@ export default function Step3PreferencesLogistics({
                   // Display existing signature from database
                   <>
                     <img
-                      src={existingSignaturePreview || "/placeholder.svg"}
+                      src={existingSignaturePreview || "/Profile.jpg"}
                       alt="Digital Signature"
                       className="w-16 h-16 object-cover rounded border"
                     />

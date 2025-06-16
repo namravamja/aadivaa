@@ -192,7 +192,7 @@ export default function ArtistProducts() {
                   src={
                     product.productImages[0]
                       ? product.productImages[0]
-                      : "/placeholder.svg"
+                      : "/Profile.jpg"
                   }
                   alt={product.productName}
                   fill
@@ -253,7 +253,7 @@ export default function ArtistProducts() {
                         src={
                           product.productImages[0]
                             ? product.productImages[0]
-                            : "/placeholder.svg"
+                            : "/Profile.jpg"
                         }
                         alt={product.productName}
                         fill

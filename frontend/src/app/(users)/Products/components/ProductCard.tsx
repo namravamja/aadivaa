@@ -135,7 +135,7 @@ export default function ProductCard({ product }: ProductCardProps) {
       <Link href={`/Products/${product.id}`} className="block">
         <div className="relative aspect-square mb-4 bg-stone-100 overflow-hidden">
           <Image
-            src={product.image || "/placeholder.svg"}
+            src={product.image || "/Profile.jpg"}
             alt={product.name}
             fill
             className="object-cover transition-transform duration-700 group-hover:scale-105"

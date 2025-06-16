@@ -8,7 +8,7 @@ const featuredArticle = {
   title: "The Revival of Traditional Navajo Weaving Techniques",
   excerpt:
     "Discover how a new generation of Navajo artisans is preserving and revitalizing ancient weaving traditions while bringing contemporary designs to a global audience.",
-  image: "/journal/featured-article.jpg",
+  image: "/Profile.jpg",
   category: "Craft Traditions",
   author: "Elena Martinez",
   date: "2023-05-15",
@@ -93,7 +93,7 @@ export default function JournalPage() {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
               <div className="relative aspect-[4/3] w-full overflow-hidden">
                 <Image
-                  src={featuredArticle.image || "/placeholder.svg"}
+                  src={featuredArticle.image || "/Profile.jpg"}
                   alt={featuredArticle.title}
                   fill
                   className="object-cover transition-transform duration-700 group-hover:scale-105"
@@ -145,7 +145,7 @@ export default function JournalPage() {
                 <div className="border border-stone-200 overflow-hidden transition-all duration-300 group-hover:shadow-md h-full flex flex-col">
                   <div className="relative aspect-[3/2] w-full overflow-hidden">
                     <Image
-                      src={article.image || "/placeholder.svg"}
+                      src={article.image || "/Profile.jpg"}
                       alt={article.title}
                       fill
                       className="object-cover transition-transform duration-700 group-hover:scale-105"

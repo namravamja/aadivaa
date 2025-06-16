@@ -362,7 +362,7 @@ export default function ArtistDetailPage({
                   >
                     <div className="relative aspect-square overflow-hidden">
                       <Image
-                        src={product.productImages[0] || "/placeholder.svg"}
+                        src={product.productImages[0] || "/Profile.jpg"}
                         alt={product.productName}
                         fill
                         className="object-cover transition-transform duration-700 group-hover:scale-105"

@@ -95,7 +95,7 @@ const transformApiOrderToOrder = (apiOrder: ApiOrder): Order => {
       id: item.id,
       name: item.product.productName,
       image:
-        item.product.productImages[0] || "/placeholder.svg?height=80&width=80",
+        item.product.productImages[0] || "/Profile.jpg?height=80&width=80",
       price: item.priceAtPurchase / 100, // Convert from paise to rupees if needed
       quantity: item.quantity,
       sku: item.product.skuCode,
@@ -353,7 +353,7 @@ export default function OrdersPage() {
                           className="flex items-center bg-stone-50 rounded-md px-2 py-1"
                         >
                           <img
-                            src={item.image || "/placeholder.svg"}
+                            src={item.image || "/Profile.jpg"}
                             alt={item.name}
                             className="w-6 h-6 object-cover rounded mr-2"
                           />

@@ -618,7 +618,7 @@ export default function AccountDetails() {
                       <img
                         ref={imgRef}
                         alt="Crop me"
-                        src={imgSrc || "/placeholder.svg"}
+                        src={imgSrc || "/Profile.jpg"}
                         onLoad={onImageLoad}
                         className="max-w-full"
                       />
@@ -657,13 +657,13 @@ export default function AccountDetails() {
           <div className="relative w-20 h-20 bg-stone-200 rounded-full flex items-center justify-center overflow-hidden">
             {avatarPreview ? (
               <img
-                src={avatarPreview || "/placeholder.svg"}
+                src={avatarPreview || "/Profile.jpg"}
                 alt={`${formData.firstName} ${formData.lastName}`}
                 className="w-full h-full object-cover"
               />
             ) : formData.avatar ? (
               <Image
-                src={formData.avatar || "/placeholder.svg"}
+                src={formData.avatar || "/Profile.jpg"}
                 alt={`${formData.firstName} ${formData.lastName}`}
                 width={80}
                 height={80}

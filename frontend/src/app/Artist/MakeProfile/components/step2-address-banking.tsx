@@ -298,7 +298,7 @@ export default function Step2AddressBanking({
                   <>
                     <div className="w-16 h-16 flex items-center justify-center bg-stone-100 rounded border">
                       <img
-                        src={existingDoc || "/placeholder.svg"}
+                        src={existingDoc || "/Profile.jpg"}
                         alt={doc.label}
                         className="w-full h-full object-cover rounded"
                         onError={(e) => {

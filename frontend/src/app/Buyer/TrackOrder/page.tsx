@@ -78,7 +78,7 @@ const mockOrder: OrderDetails = {
       id: "1",
       productId: "prod1",
       name: "Handwoven Basket",
-      image: "/placeholder.svg?height=80&width=80",
+      image: "/Profile.jpg?height=80&width=80",
       artist: "Maria Santos",
       quantity: 2,
       price: 89.99,
@@ -87,7 +87,7 @@ const mockOrder: OrderDetails = {
       id: "2",
       productId: "prod2",
       name: "Ceramic Vase",
-      image: "/placeholder.svg?height=80&width=80",
+      image: "/Profile.jpg?height=80&width=80",
       artist: "David Chen",
       quantity: 1,
       price: 65.0,
@@ -392,7 +392,7 @@ export default function TrackOrderPage() {
                     <div key={item.id} className="flex items-center space-x-4">
                       <div className="relative w-16 h-16 flex-shrink-0">
                         <Image
-                          src={item.image || "/placeholder.svg"}
+                          src={item.image || "/Profile.jpg"}
                           alt={item.name}
                           fill
                           className="object-cover rounded-lg"

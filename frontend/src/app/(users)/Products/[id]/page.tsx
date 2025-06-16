@@ -145,7 +145,7 @@ export default function ProductDetailPage({
                       className="relative aspect-square bg-stone-100 rounded-lg overflow-hidden"
                     >
                       <Image
-                        src={image || "/placeholder.svg"}
+                        src={image || "/Profile.jpg"}
                         alt={`${product.name} view ${index + 2}`}
                         fill
                         className="object-cover"

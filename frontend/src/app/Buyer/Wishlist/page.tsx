@@ -252,7 +252,7 @@ export default function BuyerWishlist() {
                     <div className="relative w-16 h-16 mr-4">
                       <Image
                         src={
-                          item.product.productImages?.[0] || "/placeholder.svg"
+                          item.product.productImages?.[0] || "/Profile.jpg"
                         }
                         alt={item.product.productName}
                         fill

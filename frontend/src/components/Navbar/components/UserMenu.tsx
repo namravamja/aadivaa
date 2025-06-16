@@ -103,7 +103,7 @@ export function ProfilePhoto({ className = "w-8 h-8" }: ProfilePhotoProps) {
 
   return user?.image ? (
     <img
-      src={user.image || "/placeholder.svg"}
+      src={user.image || "/Profile.jpg"}
       alt={user.name}
       className={`${className} rounded-full object-cover border-2 border-stone-200`}
       onError={handleImageError}
@@ -391,7 +391,7 @@ export default function UserMenu({ isMobile = false, onClose }: UserMenuProps) {
         </span>
         {user?.image ? (
           <img
-            src={user.image || "/placeholder.svg"}
+            src={user.image || "/Profile.jpg"}
             alt={user.name}
             className="w-7 h-7 lg:w-8 lg:h-8 rounded-full object-cover border-2 border-stone-200 group-hover:border-terracotta-600 transition-colors duration-300"
             onError={handleImageError}
