@@ -41,20 +41,20 @@ export default function Step1ProductBasics({
             className="w-full px-4 py-3 border border-stone-300 rounded-md focus:border-sage-500 focus:outline-none focus:ring-1 focus:ring-sage-500"
             required
           >
-            <option value="">Select Category</option>
-            <option value="Electronics">Electronics</option>
-            <option value="Clothing">Clothing</option>
-            <option value="Home & Kitchen">Home & Kitchen</option>
-            <option value="Beauty & Personal Care">
-              Beauty & Personal Care
-            </option>
-            <option value="Books">Books</option>
-            <option value="Toys & Games">Toys & Games</option>
-            <option value="Sports & Outdoors">Sports & Outdoors</option>
-            <option value="Health & Wellness">Health & Wellness</option>
+            <option value="Handicraft">Handicraft</option>
+            <option value="Textile">Textile</option>
+            <option value="Digital Art">Digital Art</option>
+            <option value="Photography">Photography</option>
+            <option value="Sculpture">Sculpture</option>
+            <option value="Pottery">Pottery</option>
             <option value="Jewelry">Jewelry</option>
-            <option value="Handmade">Handmade</option>
-            <option value="Other">Other</option>
+            <option value="Embroidery">Embroidery</option>
+            <option value="Furniture">Furniture</option>
+            <option value="Woodcraft">Woodcraft</option>
+            <option value="Fashion">Fashion</option>
+            <option value="Accessories">Accessories</option>
+            <option value="Ceramics">Ceramics</option>
+            <option value="Canvas Art">Canvas Art</option>
           </select>
         </div>
 

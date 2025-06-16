@@ -1,17 +1,28 @@
 export declare const getArtistById: (id: string) => Promise<{
     email: string;
+    password: string;
     id: string;
     createdAt: Date;
     updatedAt: Date | null;
     isAuthenticated: boolean;
+    forgotPasswordToken: string | null;
+    forgotPasswordExpires: Date | null;
+    verifyToken: string | null;
+    verifyExpires: Date | null;
+    isVerified: boolean;
     fullName: string | null;
     profileProgress: number | null;
     storeName: string | null;
     mobile: string | null;
+    confirmPassword: string | null;
     businessType: string | null;
     businessRegistrationNumber: string | null;
     productCategories: string[];
     businessLogo: string | null;
+    businessAddressId: string | null;
+    warehouseAddressId: string | null;
+    documentsId: string | null;
+    socialLinksId: string | null;
     bankAccountName: string | null;
     bankName: string | null;
     accountNumber: string | null;
@@ -27,35 +38,4 @@ export declare const getArtistById: (id: string) => Promise<{
     workingHours: string | null;
     termsAgreed: boolean | null;
     digitalSignature: string | null;
-    businessAddress: {
-        id: string;
-        street: string;
-        city: string | null;
-        state: string | null;
-        country: string | null;
-        pinCode: string | null;
-    } | null;
-    warehouseAddress: {
-        id: string;
-        street: string;
-        city: string | null;
-        state: string | null;
-        country: string | null;
-        pinCode: string | null;
-        sameAsBusiness: boolean | null;
-    } | null;
-    documents: {
-        id: string;
-        gstCertificate: string | null;
-        panCard: string | null;
-        businessLicense: string | null;
-        canceledCheque: string | null;
-    } | null;
-    socialLinks: {
-        id: string;
-        website: string | null;
-        instagram: string | null;
-        facebook: string | null;
-        twitter: string | null;
-    } | null;
 }>;

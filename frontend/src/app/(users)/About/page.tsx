@@ -194,7 +194,7 @@ export default function AboutPage() {
             </div>
             <div className="relative h-80 md:h-96 order-1 md:order-2">
               <Image
-                src="/community.jpg "
+                src="/community.jpg"
                 alt="Community impact"
                 fill
                 className="object-cover"
