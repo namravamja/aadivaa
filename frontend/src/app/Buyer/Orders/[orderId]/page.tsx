@@ -424,7 +424,7 @@ export default function OrderDetailsPage() {
                     <div>
                       <p className="text-stone-600">Weight</p>
                       <p className="font-medium">
-                        {order.orderItems[0].product.weight} lbs
+                        {order.orderItems[0].product.weight} gm
                       </p>
                     </div>
                     <div>
@@ -436,10 +436,7 @@ export default function OrderDetailsPage() {
                     <div>
                       <p className="text-stone-600">Shipping Cost</p>
                       <p className="font-medium">
-                        ₹
-                        {(
-                          order.orderItems[0].product.shippingCost / 100
-                        ).toFixed(2)}
+                        ₹{order.orderItems[0].product.shippingCost}
                       </p>
                     </div>
                   </div>
@@ -465,7 +462,7 @@ export default function OrderDetailsPage() {
                 <p className="text-stone-700 leading-relaxed">
                   {order.shippingAddress ||
                     (order.shippingAddressId
-                      ? `Address ID: ${order.shippingAddressId}`
+                      ? `Address ID: ${order.shippingAddressId} Address: ${order.addresses}`
                       : "Address not available")}
                 </p>
               </div>

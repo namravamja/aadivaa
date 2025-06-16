@@ -18,6 +18,9 @@ interface PaymentUpdateData {
     transactionId?: string;
 }
 export declare const createOrderFromCart: (buyerId: string, orderData: CreateOrderData) => Promise<{
+    buyer: {
+        email: string;
+    };
     orderItems: ({
         product: {
             artist: {
@@ -53,13 +56,30 @@ export declare const createOrderFromCart: (buyerId: string, orderData: CreateOrd
         priceAtPurchase: number;
         orderId: string;
     })[];
+    shippingAddress: {
+        id: number;
+        firstName: string;
+        lastName: string;
+        phone: string | null;
+        createdAt: Date;
+        updatedAt: Date;
+        company: string | null;
+        street: string | null;
+        apartment: string | null;
+        city: string;
+        state: string;
+        postalCode: string;
+        country: string;
+        userId: string;
+        isDefault: boolean;
+    } | null;
 } & {
     id: string;
     updatedAt: Date;
     buyerId: string;
     totalAmount: number;
     status: string;
-    shippingAddressId: number;
+    shippingAddressId: number | null;
     paymentMethod: string;
     paymentStatus: string;
     placedAt: Date;
@@ -96,7 +116,7 @@ export declare const getBuyerOrders: (buyerId: string, options?: {
         buyerId: string;
         totalAmount: number;
         status: string;
-        shippingAddressId: number;
+        shippingAddressId: number | null;
         paymentMethod: string;
         paymentStatus: string;
         placedAt: Date;
@@ -153,7 +173,7 @@ export declare const getOrderById: (orderId: string, buyerId: string) => Promise
     buyerId: string;
     totalAmount: number;
     status: string;
-    shippingAddressId: number;
+    shippingAddressId: number | null;
     paymentMethod: string;
     paymentStatus: string;
     placedAt: Date;
@@ -194,7 +214,7 @@ export declare const cancelOrder: (orderId: string, buyerId: string) => Promise<
     buyerId: string;
     totalAmount: number;
     status: string;
-    shippingAddressId: number;
+    shippingAddressId: number | null;
     paymentMethod: string;
     paymentStatus: string;
     placedAt: Date;
@@ -220,7 +240,7 @@ export declare const updatePaymentStatus: (orderId: string, paymentData: Payment
     buyerId: string;
     totalAmount: number;
     status: string;
-    shippingAddressId: number;
+    shippingAddressId: number | null;
     paymentMethod: string;
     paymentStatus: string;
     placedAt: Date;

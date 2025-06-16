@@ -23,7 +23,7 @@ app.set("trust proxy", 1);
 // Security middlewares
 app.use((0, helmet_1.default)());
 app.use((0, cors_1.default)({
-    origin: process.env.FRONTEND_URL || "http://localhost:3000",
+    origin: true,
     credentials: true,
 }));
 app.use((0, cookie_parser_1.default)());

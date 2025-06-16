@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.deleteProduct = exports.updateProduct = exports.getProductsByArtist = exports.getProductById = exports.getAllProducts = exports.createProduct = exports.listArtists = exports.deleteArtist = exports.updateSocialLinks = exports.updateDocuments = exports.updateWarehouseAddress = exports.updateBusinessAddress = exports.updateArtistMain = exports.getArtistById = exports.createArtist = void 0;
+exports.updateProductStockOnly = exports.deleteProduct = exports.updateProduct = exports.getProductsByArtist = exports.getProductById = exports.getAllProducts = exports.createProduct = exports.listArtists = exports.deleteArtist = exports.updateSocialLinks = exports.updateDocuments = exports.updateWarehouseAddress = exports.updateBusinessAddress = exports.updateArtistMain = exports.getArtistById = exports.createArtist = void 0;
 var createArtist_service_1 = require("./individual/createArtist.service");
 Object.defineProperty(exports, "createArtist", { enumerable: true, get: function () { return createArtist_service_1.createArtist; } });
 var getArtistById_service_1 = require("./individual/getArtistById.service");
@@ -31,4 +31,6 @@ var updateProduct_service_1 = require("./product/updateProduct.service");
 Object.defineProperty(exports, "updateProduct", { enumerable: true, get: function () { return updateProduct_service_1.updateProduct; } });
 var deleteProduct_service_1 = require("./product/deleteProduct.service");
 Object.defineProperty(exports, "deleteProduct", { enumerable: true, get: function () { return deleteProduct_service_1.deleteProduct; } });
+var updateProductStockOnly_service_1 = require("./product/updateProductStockOnly.service");
+Object.defineProperty(exports, "updateProductStockOnly", { enumerable: true, get: function () { return updateProductStockOnly_service_1.updateProductStockOnly; } });
 //# sourceMappingURL=artist.service.js.map

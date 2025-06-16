@@ -49,14 +49,14 @@ export declare const getArtistOrders: (artistId: string, filters: OrderFilters) 
             country: string;
             userId: string;
             isDefault: boolean;
-        };
+        } | null;
     } & {
         id: string;
         updatedAt: Date;
         buyerId: string;
         totalAmount: number;
         status: string;
-        shippingAddressId: number;
+        shippingAddressId: number | null;
         paymentMethod: string;
         paymentStatus: string;
         placedAt: Date;
@@ -114,14 +114,14 @@ export declare const getArtistOrderById: (orderId: string, artistId: string) => 
         country: string;
         userId: string;
         isDefault: boolean;
-    };
+    } | null;
 } & {
     id: string;
     updatedAt: Date;
     buyerId: string;
     totalAmount: number;
     status: string;
-    shippingAddressId: number;
+    shippingAddressId: number | null;
     paymentMethod: string;
     paymentStatus: string;
     placedAt: Date;
@@ -154,7 +154,7 @@ export declare const updateOrderStatus: (orderId: string, artistId: string, stat
     buyerId: string;
     totalAmount: number;
     status: string;
-    shippingAddressId: number;
+    shippingAddressId: number | null;
     paymentMethod: string;
     paymentStatus: string;
     placedAt: Date;
@@ -187,7 +187,7 @@ export declare const updateOrderPaymentStatus: (orderId: string, artistId: strin
     buyerId: string;
     totalAmount: number;
     status: string;
-    shippingAddressId: number;
+    shippingAddressId: number | null;
     paymentMethod: string;
     paymentStatus: string;
     placedAt: Date;
@@ -229,7 +229,7 @@ export declare const getOrderItemsByArtist: (artistId: string, filters: OrderFil
                 country: string;
                 userId: string;
                 isDefault: boolean;
-            };
+            } | null;
         };
     } & {
         id: string;
@@ -275,7 +275,7 @@ export declare const bulkUpdateOrderStatus: (orderIds: string[], artistId: strin
     buyerId: string;
     totalAmount: number;
     status: string;
-    shippingAddressId: number;
+    shippingAddressId: number | null;
     paymentMethod: string;
     paymentStatus: string;
     placedAt: Date;

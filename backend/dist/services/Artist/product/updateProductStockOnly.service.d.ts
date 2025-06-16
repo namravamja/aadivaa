@@ -1,0 +1,20 @@
+export declare const updateProductStockOnly: (productId: string, artistId: string, availableStock: string) => Promise<{
+    id: string;
+    createdAt: Date;
+    updatedAt: Date;
+    length: string;
+    productName: string;
+    category: string;
+    shortDescription: string;
+    sellingPrice: string;
+    mrp: string;
+    availableStock: string;
+    skuCode: string;
+    productImages: string[];
+    weight: string;
+    width: string;
+    height: string;
+    shippingCost: string;
+    deliveryTimeEstimate: string;
+    artistId: string;
+}>;

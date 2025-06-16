@@ -2,6 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getBuyerOrderStats = exports.updatePaymentStatus = exports.cancelOrder = exports.getOrderById = exports.getBuyerOrders = exports.createOrderFromCart = void 0;
 const client_1 = require("@prisma/client");
+const orderMailer_1 = require("../../../helpers/orderMailer");
 const prisma = new client_1.PrismaClient();
 const createOrderFromCart = async (buyerId, orderData) => {
     const { paymentMethod, cartItems, addressIds } = orderData;
@@ -32,6 +33,12 @@ const createOrderFromCart = async (buyerId, orderData) => {
                     },
                 },
                 include: {
+                    buyer: {
+                        select: {
+                            email: true,
+                        },
+                    },
+                    shippingAddress: true,
                     orderItems: {
                         include: {
                             product: {
@@ -49,21 +56,27 @@ const createOrderFromCart = async (buyerId, orderData) => {
                     },
                 },
             });
-            for (const cartItem of cartItems) {
-                const currentStock = parseInt(cartItem.product.availableStock);
-                const newStock = currentStock - cartItem.quantity;
-                if (newStock < 0) {
-                    throw new Error(`Insufficient stock for product: ${cartItem.product.productName}`);
-                }
-                await tx.product.update({
-                    where: { id: cartItem.productId },
-                    data: { availableStock: newStock.toString() },
-                });
-            }
             return newOrder;
         }, {
-            timeout: 10000,
+            timeout: 20000, // increase from 10000
+            maxWait: 10000,
         });
+        if (!order.shippingAddress) {
+            throw new Error("Shipping address not found for the order.");
+        }
+        await (0, orderMailer_1.sendOrderConfirmationEmail)(order.buyer.email, `${order.shippingAddress.firstName} ${order.shippingAddress.lastName}`, order.id, order.orderItems.map((item) => ({
+            name: item.product.productName,
+            quantity: item.quantity,
+            price: item.priceAtPurchase,
+        })), order.totalAmount, {
+            name: `${order.shippingAddress.firstName} ${order.shippingAddress.lastName}`,
+            address: `${order.shippingAddress.street} ${order.shippingAddress.apartment || ""}`,
+            city: order.shippingAddress.city,
+            state: order.shippingAddress.state,
+            zip: order.shippingAddress.postalCode,
+            country: order.shippingAddress.country,
+            phone: order.shippingAddress.phone || "N/A",
+        }, order.placedAt.toISOString(), order.paymentMethod);
         return order;
     }
     catch (error) {

@@ -63,7 +63,6 @@ export default function BuyerLoginModal({
 
       toast.success("Login successful!");
       onClose();
-      router.push("/");
     } catch (err) {
       toast.dismiss();
 

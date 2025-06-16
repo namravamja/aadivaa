@@ -51,9 +51,6 @@ export const signupBuyer = async (data: SignupData) => {
     });
     if (freshBuyer && !freshBuyer.isVerified) {
       await prisma.buyer.delete({ where: { id: buyer.id } });
-      console.log(
-        `Deleted unverified buyer with id ${buyer.id} after 5 minutes`
-      );
     }
   }, 7 * 60 * 1000); // 7 minutes delay
 

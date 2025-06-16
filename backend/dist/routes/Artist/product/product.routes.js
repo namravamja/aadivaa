@@ -49,5 +49,6 @@ router.get("/listByArtist", authMiddleware_1.verifyToken, productController.getP
 router.put("/update/:productId", authMiddleware_1.verifyToken, multer_1.uploadProductImages, productController.updateProduct);
 router.delete("/delete/:productId", authMiddleware_1.verifyToken, productController.deleteProduct);
 router.get("/:productId", productController.getProductById);
+router.patch("/updateStock", authMiddleware_1.verifyToken, productController.updateStockOnly);
 exports.default = router;
 //# sourceMappingURL=product.routes.js.map

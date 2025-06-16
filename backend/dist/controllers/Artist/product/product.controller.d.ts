@@ -12,3 +12,4 @@ export declare const getProductById: (req: Request, res: Response) => Promise<vo
 export declare const getProductsByArtist: (req: AuthenticatedRequest, res: Response) => Promise<void>;
 export declare const getProductsByArtistId: (req: Request, res: Response) => Promise<void>;
 export declare const deleteProduct: (req: AuthenticatedRequest, res: Response) => Promise<void>;
+export declare const updateStockOnly: (req: AuthenticatedRequest, res: Response) => Promise<void>;

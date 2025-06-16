@@ -33,7 +33,7 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.deleteProduct = exports.getProductsByArtistId = exports.getProductsByArtist = exports.getProductById = exports.getAllProducts = exports.updateProduct = exports.createProduct = void 0;
+exports.updateStockOnly = exports.deleteProduct = exports.getProductsByArtistId = exports.getProductsByArtist = exports.getProductById = exports.getAllProducts = exports.updateProduct = exports.createProduct = void 0;
 const productService = __importStar(require("../../../services/Artist/artist.service"));
 // Create product
 const createProduct = async (req, res) => {
@@ -158,4 +158,21 @@ const deleteProduct = async (req, res) => {
     }
 };
 exports.deleteProduct = deleteProduct;
+const updateStockOnly = async (req, res) => {
+    try {
+        const artistId = req.user?.id;
+        if (!artistId)
+            throw new Error("Unauthorized");
+        const { productId, availableStock } = req.body;
+        if (!productId || !availableStock) {
+            throw new Error("productId and availableStock are required");
+        }
+        const updatedProduct = await productService.updateProductStockOnly(productId, artistId, availableStock);
+        res.status(200).json(updatedProduct);
+    }
+    catch (error) {
+        res.status(400).json({ error: error.message });
+    }
+};
+exports.updateStockOnly = updateStockOnly;
 //# sourceMappingURL=product.controller.js.map

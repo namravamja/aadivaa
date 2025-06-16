@@ -43,6 +43,8 @@ export declare const createArtist: (data: {
     businessLogo: string | null;
     businessAddressId: string | null;
     warehouseAddressId: string | null;
+    documentsId: string | null;
+    socialLinksId: string | null;
     bankAccountName: string | null;
     bankName: string | null;
     accountNumber: string | null;
@@ -50,14 +52,12 @@ export declare const createArtist: (data: {
     upiId: string | null;
     gstNumber: string | null;
     panNumber: string | null;
-    documentsId: string | null;
     shippingType: string | null;
     serviceAreas: string[];
     inventoryVolume: string | null;
     supportContact: string | null;
     returnPolicy: string | null;
     workingHours: string | null;
-    socialLinksId: string | null;
     termsAgreed: boolean | null;
     digitalSignature: string | null;
 }>;

@@ -1,4 +1,5 @@
 import { PrismaClient } from "@prisma/client";
+import { sendOrderConfirmationEmail } from "../../../helpers/orderMailer";
 
 const prisma = new PrismaClient();
 
@@ -67,6 +68,12 @@ export const createOrderFromCart = async (
             },
           },
           include: {
+            buyer: {
+              select: {
+                email: true,
+              },
+            },
+            shippingAddress: true,
             orderItems: {
               include: {
                 product: {
@@ -91,6 +98,35 @@ export const createOrderFromCart = async (
         timeout: 20000, // increase from 10000
         maxWait: 10000,
       }
+    );
+
+    if (!order.shippingAddress) {
+      throw new Error("Shipping address not found for the order.");
+    }
+
+    await sendOrderConfirmationEmail(
+      order.buyer.email,
+      `${order.shippingAddress.firstName} ${order.shippingAddress.lastName}`,
+      order.id,
+      order.orderItems.map((item) => ({
+        name: item.product.productName,
+        quantity: item.quantity,
+        price: item.priceAtPurchase,
+      })),
+      order.totalAmount,
+      {
+        name: `${order.shippingAddress.firstName} ${order.shippingAddress.lastName}`,
+        address: `${order.shippingAddress.street} ${
+          order.shippingAddress.apartment || ""
+        }`,
+        city: order.shippingAddress.city,
+        state: order.shippingAddress.state,
+        zip: order.shippingAddress.postalCode,
+        country: order.shippingAddress.country,
+        phone: order.shippingAddress.phone || "N/A",
+      },
+      order.placedAt.toISOString(),
+      order.paymentMethod
     );
 
     return order;
