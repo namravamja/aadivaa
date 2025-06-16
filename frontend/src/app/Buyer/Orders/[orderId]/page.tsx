@@ -462,7 +462,7 @@ export default function OrderDetailsPage() {
                 <p className="text-stone-700 leading-relaxed">
                   {order.shippingAddress ||
                     (order.shippingAddressId
-                      ? `Address ID: ${order.shippingAddressId} Address: ${order.addresses}`
+                      ? `Address ID: ${order.shippingAddressId}`
                       : "Address not available")}
                 </p>
               </div>
