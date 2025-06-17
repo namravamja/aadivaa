@@ -5,7 +5,10 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Eye, EyeOff, User, Mail, Lock, Loader2, X } from "lucide-react";
 import { useSignupBuyerMutation } from "@/services/api/authApi";
+import { useGetBuyerQuery } from "@/services/api/buyerApi";
 import { useAuthModal } from "@/app/(auth)/components/auth-modal-provider";
+import { useGoogleAuth } from "@/hooks/useGoogleAuth";
+import GoogleAuthButton from "../../components/GoogleAuthButton";
 import toast from "react-hot-toast";
 
 interface BuyerSignupModalProps {
@@ -19,6 +22,8 @@ export default function BuyerSignupModal({
 }: BuyerSignupModalProps) {
   const { openBuyerLogin } = useAuthModal();
   const [signupBuyer, { isLoading }] = useSignupBuyerMutation();
+  const { refetch } = useGetBuyerQuery(undefined);
+  const { initiateGoogleAuth, isLoading: isGoogleLoading } = useGoogleAuth();
 
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const [formData, setFormData] = useState({
@@ -68,6 +73,41 @@ export default function BuyerSignupModal({
       toast.error(errorMessage);
     }
   };
+
+  const handleGoogleAuth = () => {
+    // Store modal state and close modal immediately
+    sessionStorage.setItem("wasSignupModalOpen", "true");
+    sessionStorage.setItem("shouldCloseModal", "true");
+
+    // Close the modal before redirecting
+    onClose();
+
+    // Show loading toast with transparent background
+    toast.loading("Redirecting to Google...");
+
+    // Small delay to ensure modal closes before redirect
+    setTimeout(() => {
+      initiateGoogleAuth("buyer");
+    }, 100);
+  };
+
+  // Check for successful OAuth login on component mount/update
+  useEffect(() => {
+    const checkOAuthSuccess = () => {
+      const shouldClose = sessionStorage.getItem("shouldCloseModal");
+      const userData = localStorage.getItem("userData");
+
+      if (shouldClose && userData) {
+        sessionStorage.removeItem("shouldCloseModal");
+        onClose();
+        refetch();
+      }
+    };
+
+    if (isOpen) {
+      checkOAuthSuccess();
+    }
+  }, [isOpen, onClose, refetch]);
 
   // Handle escape key to close modal
   useEffect(() => {
@@ -122,14 +162,33 @@ export default function BuyerSignupModal({
         </button>
 
         <div className="p-6">
-          <div className="text-center mb-8">
-            <h2 className="text-3xl font-bold text-gray-900">
-              Create buyer account
+          <div className="text-center mt-4">
+            <h2 className="text-2xl mb-5 font-bold text-gray-900">
+              Join AADIVAEARTH today
             </h2>
-            <p className="mt-2 text-gray-600">Join AADIVAEARTH today</p>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Google Auth Button */}
+          <div className="mt-2">
+            <GoogleAuthButton
+              userType="buyer"
+              isLoading={isGoogleLoading}
+              onGoogleAuth={handleGoogleAuth}
+            />
+          </div>
+
+          <div className="relative mt-2 mb-2">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-gray-300" />
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="px-2 bg-white text-gray-500">
+                Or continue with email
+              </span>
+            </div>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-4">
             {/* Name fields */}
             <div className="grid grid-cols-2 gap-4">
               <div>
@@ -151,7 +210,7 @@ export default function BuyerSignupModal({
                     value={formData.firstName}
                     onChange={handleChange}
                     disabled={isLoading}
-                    className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-md placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-2 focus:ring-sage-500 focus:border-sage-500 disabled:bg-gray-50 disabled:text-gray-500"
+                    className="block w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-md placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-2 focus:ring-sage-500 focus:border-sage-500 disabled:bg-gray-50 disabled:text-gray-500"
                     placeholder="First name"
                   />
                 </div>
@@ -172,7 +231,7 @@ export default function BuyerSignupModal({
                   value={formData.lastName}
                   onChange={handleChange}
                   disabled={isLoading}
-                  className="block w-full px-3 py-3 border border-gray-300 rounded-md placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-2 focus:ring-sage-500 focus:border-sage-500 disabled:bg-gray-50 disabled:text-gray-500"
+                  className="block w-full px-3 py-2.5 border border-gray-300 rounded-md placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-2 focus:ring-sage-500 focus:border-sage-500 disabled:bg-gray-50 disabled:text-gray-500"
                   placeholder="Last name"
                 />
               </div>
@@ -198,7 +257,7 @@ export default function BuyerSignupModal({
                   value={formData.email}
                   onChange={handleChange}
                   disabled={isLoading}
-                  className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-md placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-2 focus:ring-sage-500 focus:border-sage-500 disabled:bg-gray-50 disabled:text-gray-500"
+                  className="block w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-md placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-2 focus:ring-sage-500 focus:border-sage-500 disabled:bg-gray-50 disabled:text-gray-500"
                   placeholder="Enter your email"
                 />
               </div>
@@ -224,7 +283,7 @@ export default function BuyerSignupModal({
                   value={formData.password}
                   onChange={handleChange}
                   disabled={isLoading}
-                  className="block w-full pl-10 pr-10 py-3 border border-gray-300 rounded-md placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-2 focus:ring-sage-500 focus:border-sage-500 disabled:bg-gray-50 disabled:text-gray-500"
+                  className="block w-full pl-10 pr-10 py-2.5 border border-gray-300 rounded-md placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-2 focus:ring-sage-500 focus:border-sage-500 disabled:bg-gray-50 disabled:text-gray-500"
                   placeholder="Create a password"
                 />
                 <button
@@ -280,7 +339,7 @@ export default function BuyerSignupModal({
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full flex justify-center items-center py-3 px-4 border border-transparent rounded-md text-sm font-medium text-white bg-sage-600 hover:bg-sage-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sage-500 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer transition-colors"
+              className="w-full flex justify-center items-center py-2.5 px-4 border border-transparent rounded-md text-sm font-medium text-white bg-sage-600 hover:bg-sage-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sage-500 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer transition-colors"
             >
               {isLoading ? (
                 <>
@@ -293,7 +352,7 @@ export default function BuyerSignupModal({
             </button>
           </form>
 
-          <div className="mt-6">
+          <div className="mt-3">
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
                 <div className="w-full border-t border-gray-300" />
@@ -305,7 +364,7 @@ export default function BuyerSignupModal({
               </div>
             </div>
 
-            <div className="mt-6 text-center">
+            <div className="mt-3 text-center">
               <button
                 onClick={openBuyerLogin}
                 className="font-medium text-sage-600 hover:text-sage-500 cursor-pointer"

@@ -34,6 +34,7 @@ export declare const getArtistOrders: (artistId: string, filters: OrderFilters) 
             orderId: string;
         })[];
         shippingAddress: {
+            state: string;
             id: number;
             firstName: string;
             lastName: string;
@@ -44,7 +45,6 @@ export declare const getArtistOrders: (artistId: string, filters: OrderFilters) 
             street: string | null;
             apartment: string | null;
             city: string;
-            state: string;
             postalCode: string;
             country: string;
             userId: string;
@@ -99,6 +99,7 @@ export declare const getArtistOrderById: (orderId: string, artistId: string) => 
         orderId: string;
     })[];
     shippingAddress: {
+        state: string;
         id: number;
         firstName: string;
         lastName: string;
@@ -109,7 +110,6 @@ export declare const getArtistOrderById: (orderId: string, artistId: string) => 
         street: string | null;
         apartment: string | null;
         city: string;
-        state: string;
         postalCode: string;
         country: string;
         userId: string;
@@ -214,6 +214,7 @@ export declare const getOrderItemsByArtist: (artistId: string, filters: OrderFil
             paymentStatus: string;
             placedAt: Date;
             shippingAddress: {
+                state: string;
                 id: number;
                 firstName: string;
                 lastName: string;
@@ -224,7 +225,6 @@ export declare const getOrderItemsByArtist: (artistId: string, filters: OrderFil
                 street: string | null;
                 apartment: string | null;
                 city: string;
-                state: string;
                 postalCode: string;
                 country: string;
                 userId: string;

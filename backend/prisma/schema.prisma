@@ -8,11 +8,16 @@ datasource db {
 }
 
 model Buyer {
-  id                    String     @id @default(uuid())
-  email                 String     @unique
-  password              String
-  firstName             String?
-  lastName              String?
+  id        String  @id @default(uuid())
+  email     String  @unique
+  password  String?
+  firstName String?
+  lastName  String?
+
+  googleId    String? @unique
+  provider    String? @default("local") // "local" or "google"
+  isOAuthUser Boolean @default(false)
+
   phone                 String?
   avatar                String?
   dateOfBirth           DateTime?
@@ -140,12 +145,16 @@ model Artist {
   storeName                  String?
   email                      String   @unique
   mobile                     String?
-  password                   String
+  password                   String?
   confirmPassword            String?
   businessType               String?
   businessRegistrationNumber String?
   productCategories          String[]
   businessLogo               String?
+
+  googleId    String? @unique
+  provider    String? @default("local") // "local" or "google"
+  isOAuthUser Boolean @default(false)
 
   businessAddress    BusinessAddress?  @relation(fields: [businessAddressId], references: [id], onDelete: SetNull)
   businessAddressId  String?           @unique

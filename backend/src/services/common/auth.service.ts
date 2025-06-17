@@ -68,7 +68,11 @@ export const loginBuyer = async ({
   password: string;
 }) => {
   const buyer = await prisma.buyer.findUnique({ where: { email } });
-  if (!buyer || !(await comparePassword(password, buyer.password))) {
+  if (
+    !buyer ||
+    !buyer.password ||
+    !(await comparePassword(password, buyer.password))
+  ) {
     throw new Error("Invalid credentials");
   }
   if (!buyer.isVerified) {
@@ -137,7 +141,11 @@ export const loginArtist = async ({
   password: string;
 }) => {
   const artist = await prisma.artist.findUnique({ where: { email } });
-  if (!artist || !(await comparePassword(password, artist.password))) {
+  if (
+    !artist ||
+    !artist.password ||
+    !(await comparePassword(password, artist.password))
+  ) {
     throw new Error("Invalid credentials");
   }
   if (!artist.isVerified) {

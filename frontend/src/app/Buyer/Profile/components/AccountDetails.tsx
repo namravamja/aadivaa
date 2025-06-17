@@ -3,7 +3,6 @@
 import type React from "react";
 import { useState, useEffect, useRef } from "react";
 import { User, Edit, Save, X, Camera, Check } from "lucide-react";
-import Image from "next/image";
 import ReactCrop, {
   type Crop,
   centerCrop,
@@ -15,6 +14,7 @@ import {
   useUpdateBuyerMutation,
 } from "@/services/api/buyerApi";
 import { toast } from "react-hot-toast";
+import SafeImage from "./SafeImage";
 
 // Helper functions for date handling
 const formatDateForAPI = (dateString: string): string | null => {
@@ -246,17 +246,6 @@ export default function AccountDetails() {
 
   const handleSave = async () => {
     try {
-      // console.log("=== SAVE PROCESS STARTED ===");
-      // console.log("Has cropped image file:", !!croppedImageFile);
-
-      if (croppedImageFile) {
-        // console.log("Cropped file details:", {
-        //   name: croppedImageFile.name,
-        //   type: croppedImageFile.type,
-        //   size: croppedImageFile.size,
-        // });
-      }
-
       // Create FormData object for multipart/form-data submission
       const formDataToSend = new FormData();
 
@@ -268,13 +257,11 @@ export default function AccountDetails() {
 
       // Add cropped image file if available
       if (croppedImageFile) {
-        // console.log("Adding cropped image to FormData...");
         formDataToSend.append(
           "avatar",
           croppedImageFile,
           croppedImageFile.name
         );
-        // console.log("✓ Cropped image added to FormData");
       }
 
       // Handle date of birth
@@ -618,7 +605,7 @@ export default function AccountDetails() {
                       <img
                         ref={imgRef}
                         alt="Crop me"
-                        src={imgSrc || "/Profile.jpg"}
+                        src={imgSrc || "/placeholder.svg"}
                         onLoad={onImageLoad}
                         className="max-w-full"
                       />
@@ -662,12 +649,16 @@ export default function AccountDetails() {
                 className="w-full h-full object-cover"
               />
             ) : formData.avatar ? (
-              <Image
-                src={formData.avatar || "/Profile.jpg"}
+              <SafeImage
+                src={formData.avatar}
                 alt={`${formData.firstName} ${formData.lastName}`}
                 width={80}
                 height={80}
-                className="w-full h-full object-cover"
+                className="w-full h-full object-cover rounded-full"
+                fallback="/Profile.jpg"
+                initials={`${formData.firstName?.[0] || ""}${
+                  formData.lastName?.[0] || ""
+                }`}
               />
             ) : (
               <span className="text-lg font-medium text-stone-600">
@@ -762,7 +753,7 @@ export default function AccountDetails() {
               onChange={(e) =>
                 setFormData((prev) => ({ ...prev, email: e.target.value }))
               }
-              disabled={!isEditing || isUpdating}
+              disabled={true} // Email should not be editable
               className="w-full px-3 py-2 border border-stone-300 focus:outline-none focus:ring-2 focus:ring-terracotta-500 focus:border-transparent disabled:bg-stone-50 disabled:text-stone-500 transition-colors"
               placeholder="Enter your email address"
             />
@@ -773,7 +764,7 @@ export default function AccountDetails() {
               htmlFor="phone"
               className="block text-sm font-medium text-stone-700 mb-1"
             >
-              Phone Number *
+              Phone Number
             </label>
             <input
               id="phone"

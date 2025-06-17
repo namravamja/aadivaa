@@ -14,25 +14,28 @@ router.get("/list", artistController.getArtists);
 router.use(verifyToken);
 
 router.post("/create", artistController.createArtist);
-router.get("/view", artistController.getArtist);
-router.put("/update", uploadArtistImages, artistController.updateArtist);
-router.put("/update/business-address", artistController.updateBusinessAddress);
+router.get("/view", artistController.getArtist as any);
+router.put("/update", uploadArtistImages, artistController.updateArtist as any);
+router.put(
+  "/update/business-address",
+  artistController.updateBusinessAddress as any
+);
 router.put(
   "/update/warehouse-address",
-  artistController.updateWarehouseAddress
+  artistController.updateWarehouseAddress as any
 );
 router.put(
   "/update/documents",
   uploadDocuments,
-  artistController.updateDocuments
+  artistController.updateDocuments as any
 );
-router.put("/update/social-links", artistController.updateSocialLinks);
-router.delete("/delete", artistController.deleteArtist);
+router.put("/update/social-links", artistController.updateSocialLinks as any);
+router.delete("/delete", artistController.deleteArtist as any);
 
 // ---------- order routes ----------
 
 // Get all orders for the artist (with pagination and filtering)
-router.get("/order", artistOrderController.getArtistOrders);
+router.get("/order", artistOrderController.getArtistOrders as any);
 
 // Get a specific order by ID
 router.get("/order/:orderId", artistOrderController.getArtistOrderById as any);
@@ -50,7 +53,7 @@ router.put(
 );
 
 // Get all order items for the artist (alternative view)
-router.get("/order-items", artistOrderController.getOrderItemsByArtist);
+router.get("/order-items", artistOrderController.getOrderItemsByArtist as any);
 
 // Bulk update order status for multiple orders
 router.put(
@@ -61,11 +64,14 @@ router.put(
 // ---------- review routes ----------
 
 // Get all reviews written on the artist's products
-router.get("/reviews", reviewController.getReviewsByArtist);
+router.get("/reviews", reviewController.getReviewsByArtist as any);
 
 // Update verification status of a review
-router.put("/reviews/verify", reviewController.updateReviewVerificationStatus);
+router.put(
+  "/reviews/verify",
+  reviewController.updateReviewVerificationStatus as any
+);
 
 // Delete a review (by the artist)
-router.delete("/reviews/delete", reviewController.deleteReviewByArtist);
+router.delete("/reviews/delete", reviewController.deleteReviewByArtist as any);
 export default router;

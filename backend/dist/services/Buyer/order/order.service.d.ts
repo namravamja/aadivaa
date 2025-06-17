@@ -57,6 +57,7 @@ export declare const createOrderFromCart: (buyerId: string, orderData: CreateOrd
         orderId: string;
     })[];
     shippingAddress: {
+        state: string;
         id: number;
         firstName: string;
         lastName: string;
@@ -67,7 +68,6 @@ export declare const createOrderFromCart: (buyerId: string, orderData: CreateOrd
         street: string | null;
         apartment: string | null;
         city: string;
-        state: string;
         postalCode: string;
         country: string;
         userId: string;

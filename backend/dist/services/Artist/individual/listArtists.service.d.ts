@@ -1,17 +1,17 @@
 export declare const listArtists: () => Promise<({
     businessAddress: {
+        state: string | null;
         id: string;
         street: string;
         city: string | null;
-        state: string | null;
         country: string | null;
         pinCode: string | null;
     } | null;
     warehouseAddress: {
+        state: string | null;
         id: string;
         street: string;
         city: string | null;
-        state: string | null;
         country: string | null;
         pinCode: string | null;
         sameAsBusiness: boolean | null;
@@ -25,8 +25,11 @@ export declare const listArtists: () => Promise<({
     } | null;
 } & {
     email: string;
-    password: string;
     id: string;
+    password: string | null;
+    googleId: string | null;
+    provider: string | null;
+    isOAuthUser: boolean;
     createdAt: Date;
     updatedAt: Date | null;
     isAuthenticated: boolean;

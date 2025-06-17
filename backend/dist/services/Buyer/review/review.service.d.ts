@@ -6,10 +6,13 @@ type ReviewData = {
 export declare const addReview: (buyerId: string, productId: string, { rating, title, text }: ReviewData) => Promise<{
     buyer: {
         email: string;
-        password: string;
         id: string;
+        password: string | null;
         firstName: string | null;
         lastName: string | null;
+        googleId: string | null;
+        provider: string | null;
+        isOAuthUser: boolean;
         phone: string | null;
         avatar: string | null;
         dateOfBirth: Date | null;
@@ -25,8 +28,11 @@ export declare const addReview: (buyerId: string, productId: string, { rating, t
     };
     artist: {
         email: string;
-        password: string;
         id: string;
+        password: string | null;
+        googleId: string | null;
+        provider: string | null;
+        isOAuthUser: boolean;
         createdAt: Date;
         updatedAt: Date | null;
         isAuthenticated: boolean;

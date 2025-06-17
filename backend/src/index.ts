@@ -23,7 +23,7 @@ app.set("trust proxy", 1);
 app.use(helmet());
 app.use(
   cors({
-    origin: true,
+    origin: [process.env.FRONTEND_URL || "http://localhost:3000"],
     credentials: true,
   })
 );
@@ -50,7 +50,7 @@ app.get("/health", (req, res) => {
   });
 });
 
-// Auth routes
+// Auth routes (includes Google OAuth)
 app.use("/api/auth", authRoutes);
 
 // Buyer routes
@@ -69,8 +69,6 @@ app.use(errorHandler);
 // Server start
 const startServer = async () => {
   try {
-    // await connectDB(); // Optional: use if managing Prisma connection lifecycle
-
     app.listen(PORT, () => {
       logger.info(`🚀 Server running on port ${PORT}`);
       logger.info(`📱 Environment: ${process.env.NODE_ENV || "development"}`);

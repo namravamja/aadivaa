@@ -2,7 +2,7 @@ import { AuthApi } from "./index";
 
 export const authApi = AuthApi.injectEndpoints({
   endpoints: (builder) => ({
-    // Buyer signup
+    // Existing endpoints...
     signupBuyer: builder.mutation({
       query: (buyerData) => ({
         url: "/buyer/signup",
@@ -11,7 +11,6 @@ export const authApi = AuthApi.injectEndpoints({
       }),
     }),
 
-    // Buyer login
     loginBuyer: builder.mutation({
       query: (credentials) => ({
         url: "/buyer/login",
@@ -20,7 +19,6 @@ export const authApi = AuthApi.injectEndpoints({
       }),
     }),
 
-    // Artist signup
     signupArtist: builder.mutation({
       query: (artistData) => ({
         url: "/artist/signup",
@@ -29,7 +27,6 @@ export const authApi = AuthApi.injectEndpoints({
       }),
     }),
 
-    // Artist login
     loginArtist: builder.mutation({
       query: (credentials) => ({
         url: "/artist/login",
@@ -38,7 +35,6 @@ export const authApi = AuthApi.injectEndpoints({
       }),
     }),
 
-    // Verify email (GET with query params)
     verifyEmail: builder.query({
       query: (verificationToken) => ({
         url: `/verify-email?token=${verificationToken}`,
@@ -46,11 +42,25 @@ export const authApi = AuthApi.injectEndpoints({
       }),
     }),
 
-    // Logout (POST with no body)
     logout: builder.mutation({
       query: () => ({
         url: "/logout",
         method: "POST",
+      }),
+    }),
+
+    // New Google OAuth endpoints
+    initiateGoogleAuthBuyer: builder.mutation({
+      query: () => ({
+        url: "/google/buyer",
+        method: "GET",
+      }),
+    }),
+
+    initiateGoogleAuthArtist: builder.mutation({
+      query: () => ({
+        url: "/google/artist",
+        method: "GET",
       }),
     }),
   }),
@@ -63,4 +73,6 @@ export const {
   useLoginArtistMutation,
   useVerifyEmailQuery,
   useLogoutMutation,
+  useInitiateGoogleAuthBuyerMutation,
+  useInitiateGoogleAuthArtistMutation,
 } = authApi;

@@ -3,11 +3,12 @@
 import type React from "react";
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { Eye, EyeOff, Mail, Lock, Loader2, X } from "lucide-react";
 import { useLoginBuyerMutation } from "@/services/api/authApi";
 import { useGetBuyerQuery } from "@/services/api/buyerApi";
 import { useAuthModal } from "@/app/(auth)/components/auth-modal-provider";
+import { useGoogleAuth } from "@/hooks/useGoogleAuth";
+import GoogleAuthButton from "../../components/GoogleAuthButton";
 import toast from "react-hot-toast";
 
 interface BuyerLoginModalProps {
@@ -19,10 +20,10 @@ export default function BuyerLoginModal({
   isOpen,
   onClose,
 }: BuyerLoginModalProps) {
-  const router = useRouter();
   const { openBuyerSignup } = useAuthModal();
   const [loginBuyer, { isLoading }] = useLoginBuyerMutation();
   const { refetch } = useGetBuyerQuery(undefined);
+  const { initiateGoogleAuth, isLoading: isGoogleLoading } = useGoogleAuth();
 
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const [formData, setFormData] = useState({
@@ -58,7 +59,11 @@ export default function BuyerLoginModal({
       }
 
       toast.success("Login successful!");
+
+      // Close modal immediately after successful login
       onClose();
+
+      // Refetch user data
       refetch();
     } catch (err: any) {
       const errorMessage =
@@ -66,6 +71,41 @@ export default function BuyerLoginModal({
       toast.error(errorMessage);
     }
   };
+
+  const handleGoogleAuth = () => {
+    // Store modal state and close modal immediately
+    sessionStorage.setItem("wasLoginModalOpen", "true");
+    sessionStorage.setItem("shouldCloseModal", "true");
+
+    // Close the modal before redirecting
+    onClose();
+
+    // Show loading toast with transparent background
+    toast.loading("Redirecting to Google...");
+
+    // Small delay to ensure modal closes before redirect
+    setTimeout(() => {
+      initiateGoogleAuth("buyer");
+    }, 100);
+  };
+
+  // Check for successful OAuth login on component mount/update
+  useEffect(() => {
+    const checkOAuthSuccess = () => {
+      const shouldClose = sessionStorage.getItem("shouldCloseModal");
+      const userData = localStorage.getItem("userData");
+
+      if (shouldClose && userData) {
+        sessionStorage.removeItem("shouldCloseModal");
+        onClose();
+        refetch();
+      }
+    };
+
+    if (isOpen) {
+      checkOAuthSuccess();
+    }
+  }, [isOpen, onClose, refetch]);
 
   // Handle escape key to close modal
   useEffect(() => {
@@ -119,8 +159,32 @@ export default function BuyerLoginModal({
 
         <div className="p-6">
           <div className="text-center mb-8">
-            <h2 className="text-3xl mt-4 font-bold text-gray-900">Welcome back to Aadivaa</h2>
-            <p className="mt-2 text-gray-600">Shop for best quality products..</p>
+            <h2 className="text-3xl mt-4 font-bold text-gray-900">
+              Welcome back to Aadivaa
+            </h2>
+            <p className="mt-2 text-gray-600">
+              Shop for best quality products..
+            </p>
+          </div>
+
+          {/* Google Auth Button */}
+          <div className="mb-6">
+            <GoogleAuthButton
+              userType="buyer"
+              isLoading={isGoogleLoading}
+              onGoogleAuth={handleGoogleAuth}
+            />
+          </div>
+
+          <div className="relative mb-6">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-gray-300" />
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="px-2 bg-white text-gray-500">
+                Or continue with email
+              </span>
+            </div>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
@@ -230,26 +294,13 @@ export default function BuyerLoginModal({
             </button>
           </form>
 
-          <div className="mt-6">
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-300" />
-              </div>
-              <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-white text-gray-500">
-                  New to AADIVAEARTH?
-                </span>
-              </div>
-            </div>
-
-            <div className="mt-6 text-center">
-              <button
-                onClick={openBuyerSignup}
-                className="font-medium text-terracotta-600 hover:text-terracotta-500 cursor-pointer"
-              >
-                Create your account
-              </button>
-            </div>
+          <div className="mt-6 text-center">
+            <button
+              onClick={openBuyerSignup}
+              className="font-medium text-terracotta-600 hover:text-terracotta-500 cursor-pointer"
+            >
+              New to AADIVAEARTH? Create your account
+            </button>
           </div>
         </div>
       </div>

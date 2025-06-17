@@ -16,22 +16,30 @@ router.post(
   "/create",
   verifyToken,
   uploadProductImages,
-  productController.createProduct
+  productController.createProduct as any
 );
-router.get("/listByArtist", verifyToken, productController.getProductsByArtist);
+router.get(
+  "/listByArtist",
+  verifyToken,
+  productController.getProductsByArtist as any
+);
 router.put(
   "/update/:productId",
   verifyToken,
   uploadProductImages,
-  productController.updateProduct
+  productController.updateProduct as any
 );
 router.delete(
   "/delete/:productId",
   verifyToken,
-  productController.deleteProduct
+  productController.deleteProduct as any
 );
 
 router.get("/:productId", productController.getProductById);
 
-router.patch("/updateStock", verifyToken, productController.updateStockOnly);
+router.patch(
+  "/updateStock",
+  verifyToken,
+  productController.updateStockOnly as any
+);
 export default router;

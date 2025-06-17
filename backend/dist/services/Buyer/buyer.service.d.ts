@@ -17,10 +17,13 @@ export declare const createBuyer: (data: {
     gender?: string;
 }) => Promise<{
     email: string;
-    password: string;
     id: string;
+    password: string | null;
     firstName: string | null;
     lastName: string | null;
+    googleId: string | null;
+    provider: string | null;
+    isOAuthUser: boolean;
     phone: string | null;
     avatar: string | null;
     dateOfBirth: Date | null;
@@ -45,6 +48,7 @@ export declare const getBuyerById: (id: string) => Promise<{
     gender: string | null;
     createdAt: Date;
     addresses: {
+        state: string;
         id: number;
         firstName: string;
         lastName: string;
@@ -55,7 +59,6 @@ export declare const getBuyerById: (id: string) => Promise<{
         street: string | null;
         apartment: string | null;
         city: string;
-        state: string;
         postalCode: string;
         country: string;
         userId: string;

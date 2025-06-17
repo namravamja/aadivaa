@@ -6,10 +6,10 @@ interface BusinessAddressData {
     pinCode?: string;
 }
 export declare const updateBusinessAddress: (artistId: string, addressData: BusinessAddressData) => Promise<{
+    state: string | null;
     id: string;
     street: string;
     city: string | null;
-    state: string | null;
     country: string | null;
     pinCode: string | null;
 }>;

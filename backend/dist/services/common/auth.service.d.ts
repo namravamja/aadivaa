@@ -15,10 +15,13 @@ export declare const loginBuyer: ({ email, password, }: {
     token: string;
     buyer: {
         email: string;
-        password: string;
         id: string;
+        password: string | null;
         firstName: string | null;
         lastName: string | null;
+        googleId: string | null;
+        provider: string | null;
+        isOAuthUser: boolean;
         phone: string | null;
         avatar: string | null;
         dateOfBirth: Date | null;
@@ -44,8 +47,11 @@ export declare const loginArtist: ({ email, password, }: {
     token: string;
     artist: {
         email: string;
-        password: string;
         id: string;
+        password: string | null;
+        googleId: string | null;
+        provider: string | null;
+        isOAuthUser: boolean;
         createdAt: Date;
         updatedAt: Date | null;
         isAuthenticated: boolean;

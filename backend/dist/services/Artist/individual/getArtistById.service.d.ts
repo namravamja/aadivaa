@@ -28,18 +28,18 @@ export declare const getArtistById: (id: string) => Promise<{
     termsAgreed: boolean | null;
     digitalSignature: string | null;
     businessAddress: {
+        state: string | null;
         id: string;
         street: string;
         city: string | null;
-        state: string | null;
         country: string | null;
         pinCode: string | null;
     } | null;
     warehouseAddress: {
+        state: string | null;
         id: string;
         street: string;
         city: string | null;
-        state: string | null;
         country: string | null;
         pinCode: string | null;
         sameAsBusiness: boolean | null;
