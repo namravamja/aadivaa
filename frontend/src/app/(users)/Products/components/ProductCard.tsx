@@ -4,7 +4,7 @@ import type React from "react";
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Heart, Plus, Check, ShoppingBag } from "lucide-react";
+import { Heart, Plus, Check, ShoppingBag, Share2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import {
@@ -130,6 +130,21 @@ export default function ProductCard({ product }: ProductCardProps) {
     }
   };
 
+  const handleShare = async (e: React.MouseEvent) => {
+    e.preventDefault();
+
+    try {
+      const productUrl = `https://aadivaa.shop/Products/${product.id}`;
+      await navigator.clipboard.writeText(productUrl);
+      toast.success("Link copied to clipboard", {
+        duration: 2000,
+        icon: "🔗",
+      });
+    } catch (error) {
+      toast.error("Failed to copy link", { duration: 2000 });
+    }
+  };
+
   return (
     <div className="group">
       <Link href={`/Products/${product.id}`} className="block">
@@ -141,31 +156,41 @@ export default function ProductCard({ product }: ProductCardProps) {
             className="object-cover transition-transform duration-700 group-hover:scale-105"
           />
 
-          <button
-            onClick={toggleWishlist}
-            className={`absolute top-4 right-4 p-2 rounded-full z-10 cursor-pointer ${
-              isAuthenticated && isWishlisted
-                ? "bg-terracotta-600 text-white"
-                : "bg-white text-stone-900 opacity-0 group-hover:opacity-100"
-            } transition-all duration-300`}
-            aria-label={
-              isAuthenticated && isWishlisted
-                ? "Remove from wishlist"
-                : "Add to wishlist"
-            }
-          >
-            <Heart
-              className={`w-4 cursor-pointer h-4 ${
-                isAuthenticated && isWishlisted ? "fill-white" : ""
-              }`}
-            />
-          </button>
+          <div className="absolute top-4 right-4 flex flex-col gap-2 z-10">
+            <button
+              onClick={toggleWishlist}
+              className={`p-2 rounded-full cursor-pointer ${
+                isAuthenticated && isWishlisted
+                  ? "bg-terracotta-600 text-white"
+                  : "bg-white text-stone-900 sm:opacity-0 sm:group-hover:opacity-100"
+              } transition-all duration-300`}
+              aria-label={
+                isAuthenticated && isWishlisted
+                  ? "Remove from wishlist"
+                  : "Add to wishlist"
+              }
+            >
+              <Heart
+                className={`w-4 cursor-pointer h-4 ${
+                  isAuthenticated && isWishlisted ? "fill-white" : ""
+                }`}
+              />
+            </button>
 
-          <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+            <button
+              onClick={handleShare}
+              className="p-2 rounded-full bg-white text-stone-900 sm:opacity-0 sm:group-hover:opacity-100 transition-all duration-300 cursor-pointer"
+              aria-label="Share product"
+            >
+              <Share2 className="w-4 h-4" />
+            </button>
+          </div>
+
+          <div className="absolute inset-0 flex items-center justify-center sm:opacity-0 sm:group-hover:opacity-100 transition-opacity duration-300">
             <button
               onClick={handleAddToCart}
               disabled={isAddingToCart || authLoading}
-              className="bg-white text-stone-900 px-4 cursor-pointer sm:px-6 py-2 sm:py-3 font-medium flex items-center disabled:opacity-50 disabled:cursor-not-allowed"
+              className="bg-white text-stone-900 px-4 cursor-pointer sm:px-6 py-2 sm:py-3 font-medium flex items-center disabled:opacity-50 disabled:cursor-not-allowed sm:flex"
               aria-label="Add to cart"
             >
               {isAddingToCart ? (

@@ -96,13 +96,11 @@ export const signupArtist = async (data: SignupData) => {
     data: { ...data, password: hashed },
   });
 
-  // Generate verification token
   const verifyToken = generateVerificationToken({
     id: artist.id,
     role: "ARTIST",
   });
 
-  // Save token & expiry
   await prisma.artist.update({
     where: { id: artist.id },
     data: {
@@ -111,7 +109,6 @@ export const signupArtist = async (data: SignupData) => {
     },
   });
 
-  // Send verification email
   await sendVerificationEmail(artist.email, verifyToken);
 
   setTimeout(async () => {

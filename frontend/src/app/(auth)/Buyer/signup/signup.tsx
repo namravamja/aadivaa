@@ -3,7 +3,7 @@
 import type React from "react";
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Eye, EyeOff, User, Mail, Lock, X } from "lucide-react";
+import { Eye, EyeOff, User, Mail, Lock, Loader2, X } from "lucide-react";
 import { useSignupBuyerMutation } from "@/services/api/authApi";
 import { useAuthModal } from "@/app/(auth)/components/auth-modal-provider";
 import toast from "react-hot-toast";
@@ -18,7 +18,7 @@ export default function BuyerSignupModal({
   onClose,
 }: BuyerSignupModalProps) {
   const { openBuyerLogin } = useAuthModal();
-  const [signupBuyer, { isLoading, isError, error }] = useSignupBuyerMutation();
+  const [signupBuyer, { isLoading }] = useSignupBuyerMutation();
 
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const [formData, setFormData] = useState({
@@ -58,27 +58,14 @@ export default function BuyerSignupModal({
     }
 
     try {
-      const loadingToastId = toast.loading("Creating your account...");
-
-      const result = await signupBuyer(formData).unwrap();
-
-      toast.dismiss(loadingToastId);
-      toast.success("Account created successfully! Please sign in");
-
+      await signupBuyer(formData).unwrap();
+      toast.success("Signup done, Check Verification mail sent successfully!");
       onClose();
       openBuyerLogin();
-    } catch (err) {
-      toast.dismiss();
-
-      if ("data" in (err as any)) {
-        const errorMessage =
-          (err as any).data?.message || "Signup failed. Please try again";
-        toast.error(errorMessage);
-      } else {
-        toast.error("An error occurred. Please try again");
-      }
-
-      console.error("Signup failed:", err);
+    } catch (err: any) {
+      const errorMessage =
+        err?.data?.message || err?.message || "Signup failed. Please try again";
+      toast.error(errorMessage);
     }
   };
 
@@ -120,7 +107,7 @@ export default function BuyerSignupModal({
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       {/* Backdrop */}
       <div
-        className="absolute inset-0 bg-black/60 backdrop-blur-none transition-opacity"
+        className="absolute inset-0 bg-black/60 backdrop-blur-none transition-opacity cursor-pointer"
         onClick={onClose}
       />
 
@@ -129,14 +116,16 @@ export default function BuyerSignupModal({
         {/* Close Button */}
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors z-10 p-1 rounded-full hover:bg-gray-100"
+          className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors z-10 p-1 rounded-full hover:bg-gray-100 cursor-pointer"
         >
-          <X className="h-5 w-5 cursor-pointer" />
+          <X className="h-5 w-5" />
         </button>
 
         <div className="p-6">
           <div className="text-center mb-8">
-            <h2 className="text-3xl font-bold text-gray-900">Create account</h2>
+            <h2 className="text-3xl font-bold text-gray-900">
+              Create buyer account
+            </h2>
             <p className="mt-2 text-gray-600">Join AADIVAEARTH today</p>
           </div>
 
@@ -291,13 +280,13 @@ export default function BuyerSignupModal({
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full flex justify-center py-3 px-4 border border-transparent rounded-md text-sm font-medium text-white bg-sage-600 hover:bg-sage-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sage-500 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer transition-colors"
+              className="w-full flex justify-center items-center py-3 px-4 border border-transparent rounded-md text-sm font-medium text-white bg-sage-600 hover:bg-sage-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sage-500 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer transition-colors"
             >
               {isLoading ? (
-                <div className="flex items-center">
-                  <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent mr-2"></div>
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   Creating account...
-                </div>
+                </>
               ) : (
                 "Create account"
               )}

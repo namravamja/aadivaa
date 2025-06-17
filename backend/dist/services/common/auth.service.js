@@ -69,12 +69,10 @@ const signupArtist = async (data) => {
     const artist = await prisma.artist.create({
         data: { ...data, password: hashed },
     });
-    // Generate verification token
     const verifyToken = (0, jwt_1.generateVerificationToken)({
         id: artist.id,
         role: "ARTIST",
     });
-    // Save token & expiry
     await prisma.artist.update({
         where: { id: artist.id },
         data: {
@@ -82,7 +80,6 @@ const signupArtist = async (data) => {
             verifyExpires: new Date(Date.now() + 5 * 60 * 1000),
         },
     });
-    // Send verification email
     await (0, mailer_1.sendVerificationEmail)(artist.email, verifyToken);
     setTimeout(async () => {
         const freshArtist = await prisma.artist.findUnique({

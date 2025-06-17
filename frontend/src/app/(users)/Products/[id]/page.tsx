@@ -1,9 +1,10 @@
 "use client";
 
-import { use } from "react";
+import { use, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowLeft, Star } from "lucide-react";
+import { ArrowLeft, Star, Share2 } from "lucide-react";
+import toast from "react-hot-toast";
 import AddToCartButton from "../components/AddToCartButton";
 import WishlistButton from "../components/WishlistButton";
 import ProductReviews from "../components/ProductReviews";
@@ -16,6 +17,7 @@ export default function ProductDetailPage({
 }) {
   // Unwrap params using React.use()
   const { id } = use(params);
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
 
   // Fetch specific product data by ID
   const {
@@ -56,6 +58,41 @@ export default function ProductDetailPage({
         updatedAt: apiProduct.updatedAt,
       }
     : null;
+
+  const handleShare = async () => {
+    const currentUrl = window.location.href;
+
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: product?.name || "Check out this product",
+          text: `Check out ${product?.name} by ${product?.artist.name}`,
+          url: currentUrl,
+        });
+        toast.success("Shared Open!", { duration: 2000 });
+      } catch (error) {
+        // User cancelled sharing or error occurred
+        fallbackShare(currentUrl);
+      }
+    } else {
+      fallbackShare(currentUrl);
+    }
+  };
+
+  const fallbackShare = (url: string) => {
+    navigator.clipboard
+      .writeText(url)
+      .then(() => {
+        toast.success("Link copied to clipboard!", { duration: 2000 });
+      })
+      .catch(() => {
+        toast.error("Failed to copy link", { duration: 2000 });
+      });
+  };
+
+  const handleImageClick = (index: number) => {
+    setSelectedImageIndex(index);
+  };
 
   if (isLoading) {
     return (
@@ -128,7 +165,7 @@ export default function ProductDetailPage({
           <div className="space-y-4">
             <div className="relative aspect-square bg-stone-100 rounded-lg overflow-hidden">
               <Image
-                src={product.images[0] || "/Profile.jpg"}
+                src={product.images[selectedImageIndex] || "/Profile.jpg"}
                 alt={product.name}
                 fill
                 className="object-cover"
@@ -136,31 +173,43 @@ export default function ProductDetailPage({
               />
             </div>
             {product.images.length > 1 && (
-              <div className="grid grid-cols-3 gap-4">
-                {product.images
-                  .slice(1, 4)
-                  .map((image: string, index: number) => (
-                    <div
-                      key={index}
-                      className="relative aspect-square bg-stone-100 rounded-lg overflow-hidden"
-                    >
-                      <Image
-                        src={image || "/Profile.jpg"}
-                        alt={`${product.name} view ${index + 2}`}
-                        fill
-                        className="object-cover"
-                      />
-                    </div>
-                  ))}
+              <div className="grid grid-cols-4 gap-4">
+                {product.images.map((image: string, index: number) => (
+                  <div
+                    key={index}
+                    className={`relative aspect-square bg-stone-100 rounded-lg overflow-hidden cursor-pointer border-2 transition-all ${
+                      selectedImageIndex === index
+                        ? "border-terracotta-600"
+                        : "border-transparent hover:border-stone-300"
+                    }`}
+                    onClick={() => handleImageClick(index)}
+                  >
+                    <Image
+                      src={image || "/Profile.jpg"}
+                      alt={`${product.name} view ${index + 1}`}
+                      fill
+                      className="object-cover"
+                    />
+                  </div>
+                ))}
               </div>
             )}
           </div>
 
           {/* Product Info */}
           <div>
-            <h1 className="text-3xl font-light text-stone-900 mb-2">
-              {product.name}
-            </h1>
+            <div className="flex justify-between items-start mb-4">
+              <h1 className="text-3xl font-light text-stone-900">
+                {product.name}
+              </h1>
+              <button
+                onClick={handleShare}
+                className="p-2 rounded-full cursor-pointer bg-stone-100 hover:bg-stone-200 transition-colors"
+                aria-label="Share product"
+              >
+                <Share2 className="w-5 h-5 text-stone-600" />
+              </button>
+            </div>
 
             {/* Artist Info */}
             <div className="flex items-center mb-4">

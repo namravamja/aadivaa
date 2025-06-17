@@ -4,7 +4,7 @@ import type React from "react";
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Eye, EyeOff, Mail, Lock, X } from "lucide-react";
+import { Eye, EyeOff, Mail, Lock, Loader2, X } from "lucide-react";
 import { useLoginBuyerMutation } from "@/services/api/authApi";
 import { useGetBuyerQuery } from "@/services/api/buyerApi";
 import { useAuthModal } from "@/app/(auth)/components/auth-modal-provider";
@@ -21,7 +21,7 @@ export default function BuyerLoginModal({
 }: BuyerLoginModalProps) {
   const router = useRouter();
   const { openBuyerSignup } = useAuthModal();
-  const [loginBuyer, { isLoading, error }] = useLoginBuyerMutation();
+  const [loginBuyer, { isLoading }] = useLoginBuyerMutation();
   const { refetch } = useGetBuyerQuery(undefined);
 
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
@@ -48,14 +48,10 @@ export default function BuyerLoginModal({
     }
 
     try {
-      const loadingToastId = toast.loading("Signing in...");
-
       const result = await loginBuyer({
         email: formData.email,
         password: formData.password,
       }).unwrap();
-
-      toast.dismiss(loadingToastId);
 
       if (result.token) {
         localStorage.setItem("authToken", result.token);
@@ -63,19 +59,12 @@ export default function BuyerLoginModal({
 
       toast.success("Login successful!");
       onClose();
-    } catch (err) {
-      toast.dismiss();
-
-      if ("data" in (err as any) && (err as any).data?.message) {
-        toast.error((err as any).data.message);
-      } else {
-        toast.error("Login failed. Please try again");
-      }
-
-      console.error("Login failed:", err);
+      refetch();
+    } catch (err: any) {
+      const errorMessage =
+        err?.data?.message || err?.message || "Login failed. Please try again";
+      toast.error(errorMessage);
     }
-
-    refetch();
   };
 
   // Handle escape key to close modal
@@ -114,7 +103,7 @@ export default function BuyerLoginModal({
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       {/* Backdrop */}
       <div
-        className="absolute inset-0 bg-black/60 backdrop-blur-none transition-opacity"
+        className="absolute inset-0 bg-black/60 backdrop-blur-none transition-opacity cursor-pointer"
         onClick={onClose}
       />
 
@@ -123,20 +112,18 @@ export default function BuyerLoginModal({
         {/* Close Button */}
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors z-10 p-1 rounded-full hover:bg-gray-100"
+          className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors z-10 p-1 rounded-full hover:bg-gray-100 cursor-pointer"
         >
-          <X className="h-5 w-5 cursor-pointer" />
+          <X className="h-5 w-5" />
         </button>
 
         <div className="p-6">
           <div className="text-center mb-8">
-            <h2 className="text-3xl font-bold text-gray-900">Welcome back</h2>
-            <p className="mt-2 text-gray-600">Sign in to your account</p>
+            <h2 className="text-3xl mt-4 font-bold text-gray-900">Welcome back to Aadivaa</h2>
+            <p className="mt-2 text-gray-600">Shop for best quality products..</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Error display */}
-
             {/* Email */}
             <div>
               <label
@@ -230,13 +217,13 @@ export default function BuyerLoginModal({
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full flex justify-center py-3 px-4 border border-transparent rounded-md text-sm font-medium text-white bg-terracotta-600 hover:bg-terracotta-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-terracotta-500 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer transition-colors"
+              className="w-full flex justify-center items-center py-3 px-4 border border-transparent rounded-md text-sm font-medium text-white bg-terracotta-600 hover:bg-terracotta-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-terracotta-500 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer transition-colors"
             >
               {isLoading ? (
-                <div className="flex items-center">
-                  <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent mr-2"></div>
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   Signing in...
-                </div>
+                </>
               ) : (
                 "Sign in"
               )}

@@ -39,53 +39,51 @@ const signupBuyer = async (req, res) => {
     try {
         const result = await authService.signupBuyer(req.body);
         res.status(201).json(result);
-        res.json({ message: "Signup buyer successful" });
     }
     catch (err) {
-        res.status(400).json({ error: err.message });
+        res.status(400).json({ message: err.message });
     }
 };
 exports.signupBuyer = signupBuyer;
 const loginBuyer = async (req, res) => {
     try {
-        const { token } = await authService.loginBuyer(req.body);
+        const { token, buyer } = await authService.loginBuyer(req.body);
         res.cookie("token", token, {
             httpOnly: true,
             secure: true,
             sameSite: "none",
             maxAge: 7 * 24 * 60 * 60 * 1000,
         });
-        res.json({ message: "Login buyer successful" });
+        res.status(200).json({ message: "Login buyer successful", buyer });
     }
     catch (err) {
-        res.status(401).json({ error: err.message });
+        res.status(401).json({ message: err.message });
     }
 };
 exports.loginBuyer = loginBuyer;
 const signupArtist = async (req, res) => {
     try {
         const result = await authService.signupArtist(req.body);
-        res.json({ message: "Signup artist successful" });
         res.status(201).json(result);
     }
     catch (err) {
-        res.status(400).json({ error: err.message });
+        res.status(400).json({ message: err.message });
     }
 };
 exports.signupArtist = signupArtist;
 const loginArtist = async (req, res) => {
     try {
-        const { token } = await authService.loginArtist(req.body);
+        const { token, artist } = await authService.loginArtist(req.body);
         res.cookie("token", token, {
             httpOnly: true,
             secure: true,
             sameSite: "none",
             maxAge: 7 * 24 * 60 * 60 * 1000,
         });
-        res.json({ message: "Login artist successful" });
+        res.status(200).json({ message: "Login artist successful", artist });
     }
     catch (err) {
-        res.status(401).json({ error: err.message });
+        res.status(401).json({ message: err.message });
     }
 };
 exports.loginArtist = loginArtist;
