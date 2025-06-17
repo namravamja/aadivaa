@@ -45,7 +45,9 @@ const signupBuyer = async (data) => {
 exports.signupBuyer = signupBuyer;
 const loginBuyer = async ({ email, password, }) => {
     const buyer = await prisma.buyer.findUnique({ where: { email } });
-    if (!buyer || !(await (0, jwt_1.comparePassword)(password, buyer.password))) {
+    if (!buyer ||
+        !buyer.password ||
+        !(await (0, jwt_1.comparePassword)(password, buyer.password))) {
         throw new Error("Invalid credentials");
     }
     if (!buyer.isVerified) {
@@ -98,7 +100,9 @@ const signupArtist = async (data) => {
 exports.signupArtist = signupArtist;
 const loginArtist = async ({ email, password, }) => {
     const artist = await prisma.artist.findUnique({ where: { email } });
-    if (!artist || !(await (0, jwt_1.comparePassword)(password, artist.password))) {
+    if (!artist ||
+        !artist.password ||
+        !(await (0, jwt_1.comparePassword)(password, artist.password))) {
         throw new Error("Invalid credentials");
     }
     if (!artist.isVerified) {

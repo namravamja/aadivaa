@@ -364,7 +364,7 @@ export const bulkUpdateOrderStatus = async (
     },
   });
 
-  const validOrderIds = validOrders.map((order) => order.id);
+  const validOrderIds = validOrders.map((order: { id: string }) => order.id);
 
   if (validOrderIds.length === 0) {
     throw new Error("No valid orders found for bulk update");

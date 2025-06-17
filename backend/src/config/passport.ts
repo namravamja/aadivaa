@@ -1,3 +1,6 @@
+import dotenv from "dotenv";
+dotenv.config();
+
 import passport from "passport";
 import { Strategy as GoogleStrategy } from "passport-google-oauth20";
 import { PrismaClient } from "@prisma/client";
@@ -5,11 +8,20 @@ import { generateToken } from "../utils/jwt";
 
 const prisma = new PrismaClient();
 
+const clientID = process.env.GOOGLE_CLIENT_ID;
+const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
+
+if (!clientID || !clientSecret) {
+  throw new Error(
+    "❌ Missing GOOGLE_CLIENT_ID or GOOGLE_CLIENT_SECRET in environment variables"
+  );
+}
+
 passport.use(
   new GoogleStrategy(
     {
-      clientID: process.env.GOOGLE_CLIENT_ID!,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+      clientID,
+      clientSecret,
       callbackURL: "/api/auth/google/callback",
       scope: ["profile", "email"],
     },
@@ -25,21 +37,16 @@ passport.use(
           return done(new Error("No email found in Google profile"), false);
         }
 
-        // Get user type from state parameter in the profile._json or default to buyer
-        // If you are passing state in the OAuth flow, you should extract it from the request, not from profile
-        // For now, default to "buyer"
         const userType = "buyer";
 
         if (userType === "buyer") {
-          // Check if buyer already exists
           let buyer = await prisma.buyer.findFirst({
             where: {
-              OR: [{ googleId: id }, { email: email }],
+              OR: [{ googleId: id }, { email }],
             },
           });
 
           if (buyer) {
-            // Update existing buyer with Google info if not already set
             if (!buyer.googleId) {
               buyer = await prisma.buyer.update({
                 where: { id: buyer.id },
@@ -55,18 +62,15 @@ passport.use(
                 },
               });
             } else {
-              // Just update authentication status
               buyer = await prisma.buyer.update({
                 where: { id: buyer.id },
                 data: {
                   isAuthenticated: true,
-                  // Update avatar if it's newer/different
                   avatar: avatar || buyer.avatar,
                 },
               });
             }
           } else {
-            // Create new buyer with complete profile
             buyer = await prisma.buyer.create({
               data: {
                 email,
@@ -78,13 +82,11 @@ passport.use(
                 isOAuthUser: true,
                 isVerified: true,
                 isAuthenticated: true,
-                // Set password as null for OAuth users
                 password: null,
               },
             });
           }
 
-          // Generate JWT token
           const token = generateToken({ id: buyer.id, role: "BUYER" });
 
           return done(null, {
@@ -93,13 +95,12 @@ passport.use(
             token,
             isNewUser:
               !buyer.createdAt ||
-              Date.now() - new Date(buyer.createdAt).getTime() < 60000, // Less than 1 minute old
+              Date.now() - new Date(buyer.createdAt).getTime() < 60000,
           });
         } else {
-          // Handle artist
           let artist = await prisma.artist.findFirst({
             where: {
-              OR: [{ googleId: id }, { email: email }],
+              OR: [{ googleId: id }, { email }],
             },
           });
 

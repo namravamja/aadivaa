@@ -54,7 +54,7 @@ export const createOrderFromCart = async (
     }
 
     const order = await prisma.$transaction(
-      async (tx) => {
+      async (tx: PrismaClient) => {
         const newOrder = await tx.order.create({
           data: {
             buyer: { connect: { id: buyerId } },
@@ -108,7 +108,7 @@ export const createOrderFromCart = async (
       order.buyer.email,
       `${order.shippingAddress.firstName} ${order.shippingAddress.lastName}`,
       order.id,
-      order.orderItems.map((item) => ({
+      order.orderItems.map((item: (typeof order.orderItems)[number]) => ({
         name: item.product.productName,
         quantity: item.quantity,
         price: item.priceAtPurchase,
@@ -255,34 +255,36 @@ export const cancelOrder = async (orderId: string, buyerId: string) => {
       throw new Error("Only pending orders can be cancelled");
     }
 
-    const cancelledOrder = await prisma.$transaction(async (tx) => {
-      const updatedOrder = await tx.order.update({
-        where: { id: orderId },
-        data: {
-          status: "cancelled",
-          updatedAt: new Date(),
-        },
-        include: {
-          orderItems: {
-            include: {
-              product: true,
+    const cancelledOrder = await prisma.$transaction(
+      async (tx: PrismaClient) => {
+        const updatedOrder = await tx.order.update({
+          where: { id: orderId },
+          data: {
+            status: "cancelled",
+            updatedAt: new Date(),
+          },
+          include: {
+            orderItems: {
+              include: {
+                product: true,
+              },
             },
           },
-        },
-      });
-
-      for (const orderItem of existingOrder.orderItems) {
-        const currentStock = parseInt(orderItem.product.availableStock);
-        const restoredStock = currentStock + orderItem.quantity;
-
-        await tx.product.update({
-          where: { id: orderItem.productId },
-          data: { availableStock: restoredStock.toString() },
         });
-      }
 
-      return updatedOrder;
-    });
+        for (const orderItem of existingOrder.orderItems) {
+          const currentStock = parseInt(orderItem.product.availableStock);
+          const restoredStock = currentStock + orderItem.quantity;
+
+          await tx.product.update({
+            where: { id: orderItem.productId },
+            data: { availableStock: restoredStock.toString() },
+          });
+        }
+
+        return updatedOrder;
+      }
+    );
 
     return cancelledOrder;
   } catch (error: any) {
