@@ -63,7 +63,6 @@ const updateProduct = async (req, res) => {
         const artistId = req.user?.id;
         if (!artistId)
             throw new Error("Unauthorized");
-        // console.log(artistId)
         const { productId } = req.params;
         const files = req.files;
         // 1. Verify product exists and belongs to this artist
@@ -72,18 +71,27 @@ const updateProduct = async (req, res) => {
             throw new Error("Product not found");
         if (existingProduct.artistId !== artistId)
             throw new Error("Not authorized to update this product");
-        // 2. Map uploaded files to image URLs (paths)
-        const imageUrls = files?.map((file) => file.path);
-        // 3. Merge body with productImages if any
-        const updatedData = {
-            ...req.body,
-            ...(imageUrls?.length ? { productImages: imageUrls } : {}),
-        };
-        // 4. Update product with updatedData
+        // 2. Handle image updates
+        let updatedData = { ...req.body };
+        // If files are uploaded, replace the productImages array
+        if (files && files.length > 0) {
+            const imageUrls = files.map((file) => file.path);
+            updatedData.productImages = imageUrls;
+        }
+        else {
+            // If no new files, keep existing images
+            // This handles the case where user didn't change images
+            delete updatedData.productImages;
+        }
+        // 3. Update product with updatedData
         const updatedProduct = await productService.updateProduct(productId, artistId, updatedData);
-        res.status(200).json(updatedProduct);
+        res.status(200).json({
+            message: "Product updated successfully",
+            product: updatedProduct,
+        });
     }
     catch (error) {
+        console.error("Update product error:", error);
         res.status(400).json({ error: error.message });
     }
 };

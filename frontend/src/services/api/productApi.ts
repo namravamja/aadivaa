@@ -33,13 +33,16 @@ export const productApi = ProductApi.injectEndpoints({
             url: `/update/${productId}`,
             method: "PUT",
             body: updatedData,
-            formData: true,
+            // No need to set headers – fetchBaseQuery will handle FormData automatically
           };
         } else {
           return {
             url: `/update/${productId}`,
             method: "PUT",
-            body: updatedData,
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(updatedData),
           };
         }
       },

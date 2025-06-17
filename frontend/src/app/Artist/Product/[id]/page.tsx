@@ -91,8 +91,6 @@ function ProductPreview({ params }: Params) {
       handleInputChange("productImages", [...previewImages, ...newImageUrls]);
 
       toast.success(`${filesArray.length} image(s) added successfully`);
-
-      refetch();
     }
   };
 
@@ -120,13 +118,11 @@ function ProductPreview({ params }: Params) {
       URL.revokeObjectURL(removedUrl);
     }
 
-    refetch();
-
     handleInputChange("productImages", updatedPreviews);
     toast.success("Image removed successfully");
   };
 
-  // Convert a file to Base64 string
+  // Convert a file to Base64 string (for preview only)
   const fileToBase64 = (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
@@ -142,41 +138,6 @@ function ProductPreview({ params }: Params) {
     });
   };
 
-  // Convert image URL to base64 (fetch and read as blob)
-  const urlToBase64 = async (url: string): Promise<string> => {
-    const response = await fetch(url);
-    const blob = await response.blob();
-    return await fileToBase64(
-      new File([blob], "image.jpg", { type: blob.type })
-    );
-  };
-
-  // Prepare final data with Base64 images
-  const prepareUpdatedData = async (): Promise<ProductData | null> => {
-    if (!editedProduct) return null;
-
-    const base64Images: string[] = [];
-
-    // Convert new files to Base64
-    for (const file of newFiles) {
-      const base64 = await fileToBase64(file);
-      base64Images.push(base64);
-    }
-
-    // Convert existing URLs to Base64 (excluding object URLs)
-    for (const url of previewImages) {
-      if (!isObjectURL(url)) {
-        const base64 = await urlToBase64(url);
-        base64Images.push(base64);
-      }
-    }
-
-    return {
-      ...editedProduct,
-      productImages: base64Images,
-    };
-  };
-
   const handleSaveChanges = async (): Promise<void> => {
     if (!editedProduct) {
       toast.error("No product data to save");
@@ -186,14 +147,60 @@ function ProductPreview({ params }: Params) {
     const loadingToast = toast.loading("Updating product...");
 
     try {
-      const updatedData = await prepareUpdatedData();
-      if (!updatedData) {
-        toast.dismiss(loadingToast);
-        toast.error("Failed to prepare update data");
-        return;
+      // Create FormData just like in add product
+      const formData = new FormData();
+
+      // Handle images - only process if there are new files or image changes
+      if (
+        newFiles.length > 0 ||
+        previewImages.some((img) => isObjectURL(img))
+      ) {
+        // Add all new files directly
+        newFiles.forEach((file, index) => {
+          formData.append("productImages", file);
+        });
+
+        // For existing images that weren't removed, we need to preserve them
+        // by converting them to files only if they're not already handled
+        for (let i = 0; i < previewImages.length; i++) {
+          const imageUrl = previewImages[i];
+
+          if (!isObjectURL(imageUrl)) {
+            // This is an existing image URL - convert to file
+            try {
+              const response = await fetch(imageUrl);
+              const blob = await response.blob();
+              const file = new File([blob], `existing-image-${i}.jpg`, {
+                type: blob.type || "image/jpeg",
+              });
+              formData.append("productImages", file);
+            } catch (error) {
+              console.warn(
+                `Failed to fetch existing image: ${imageUrl}`,
+                error
+              );
+            }
+          }
+        }
       }
 
-      await updateProduct({ productId: id, updatedData }).unwrap();
+      // Append other product data (excluding arrays and timestamps)
+      const {
+        productImages,
+        id: productId,
+        createdAt,
+        updatedAt,
+        ...otherData
+      } = editedProduct;
+
+      Object.entries(otherData).forEach(([key, value]) => {
+        if (value !== null && value !== undefined) {
+          formData.append(key, value.toString());
+        }
+      });
+
+      // Use the same API call structure as add product
+      await updateProduct({ productId: id, updatedData: formData }).unwrap();
 
       toast.dismiss(loadingToast);
       toast.success("Product updated successfully!");
@@ -201,13 +208,14 @@ function ProductPreview({ params }: Params) {
       setIsEditing(false);
       setNewFiles([]);
 
+      // Clean up object URLs
       previewImages.forEach((url) => {
         if (isObjectURL(url)) {
           URL.revokeObjectURL(url);
         }
       });
 
-      await refetch(); // ✅ Properly refetch after update completes
+      await refetch();
     } catch (err: any) {
       toast.dismiss(loadingToast);
       const errorMessage =
@@ -231,7 +239,7 @@ function ProductPreview({ params }: Params) {
       refetch();
 
       // Redirect to product list or dashboard
-      router.push("/Artist/Product"); // 👈 change the path as per your app structure
+      router.push("/Artist/Product");
     } catch (err: any) {
       toast.dismiss(loadingToast);
       const errorMessage =
@@ -240,6 +248,7 @@ function ProductPreview({ params }: Params) {
       console.error("Delete error:", err);
     }
   };
+
   useEffect(() => {
     return () => {
       previewImages.forEach((url) => {
