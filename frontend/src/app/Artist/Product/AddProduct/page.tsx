@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Save, Check, Package, DollarSign, ImageIcon } from "lucide-react";
 import { toast } from "react-hot-toast";
 import Step1ProductBasics from "./components/step1-product-basics";
@@ -9,6 +9,7 @@ import Step3ImagesShipping from "./components/step3-images-shipping";
 import Step4Summary from "./components/step4-summary";
 import { useCreateProductMutation } from "@/services/api/productApi";
 import { useRouter } from "next/navigation";
+import { useGetartistQuery } from "@/services/api/artistApi";
 
 export interface ProductData {
   id: string;
@@ -35,6 +36,39 @@ export default function AddProduct() {
   const [createProduct, { isLoading }] = useCreateProductMutation();
   const router = useRouter();
   const formRef = useRef<HTMLDivElement>(null);
+  const hasRedirected = useRef(false);
+
+  const {
+    data: artistData,
+    isLoading: isArtistLoading,
+    refetch,
+  } = useGetartistQuery(undefined, {
+    refetchOnMountOrArgChange: true,
+  });
+
+  // Check profile progress on component mount and artist data change
+  useEffect(() => {
+    if (artistData && !isArtistLoading && !hasRedirected.current) {
+      const profileProgress = artistData.profileProgress || 0;
+      const isAuthenticated = artistData.isAuthenticated || false;
+
+      if (isAuthenticated) {
+        if (profileProgress < 92) {
+          hasRedirected.current = true;
+          toast.error(
+            "Please complete your profile to add products. Profile must be at least 90% complete."
+          );
+          router.push("/Artist/MakeProfile");
+          return;
+        }
+      } else {
+        hasRedirected.current = true;
+        toast.error("Please login to add products.");
+        router.push("/"); // or wherever your login page is
+        return;
+      }
+    }
+  }, [artistData, isArtistLoading, router]);
 
   const [productData, setProductData] = useState<ProductData>({
     id: "",
@@ -120,6 +154,15 @@ export default function AddProduct() {
   };
 
   const handleSubmit = async () => {
+    // Double-check profile progress before submitting
+    if (artistData && artistData.profileProgress < 92) {
+      toast.error(
+        "Please complete your profile to add products. Profile must be at least 90% complete."
+      );
+      router.push("/Artist/MakeProfile");
+      return;
+    }
+
     if (!validateFields()) {
       scrollToTop();
       return;
@@ -215,6 +258,20 @@ export default function AddProduct() {
     "Images & Shipping",
     "Summary",
   ];
+
+  // Show loading state while checking artist data
+  if (isArtistLoading) {
+    return (
+      <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8">
+        <div className="flex justify-center items-center min-h-[400px]">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-sage-600 mx-auto mb-4"></div>
+            <p className="text-stone-600">Checking profile status...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div ref={formRef} className="container mx-auto px-4 sm:px-6 py-6 sm:py-8">

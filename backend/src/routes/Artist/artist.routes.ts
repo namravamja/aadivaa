@@ -1,6 +1,7 @@
 import express from "express";
 import * as artistController from "../../controllers/Artist/artist.controller";
 import * as artistOrderController from "../../controllers/Artist/order/order.controller";
+import * as reviewController from "../../controllers/Artist/review/review.controller";
 
 import { verifyToken } from "../../middleware/authMiddleware";
 import { uploadArtistImages, uploadDocuments } from "../../middleware/multer";
@@ -56,4 +57,15 @@ router.put(
   "/order/bulk-status",
   artistOrderController.bulkUpdateOrderStatus as any
 );
+
+// ---------- review routes ----------
+
+// Get all reviews written on the artist's products
+router.get("/reviews", reviewController.getReviewsByArtist);
+
+// Update verification status of a review
+router.put("/reviews/verify", reviewController.updateReviewVerificationStatus);
+
+// Delete a review (by the artist)
+router.delete("/reviews/delete", reviewController.deleteReviewByArtist);
 export default router;

@@ -16,7 +16,6 @@ const navigation = [
   { name: "Orders", href: "/Artist/Orders" },
   { name: "Products", href: "/Artist/Product" },
   { name: "Reviews", href: "/Artist/Reviews" },
-  { name: "Journal", href: "/Artist/Journal" },
 ];
 
 interface ArtistData {

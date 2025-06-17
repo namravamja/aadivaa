@@ -39,6 +39,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const artistController = __importStar(require("../../controllers/Artist/artist.controller"));
 const artistOrderController = __importStar(require("../../controllers/Artist/order/order.controller"));
+const reviewController = __importStar(require("../../controllers/Artist/review/review.controller"));
 const authMiddleware_1 = require("../../middleware/authMiddleware");
 const multer_1 = require("../../middleware/multer");
 const router = express_1.default.Router();
@@ -66,5 +67,12 @@ router.put("/order/:orderId/payment-status", artistOrderController.updateOrderPa
 router.get("/order-items", artistOrderController.getOrderItemsByArtist);
 // Bulk update order status for multiple orders
 router.put("/order/bulk-status", artistOrderController.bulkUpdateOrderStatus);
+// ---------- review routes ----------
+// Get all reviews written on the artist's products
+router.get("/reviews", reviewController.getReviewsByArtist);
+// Update verification status of a review
+router.put("/reviews/verify", reviewController.updateReviewVerificationStatus);
+// Delete a review (by the artist)
+router.delete("/reviews/delete", reviewController.deleteReviewByArtist);
 exports.default = router;
 //# sourceMappingURL=artist.routes.js.map

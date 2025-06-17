@@ -11,10 +11,8 @@ interface Address {
 }
 
 interface ArtistData {
-  businessAddress: Address;
-  warehouseAddress: {
-    sameAsBusiness: boolean;
-  } & Address;
+  businessAddress: Address | null;
+  warehouseAddress: (Address & { sameAsBusiness: boolean }) | null;
 }
 
 interface AddressInformationProps {
@@ -24,6 +22,9 @@ interface AddressInformationProps {
 export default function AddressInformation({
   artistData,
 }: AddressInformationProps) {
+  const business = artistData.businessAddress;
+  const warehouse = artistData.warehouseAddress;
+
   return (
     <div className="bg-white border border-stone-200 shadow-sm">
       <div className="p-6 border-b border-stone-200">
@@ -39,16 +40,17 @@ export default function AddressInformation({
           <h3 className="text-sm font-medium text-stone-700 mb-3">
             Business Address
           </h3>
-          <div className="text-stone-600 space-y-1">
-            <p>{artistData.businessAddress.street}</p>
-            <p>
-              {artistData.businessAddress.city},{"not provided"}
-              {artistData.businessAddress.state}
-              {"not provided"}
-              {artistData.businessAddress.pinCode}
-            </p>
-            <p>{artistData.businessAddress.country}</p>
-          </div>
+          {business ? (
+            <div className="text-stone-600 space-y-1">
+              <p>{business.street}</p>
+              <p>
+                {business.city}, {business.state} {business.pinCode}
+              </p>
+              <p>{business.country}</p>
+            </div>
+          ) : (
+            <p className="text-stone-500">Business address not available.</p>
+          )}
         </div>
 
         {/* Warehouse Address */}
@@ -56,19 +58,20 @@ export default function AddressInformation({
           <h3 className="text-sm font-medium text-stone-700 mb-3">
             Warehouse Address
           </h3>
-          {artistData.warehouseAddress.sameAsBusiness ? (
-            <p className="text-stone-600">Same as Business Address</p>
+          {warehouse ? (
+            warehouse.sameAsBusiness ? (
+              <p className="text-stone-600">Same as Business Address</p>
+            ) : (
+              <div className="text-stone-600 space-y-1">
+                <p>{warehouse.street}</p>
+                <p>
+                  {warehouse.city}, {warehouse.state} {warehouse.pinCode}
+                </p>
+                <p>{warehouse.country}</p>
+              </div>
+            )
           ) : (
-            <div className="text-stone-600 space-y-1">
-              <p>{artistData.warehouseAddress.street}</p>
-              <p>
-                {artistData.warehouseAddress.city},{"not provided"}
-                {artistData.warehouseAddress.state}
-                {"not provided"}
-                {artistData.warehouseAddress.pinCode}
-              </p>
-              <p>{artistData.warehouseAddress.country}</p>
-            </div>
+            <p className="text-stone-500">Warehouse address not available.</p>
           )}
         </div>
       </div>

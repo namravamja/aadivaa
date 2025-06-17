@@ -24,6 +24,9 @@ type Product = {
   deliveryTimeEstimate: string;
   createdAt: string;
   updatedAt: string;
+  artist: {
+    fullName: string;
+  };
 };
 
 type ProductsGridProps = {
@@ -52,7 +55,7 @@ export default function ProductsGrid({
     originalPrice: Number.parseFloat(product.mrp),
     image: product.productImages[0] || "/Profile.jpg?height=300&width=300",
     images: product.productImages,
-    artist: "Artisan", // You might want to add artist info to your API
+    artist: product.artist.fullName || "Unknown Artist",
     category: product.category.toLowerCase().replace(/\s+/g, "-"),
     description: product.shortDescription,
     stock: Number.parseInt(product.availableStock),

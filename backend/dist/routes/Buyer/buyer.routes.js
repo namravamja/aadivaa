@@ -40,13 +40,15 @@ const express_1 = __importDefault(require("express"));
 const buyerController = __importStar(require("../../controllers/Buyer/buyer.controller"));
 const wishlistController = __importStar(require("../../controllers/Buyer/wishlist/wishlist.controller"));
 const cartController = __importStar(require("../../controllers/Buyer/cart/cart.controller"));
-const authMiddleware_1 = require("../../middleware/authMiddleware");
 const orderController = __importStar(require("../../controllers/Buyer/order/order.controller"));
+const reviewController = __importStar(require("../../controllers/Buyer/review/review.controller"));
+const authMiddleware_1 = require("../../middleware/authMiddleware");
 const multer_1 = require("../../middleware/multer");
 const router = express_1.default.Router();
-// Public route
+// Public routes
 router.post("/create", authMiddleware_1.verifyToken, buyerController.createBuyer);
 router.get("/list", buyerController.getBuyers);
+router.get("/review/:productId", reviewController.getReviewsByProduct);
 // Protected routes
 router.use(authMiddleware_1.verifyToken);
 router.get("/view", buyerController.getBuyer);
@@ -67,5 +69,9 @@ router.get("/order/list", orderController.getBuyerOrders);
 router.get("/order/:orderId", orderController.getOrderById);
 router.put("/order/cancel/:orderId", orderController.cancelOrder);
 router.put("/order/payment/:orderId", orderController.updatePaymentStatus);
+// ------------------- Review Routes -------------------
+router.post("/review/:productId", reviewController.addReview);
+router.put("/review/update", reviewController.updateReview);
+router.delete("/review/delete", reviewController.deleteReview);
 exports.default = router;
 //# sourceMappingURL=buyer.routes.js.map

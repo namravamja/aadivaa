@@ -9,6 +9,7 @@ import AddToCartButton from "../components/AddToCartButton";
 import WishlistButton from "../components/WishlistButton";
 import ProductReviews from "../components/ProductReviews";
 import { useGetProductByIdQuery } from "@/services/api/productApi";
+import { useGetReviewsByProductQuery } from "@/services/api/buyerApi";
 
 export default function ProductDetailPage({
   params,
@@ -27,6 +28,22 @@ export default function ProductDetailPage({
   } = useGetProductByIdQuery(id, {
     refetchOnMountOrArgChange: true,
   });
+
+  // Fetch review statistics
+  const { data: reviews = [], isLoading: reviewsLoading } =
+    useGetReviewsByProductQuery(id, {
+      refetchOnMountOrArgChange: true,
+    });
+
+  // Calculate review statistics
+  const reviewStats = {
+    averageRating:
+      reviews.length > 0
+        ? reviews.reduce((acc: number, review: any) => acc + review.rating, 0) /
+          reviews.length
+        : 0,
+    reviewCount: reviews.length,
+  };
 
   // Transform API product to match component format
   const product = apiProduct
@@ -49,8 +66,8 @@ export default function ProductDetailPage({
         weight: `${apiProduct.weight}`,
         inStock: Number.parseInt(apiProduct.availableStock) > 0,
         stockCount: Number.parseInt(apiProduct.availableStock),
-        rating: 4.5, // You might want to add rating to your API
-        reviewCount: 12, // You might want to add review count to your API
+        rating: reviewStats.averageRating,
+        reviewCount: reviewStats.reviewCount,
         sku: apiProduct.skuCode,
         shippingCost: Number.parseFloat(apiProduct.shippingCost),
         deliveryTime: apiProduct.deliveryTimeEstimate,
@@ -94,7 +111,7 @@ export default function ProductDetailPage({
     setSelectedImageIndex(index);
   };
 
-  if (isLoading) {
+  if (isLoading || reviewsLoading) {
     return (
       <main className="pt-24 pb-16">
         <div className="container mx-auto px-4">

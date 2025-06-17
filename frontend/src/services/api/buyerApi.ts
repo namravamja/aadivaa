@@ -51,6 +51,38 @@ export const buyerApi = BuyerApi.injectEndpoints({
         method: "DELETE",
       }),
     }),
+
+    // Add a review to a product
+    addReview: builder.mutation({
+      query: ({ productId, reviewData }) => ({
+        url: `/review/${productId}`,
+        method: "POST",
+        body: reviewData,
+      }),
+    }),
+
+    // Update a review
+    updateReview: builder.mutation({
+      query: (reviewData) => ({
+        url: "/review/update",
+        method: "PUT",
+        body: reviewData,
+      }),
+    }),
+
+    // Delete a review
+    deleteReview: builder.mutation({
+      query: (reviewData) => ({
+        url: "/review/delete",
+        method: "DELETE",
+        body: reviewData,
+      }),
+    }),
+
+    // Get all reviews for a product
+    getReviewsByProduct: builder.query({
+      query: (productId) => `/review/${productId}`,
+    }),
   }),
 });
 
@@ -60,4 +92,8 @@ export const {
   useGetBuyerQuery,
   useUpdateBuyerMutation,
   useDeleteBuyerMutation,
+  useAddReviewMutation,
+  useUpdateReviewMutation,
+  useDeleteReviewMutation,
+  useGetReviewsByProductQuery,
 } = buyerApi;

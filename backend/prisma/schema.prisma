@@ -29,6 +29,7 @@ model Buyer {
   verifyToken           String?    @unique
   verifyExpires         DateTime?
   isVerified            Boolean    @default(false)
+  Review                Review[]
 }
 
 model Wishlist {
@@ -129,6 +130,7 @@ model Product {
   Wishlist  Wishlist[]
   Cart      Cart[]
   OrderItem OrderItem[]
+  Review    Review[]
 }
 
 model Artist {
@@ -180,6 +182,7 @@ model Artist {
 
   products   Product[]
   orderItems OrderItem[]
+  Review     Review[]
 }
 
 model BusinessAddress {
@@ -223,4 +226,22 @@ model SocialLinks {
   twitter   String?
 
   artist Artist?
+}
+
+model Review {
+  id       String   @id @default(uuid())
+  rating   Int
+  title    String
+  text     String
+  date     DateTime @default(now())
+  verified Boolean  @default(false)
+
+  buyer   Buyer  @relation(fields: [buyerId], references: [id], onDelete: Cascade)
+  buyerId String
+
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  productId String
+
+  artist   Artist @relation(fields: [artistId], references: [id], onDelete: Cascade)
+  artistId String
 }

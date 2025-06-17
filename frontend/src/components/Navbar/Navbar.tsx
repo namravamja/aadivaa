@@ -37,7 +37,6 @@ export default function Navbar() {
       href: "",
     },
     { name: "About", href: "/About" },
-    { name: "Journal", href: "/Journal" },
   ];
 
   const closeMenu = () => {

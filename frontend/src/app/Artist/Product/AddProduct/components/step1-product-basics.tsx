@@ -41,6 +41,9 @@ export default function Step1ProductBasics({
             className="w-full px-4 py-3 border border-stone-300 rounded-md focus:border-sage-500 focus:outline-none focus:ring-1 focus:ring-sage-500"
             required
           >
+            <option value="" disabled>
+              select category
+            </option>
             <option value="Handicraft">Handicraft</option>
             <option value="Textile">Textile</option>
             <option value="Digital Art">Digital Art</option>

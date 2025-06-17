@@ -100,6 +100,29 @@ export const artistApi = ArtistApi.injectEndpoints({
         method: "DELETE",
       }),
     }),
+
+    // Get all reviews written on the artist's products
+    getArtistReviews: builder.query({
+      query: () => "/reviews",
+    }),
+
+    // Update review verification status
+    updateReviewVerificationStatus: builder.mutation({
+      query: (verificationData) => ({
+        url: "/reviews/verify",
+        method: "PUT",
+        body: verificationData,
+      }),
+    }),
+
+    // Delete a review by artist
+    deleteReviewByArtist: builder.mutation({
+      query: (deleteData) => ({
+        url: "/reviews/delete",
+        method: "DELETE",
+        body: deleteData,
+      }),
+    }),
   }),
 });
 
@@ -113,4 +136,7 @@ export const {
   useUpdateDocumentsMutation,
   useUpdateSocialLinksMutation,
   useDeleteartistMutation,
+  useGetArtistReviewsQuery,
+  useUpdateReviewVerificationStatusMutation,
+  useDeleteReviewByArtistMutation,
 } = artistApi;
