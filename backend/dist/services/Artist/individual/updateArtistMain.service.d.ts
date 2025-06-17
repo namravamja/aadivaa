@@ -35,4 +35,32 @@ export interface ArtistUpdateData {
     isAuthenticated?: boolean;
     isVerified?: boolean;
 }
-export declare const updateArtistMain: (id: string, data: any) => Promise<any>;
+export declare const updateArtistMain: (id: string, data: any) => Promise<{
+    email: string;
+    id: string;
+    createdAt: Date;
+    updatedAt: Date | null;
+    fullName: string | null;
+    profileProgress: number | null;
+    storeName: string | null;
+    mobile: string | null;
+    businessType: string | null;
+    businessRegistrationNumber: string | null;
+    productCategories: string[];
+    businessLogo: string | null;
+    bankAccountName: string | null;
+    bankName: string | null;
+    accountNumber: string | null;
+    ifscCode: string | null;
+    upiId: string | null;
+    gstNumber: string | null;
+    panNumber: string | null;
+    shippingType: string | null;
+    serviceAreas: string[];
+    inventoryVolume: string | null;
+    supportContact: string | null;
+    returnPolicy: string | null;
+    workingHours: string | null;
+    termsAgreed: boolean | null;
+    digitalSignature: string | null;
+}>;
