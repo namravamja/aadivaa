@@ -130,8 +130,17 @@ export declare const getBuyerOrders: (buyerId: string, options?: {
     };
 }>;
 export declare const getOrderById: (orderId: string, buyerId: string) => Promise<({
+    buyer: {
+        email: string;
+        id: string;
+        firstName: string | null;
+        lastName: string | null;
+        phone: string | null;
+    };
     orderItems: ({
         product: {
+            id: string;
+            length: string;
             artist: {
                 email: string;
                 id: string;
@@ -139,25 +148,15 @@ export declare const getOrderById: (orderId: string, buyerId: string) => Promise
                 storeName: string | null;
                 mobile: string | null;
             };
-        } & {
-            id: string;
-            createdAt: Date;
-            updatedAt: Date;
-            length: string;
             productName: string;
             category: string;
             shortDescription: string;
-            sellingPrice: string;
-            mrp: string;
             availableStock: string;
             skuCode: string;
             productImages: string[];
             weight: string;
             width: string;
             height: string;
-            shippingCost: string;
-            deliveryTimeEstimate: string;
-            artistId: string;
         };
     } & {
         id: string;
@@ -167,6 +166,23 @@ export declare const getOrderById: (orderId: string, buyerId: string) => Promise
         priceAtPurchase: number;
         orderId: string;
     })[];
+    shippingAddress: {
+        state: string;
+        id: number;
+        firstName: string;
+        lastName: string;
+        phone: string | null;
+        createdAt: Date;
+        updatedAt: Date;
+        company: string | null;
+        street: string | null;
+        apartment: string | null;
+        city: string;
+        postalCode: string;
+        country: string;
+        userId: string;
+        isDefault: boolean;
+    } | null;
 } & {
     id: string;
     updatedAt: Date;

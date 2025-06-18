@@ -5,7 +5,6 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { Menu, X, LogOut } from "lucide-react";
 import toast from "react-hot-toast";
-import LanguageSelector from "@/components/LanguageSelector";
 import { useGetartistQuery } from "@/services/api/artistApi"; // Adjust import path as needed
 import { useLogoutMutation } from "@/services/api/authApi";
 
@@ -173,8 +172,6 @@ export default function ArtistNavbar() {
 
             {/* Desktop Actions - responsive spacing and sizing */}
             <div className="hidden md:flex items-center space-x-3 lg:space-x-5 xl:space-x-7">
-              <LanguageSelector />
-
               {/* Artist Profile Section */}
               {isLoading && !hasTriedAuth ? (
                 <div className="flex items-center justify-center">
@@ -229,7 +226,6 @@ export default function ArtistNavbar() {
 
             {/* Mobile Menu Button - better spacing for small devices */}
             <div className="md:hidden flex items-center space-x-3">
-              <LanguageSelector />
               <button
                 onClick={() => setIsMenuOpen(!isMenuOpen)}
                 className="text-stone-600 hover:text-terracotta-600 transition-colors duration-300 p-1 rounded-md hover:bg-stone-100"

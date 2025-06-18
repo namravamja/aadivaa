@@ -200,9 +200,11 @@ export default function ArtistProducts() {
                 />
               </div>
               <div className="p-4 sm:p-5">
-                <h3 className="font-medium text-stone-900 mb-1 truncate">
-                  {product.productName}
-                </h3>
+                <Link href={`/Artist/Product/${product.id}`}>
+                  <h3 className="font-medium text-stone-900 mb-1 truncate hover:text-terracotta-600 transition-colors cursor-pointer">
+                    {product.productName}
+                  </h3>
+                </Link>
                 <p className="text-sm text-stone-500 mb-3">
                   {product.category}
                 </p>
@@ -236,7 +238,7 @@ export default function ArtistProducts() {
                 <th className="text-left py-3.5 px-6 text-sm font-medium text-stone-900">
                   Price
                 </th>
-                <th className="text-center py-3.5 px-6 text-sm font-medium text-stone-900">
+                <th className="text-center py-3.5 px-6 text-sm font-medium text-stone-900 hidden md:table-cell">
                   Action
                 </th>
               </tr>
@@ -261,9 +263,11 @@ export default function ArtistProducts() {
                       />
                     </div>
                     <div>
-                      <div className="font-medium text-sm text-stone-900">
-                        {product.productName}
-                      </div>
+                      <Link href={`/Artist/Product/${product.id}`}>
+                        <div className="font-medium text-sm text-stone-900 hover:text-terracotta-600 transition-colors cursor-pointer">
+                          {product.productName}
+                        </div>
+                      </Link>
                       <div className="text-xs text-stone-500">
                         ID: {product.id}
                       </div>
@@ -275,13 +279,14 @@ export default function ArtistProducts() {
                   <td className="py-4 px-6 text-sm font-medium text-stone-900">
                     ₹{product.sellingPrice}
                   </td>
-                  <td className="py-4 px-6 text-center">
+                  <td className="py-4 px-6 text-center hidden md:table-cell">
                     <Link
                       href={`/Artist/Product/${product.id}`}
-                      className="text-blue-600 hover:text-blue-800"
-                      title="View"
+                      title="View Product"
+                      className="inline-flex items-center justify-center gap-2 px-3 py-1.5 bg-sage-100 rounded-md hover:bg-sage-500 transition"
                     >
-                      <Eye className="w-5 h-5 inline" />
+                      <Eye className="w-5 h-5" />
+                      <span className="text-sm font-medium">View Product</span>
                     </Link>
                   </td>
                 </tr>

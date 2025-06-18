@@ -194,6 +194,70 @@ export default function OrderDetailsPage() {
     }
   };
 
+  // Helper function to format shipping address
+  const formatShippingAddress = (shippingAddress: any) => {
+    if (!shippingAddress) {
+      return "Address not available";
+    }
+
+    // If it's a string, return it as is
+    if (typeof shippingAddress === "string") {
+      return shippingAddress;
+    }
+
+    // If it's an object, format it properly
+    if (typeof shippingAddress === "object") {
+      const parts = [];
+
+      if (shippingAddress.firstName || shippingAddress.lastName) {
+        parts.push(
+          `${shippingAddress.firstName || ""} ${
+            shippingAddress.lastName || ""
+          }`.trim()
+        );
+      }
+
+      if (shippingAddress.company) {
+        parts.push(shippingAddress.company);
+      }
+
+      if (shippingAddress.street) {
+        parts.push(shippingAddress.street);
+      }
+
+      if (shippingAddress.apartment) {
+        parts.push(shippingAddress.apartment);
+      }
+
+      if (
+        shippingAddress.city ||
+        shippingAddress.state ||
+        shippingAddress.postalCode
+      ) {
+        const cityStateZip = [
+          shippingAddress.city,
+          shippingAddress.state,
+          shippingAddress.postalCode,
+        ]
+          .filter(Boolean)
+          .join(", ");
+        if (cityStateZip) parts.push(cityStateZip);
+      }
+
+      if (shippingAddress.country) {
+        parts.push(shippingAddress.country);
+      }
+
+      if (shippingAddress.phone) {
+        parts.push(`Phone: ${shippingAddress.phone}`);
+      }
+
+      return parts.length > 0 ? parts.join("\n") : "Address not available";
+    }
+
+    return "Address not available";
+  };
+
   // Show login prompt if not authenticated
   if (!authLoading && !isAuthenticated) {
     return (
@@ -459,12 +523,12 @@ export default function OrderDetailsPage() {
                     Shipping Address
                   </h2>
                 </div>
-                <p className="text-stone-700 leading-relaxed">
-                  {order.shippingAddress ||
+                <div className="text-stone-700 leading-relaxed whitespace-pre-line">
+                  {formatShippingAddress(order.shippingAddress) ||
                     (order.shippingAddressId
                       ? `Address ID: ${order.shippingAddressId}`
                       : "Address not available")}
-                </p>
+                </div>
               </div>
             </div>
 

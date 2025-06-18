@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import { Menu, X, User } from "lucide-react";
-import LanguageSelector from "../LanguageSelector";
 import Logo from "../Navbar/components/Logo";
 import DesktopNavigation from "../Navbar/components/DesktopNavigation";
 import ActionButtons from "../Navbar/components/ActionButtons";
@@ -83,7 +82,6 @@ export default function Navbar() {
           </div>
 
           <div className="hidden lg:flex items-center space-x-2 xl:space-x-4">
-            <LanguageSelector />
             <ActionButtons />
             <div className="flex items-center gap-2 cursor-pointer min-w-[170px]">
               <UserMenu />
@@ -91,7 +89,6 @@ export default function Navbar() {
           </div>
 
           <div className="hidden md:flex lg:hidden items-center space-x-3">
-            <LanguageSelector />
             <ActionButtons />
 
             <div
@@ -130,8 +127,6 @@ export default function Navbar() {
           </div>
 
           <div className="md:hidden flex items-center space-x-2 sm:space-x-3">
-            <LanguageSelector />
-
             <button
               onClick={() => setIsMenuOpen(!isMenuOpen)}
               className="text-stone-600 hover:text-terracotta-600 transition-colors duration-300 p-1 rounded-md hover:bg-stone-50"

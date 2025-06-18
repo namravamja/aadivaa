@@ -450,7 +450,7 @@ export default function BuyerOrdersPage() {
                     </div>
                     <div className="flex space-x-2">
                       <Link href={`/Buyer/Orders/${order.id}`}>
-                        <button className="border border-stone-300 bg-terracotta-200 text-stone-700 hover:bg-stone-50 px-3 py-1 text-sm font-medium transition-colors cursor-pointer rounded">
+                        <button className="border border-stone-600 bg-terracotta-200 text-black px-3 py-1 text-sm font-medium transition-colors cursor-pointer rounded">
                           <Eye className="w-4 h-4 mr-2 inline" />
                           View Details
                         </button>
@@ -458,7 +458,7 @@ export default function BuyerOrdersPage() {
                       {order.paymentStatus?.toLowerCase() === "paid" && (
                         <button
                           onClick={() => downloadInvoice(order.id)}
-                          className="border border-stone-300 text-stone-700 bg-blue-200 hover:bg-stone-50 px-3 py-1 text-sm font-medium transition-colors cursor-pointer rounded"
+                          className="border border-stone-600 text-black bg-blue-200 hover:bg-stone-50 px-3 py-1 text-sm font-medium transition-colors cursor-pointer rounded"
                         >
                           <Download className="w-4 h-4 mr-2 inline" />
                           Invoice

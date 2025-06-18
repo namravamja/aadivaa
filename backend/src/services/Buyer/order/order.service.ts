@@ -204,10 +204,31 @@ export const getOrderById = async (orderId: string, buyerId: string) => {
         buyerId,
       },
       include: {
+        buyer: {
+          select: {
+            id: true,
+            email: true,
+            firstName: true,
+            lastName: true,
+            phone: true,
+          },
+        },
+        shippingAddress: true,
         orderItems: {
           include: {
             product: {
-              include: {
+              select: {
+                id: true,
+                productName: true,
+                category: true,
+                shortDescription: true,
+                productImages: true,
+                skuCode: true,
+                weight: true,
+                length: true,
+                width: true,
+                height: true,
+                availableStock: true,
                 artist: {
                   select: {
                     id: true,
