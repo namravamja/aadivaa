@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getArtists = exports.deleteArtist = exports.updateSocialLinks = exports.updateDocuments = exports.updateWarehouseAddress = exports.updateBusinessAddress = exports.updateArtist = exports.getArtist = exports.createArtist = void 0;
+exports.verifyResetToken = exports.resetPassword = exports.forgotPassword = exports.getArtists = exports.deleteArtist = exports.updateSocialLinks = exports.updateDocuments = exports.updateWarehouseAddress = exports.updateBusinessAddress = exports.updateArtist = exports.getArtist = exports.createArtist = void 0;
 var createArtist_controller_1 = require("./individual/createArtist.controller");
 Object.defineProperty(exports, "createArtist", { enumerable: true, get: function () { return createArtist_controller_1.createArtist; } });
 var getArtist_controller_1 = require("./individual/getArtist.controller");
@@ -19,4 +19,8 @@ var deleteArtist_controller_1 = require("./individual/deleteArtist.controller");
 Object.defineProperty(exports, "deleteArtist", { enumerable: true, get: function () { return deleteArtist_controller_1.deleteArtist; } });
 var getArtists_controller_1 = require("./individual/getArtists.controller");
 Object.defineProperty(exports, "getArtists", { enumerable: true, get: function () { return getArtists_controller_1.getArtists; } });
+var forgorpassword_controller_1 = require("./individual/forgorpassword.controller");
+Object.defineProperty(exports, "forgotPassword", { enumerable: true, get: function () { return forgorpassword_controller_1.forgotPassword; } });
+Object.defineProperty(exports, "resetPassword", { enumerable: true, get: function () { return forgorpassword_controller_1.resetPassword; } });
+Object.defineProperty(exports, "verifyResetToken", { enumerable: true, get: function () { return forgorpassword_controller_1.verifyResetToken; } });
 //# sourceMappingURL=artist.controller.js.map

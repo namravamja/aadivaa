@@ -11,9 +11,9 @@ const googleCallback = (req, res) => {
         // Set JWT cookie
         res.cookie("token", user.token, {
             httpOnly: true,
-            secure: process.env.NODE_ENV === "production",
-            sameSite: "lax",
-            maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+            secure: true,
+            sameSite: "none",
+            maxAge: 7 * 24 * 60 * 60 * 1000,
         });
         // Create success URL with user data
         const userData = encodeURIComponent(JSON.stringify({

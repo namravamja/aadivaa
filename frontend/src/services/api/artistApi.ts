@@ -123,6 +123,26 @@ export const artistApi = ArtistApi.injectEndpoints({
         body: deleteData,
       }),
     }),
+
+    forgotPasswordArtist: builder.mutation({
+      query: (data) => ({
+        url: "/forgot-password",
+        method: "POST",
+        body: data,
+      }),
+    }),
+
+    resetPasswordArtist: builder.mutation({
+      query: (data) => ({
+        url: "/reset-password",
+        method: "POST",
+        body: data,
+      }),
+    }),
+
+    verifyResetTokenArtist: builder.query({
+      query: (token) => `/verify-reset-token/${token}`,
+    }),
   }),
 });
 
@@ -139,4 +159,7 @@ export const {
   useGetArtistReviewsQuery,
   useUpdateReviewVerificationStatusMutation,
   useDeleteReviewByArtistMutation,
+  useForgotPasswordArtistMutation,
+  useResetPasswordArtistMutation,
+  useVerifyResetTokenArtistQuery,
 } = artistApi;

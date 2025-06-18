@@ -5,6 +5,7 @@ import ArtistLoginModal from "../Artist/login/login";
 import BuyerLoginModal from "../Buyer/login/login";
 import ArtistSignupModal from "../Artist/signup/signup";
 import BuyerSignupModal from "../Buyer/signup/signup";
+import ForgotPasswordModal from "./ForgotPasswordModal";
 
 interface AuthModalContextType {
   openArtistLogin: () => void;
@@ -12,6 +13,8 @@ interface AuthModalContextType {
   openArtistSignup: () => void;
   openBuyerSignup: () => void;
   closeModals: () => void;
+  openForgotPassword: (userType: "buyer" | "artist") => void;
+  closeForgotPassword: () => void;
 }
 
 const AuthModalContext = createContext<AuthModalContextType | undefined>(
@@ -35,6 +38,10 @@ export function AuthModalProvider({ children }: AuthModalProviderProps) {
   const [isBuyerLoginOpen, setIsBuyerLoginOpen] = useState(false);
   const [isArtistSignupOpen, setIsArtistSignupOpen] = useState(false);
   const [isBuyerSignupOpen, setIsBuyerSignupOpen] = useState(false);
+  const [forgotPasswordOpen, setForgotPasswordOpen] = useState(false);
+  const [forgotPasswordUserType, setForgotPasswordUserType] = useState<
+    "buyer" | "artist"
+  >("buyer");
 
   const openArtistLogin = () => {
     setIsBuyerLoginOpen(false);
@@ -64,6 +71,12 @@ export function AuthModalProvider({ children }: AuthModalProviderProps) {
     setIsBuyerSignupOpen(true);
   };
 
+  const openForgotPassword = (userType: "buyer" | "artist") => {
+    setForgotPasswordUserType(userType);
+    setForgotPasswordOpen(true);
+  };
+  const closeForgotPassword = () => setForgotPasswordOpen(false);
+
   const closeModals = () => {
     const wasOpen =
       isArtistLoginOpen ||
@@ -85,6 +98,8 @@ export function AuthModalProvider({ children }: AuthModalProviderProps) {
         openArtistSignup,
         openBuyerSignup,
         closeModals,
+        openForgotPassword,
+        closeForgotPassword,
       }}
     >
       {children}
@@ -92,6 +107,11 @@ export function AuthModalProvider({ children }: AuthModalProviderProps) {
       <BuyerLoginModal isOpen={isBuyerLoginOpen} onClose={closeModals} />
       <ArtistSignupModal isOpen={isArtistSignupOpen} onClose={closeModals} />
       <BuyerSignupModal isOpen={isBuyerSignupOpen} onClose={closeModals} />
+      <ForgotPasswordModal
+        isOpen={forgotPasswordOpen}
+        onClose={closeForgotPassword}
+        userType={forgotPasswordUserType}
+      />
     </AuthModalContext.Provider>
   );
 }

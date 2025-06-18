@@ -38,6 +38,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const artistController = __importStar(require("../../controllers/Artist/artist.controller"));
+const forgotmailController = __importStar(require("../../controllers/Artist/artist.controller"));
 const artistOrderController = __importStar(require("../../controllers/Artist/order/order.controller"));
 const reviewController = __importStar(require("../../controllers/Artist/review/review.controller"));
 const authMiddleware_1 = require("../../middleware/authMiddleware");
@@ -45,6 +46,10 @@ const multer_1 = require("../../middleware/multer");
 const router = express_1.default.Router();
 // Artist routes
 router.get("/list", artistController.getArtists);
+// forgot password
+router.post("/forgot-password", forgotmailController.forgotPassword);
+router.post("/reset-password", forgotmailController.resetPassword);
+router.get("/verify-reset-token/:token", forgotmailController.verifyResetToken);
 router.use(authMiddleware_1.verifyToken);
 router.post("/create", artistController.createArtist);
 router.get("/view", artistController.getArtist);

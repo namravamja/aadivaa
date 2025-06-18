@@ -13,7 +13,6 @@ import { LoadingSkeleton } from "./components/loading-skeleton";
 interface UserProfile {
   id: string;
   email: string;
-  password?: string;
   firstName?: string;
   lastName?: string;
   phone?: string;

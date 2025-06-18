@@ -14,3 +14,4 @@ export { getProductsByArtist } from "./product/getProductByArtist.service";
 export { updateProduct } from "./product/updateProduct.service";
 export { deleteProduct } from "./product/deleteProduct.service";
 export { updateProductStockOnly } from "./product/updateProductStockOnly.service";
+export { forgotPassword, resetPassword, verifyResetToken, } from "./individual/forgotpassword.service";

@@ -42,6 +42,7 @@ const wishlistController = __importStar(require("../../controllers/Buyer/wishlis
 const cartController = __importStar(require("../../controllers/Buyer/cart/cart.controller"));
 const orderController = __importStar(require("../../controllers/Buyer/order/order.controller"));
 const reviewController = __importStar(require("../../controllers/Buyer/review/review.controller"));
+const forgotController = __importStar(require("../../controllers/Buyer/forgotpassword/forgot.controller"));
 const authMiddleware_1 = require("../../middleware/authMiddleware");
 const multer_1 = require("../../middleware/multer");
 const router = express_1.default.Router();
@@ -49,6 +50,9 @@ const router = express_1.default.Router();
 router.post("/create", authMiddleware_1.verifyToken, buyerController.createBuyer);
 router.get("/list", buyerController.getBuyers);
 router.get("/review/:productId", reviewController.getReviewsByProduct);
+router.post("/forgot-password", forgotController.forgotPassword);
+router.post("/reset-password", forgotController.resetPassword);
+router.get("/verify-reset-token/:token", forgotController.verifyResetToken);
 // Protected routes
 router.use(authMiddleware_1.verifyToken);
 router.get("/view", buyerController.getBuyer);

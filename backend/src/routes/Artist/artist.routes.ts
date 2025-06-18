@@ -1,5 +1,6 @@
 import express from "express";
 import * as artistController from "../../controllers/Artist/artist.controller";
+import * as forgotmailController from "../../controllers/Artist/artist.controller";
 import * as artistOrderController from "../../controllers/Artist/order/order.controller";
 import * as reviewController from "../../controllers/Artist/review/review.controller";
 
@@ -10,6 +11,11 @@ const router = express.Router();
 
 // Artist routes
 router.get("/list", artistController.getArtists);
+
+// forgot password
+router.post("/forgot-password", forgotmailController.forgotPassword as any);
+router.post("/reset-password", forgotmailController.resetPassword as any);
+router.get("/verify-reset-token/:token", forgotmailController.verifyResetToken);
 
 router.use(verifyToken);
 

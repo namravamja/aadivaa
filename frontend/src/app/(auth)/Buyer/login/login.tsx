@@ -2,7 +2,6 @@
 
 import type React from "react";
 import { useState, useEffect } from "react";
-import Link from "next/link";
 import { Eye, EyeOff, Mail, Lock, Loader2, X } from "lucide-react";
 import { useLoginBuyerMutation } from "@/services/api/authApi";
 import { useGetBuyerQuery } from "@/services/api/buyerApi";
@@ -20,7 +19,7 @@ export default function BuyerLoginModal({
   isOpen,
   onClose,
 }: BuyerLoginModalProps) {
-  const { openBuyerSignup } = useAuthModal();
+  const { openBuyerSignup, openForgotPassword } = useAuthModal();
   const [loginBuyer, { isLoading }] = useLoginBuyerMutation();
   const { refetch } = useGetBuyerQuery(undefined);
   const { initiateGoogleAuth, isLoading: isGoogleLoading } = useGoogleAuth();
@@ -268,24 +267,27 @@ export default function BuyerLoginModal({
                   Remember me
                 </label>
               </div>
-              <Link
-                href="/forgot-password"
+              <button
+                type="button"
+                onClick={() => {
+                  onClose(); // Close current modal
+                  openForgotPassword("buyer"); // Open forgot password modal
+                }}
                 className="text-sm text-terracotta-600 hover:text-terracotta-500 font-medium cursor-pointer"
-                onClick={onClose}
               >
                 Forgot password?
-              </Link>
+              </button>
             </div>
 
             {/* Submit button */}
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full flex justify-center items-center py-3 px-4 border border-transparent rounded-md text-sm font-medium text-white bg-terracotta-600 hover:bg-terracotta-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-terracotta-500 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer transition-colors"
+              className="w-full flex justify-center items-center gap-2 py-3 px-4 border border-transparent rounded-md text-sm font-medium text-white bg-terracotta-600 hover:bg-terracotta-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-terracotta-500 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer transition-colors"
             >
               {isLoading ? (
                 <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  <Loader2 className="h-4 w-4 animate-spin" />
                   Signing in...
                 </>
               ) : (

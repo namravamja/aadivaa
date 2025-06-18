@@ -83,6 +83,26 @@ export const buyerApi = BuyerApi.injectEndpoints({
     getReviewsByProduct: builder.query({
       query: (productId) => `/review/${productId}`,
     }),
+
+    forgotPasswordBuyer: builder.mutation({
+      query: (data) => ({
+        url: "/forgot-password",
+        method: "POST",
+        body: data,
+      }),
+    }),
+
+    resetPasswordBuyer: builder.mutation({
+      query: (data) => ({
+        url: "/reset-password",
+        method: "POST",
+        body: data,
+      }),
+    }),
+
+    verifyResetTokenBuyer: builder.query({
+      query: (token) => `/verify-reset-token/${token}`,
+    }),
   }),
 });
 
@@ -96,4 +116,8 @@ export const {
   useUpdateReviewMutation,
   useDeleteReviewMutation,
   useGetReviewsByProductQuery,
+
+  useForgotPasswordBuyerMutation,
+  useResetPasswordBuyerMutation,
+  useVerifyResetTokenBuyerQuery,
 } = buyerApi;

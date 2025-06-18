@@ -4,6 +4,7 @@ import * as wishlistController from "../../controllers/Buyer/wishlist/wishlist.c
 import * as cartController from "../../controllers/Buyer/cart/cart.controller";
 import * as orderController from "../../controllers/Buyer/order/order.controller";
 import * as reviewController from "../../controllers/Buyer/review/review.controller";
+import * as forgotController from "../../controllers/Buyer/forgotpassword/forgot.controller";
 
 import { verifyToken } from "../../middleware/authMiddleware";
 import { uploadSingle } from "../../middleware/multer";
@@ -14,6 +15,10 @@ const router = express.Router();
 router.post("/create", verifyToken, buyerController.createBuyer);
 router.get("/list", buyerController.getBuyers);
 router.get("/review/:productId", reviewController.getReviewsByProduct);
+
+router.post("/forgot-password", forgotController.forgotPassword as any);
+router.post("/reset-password", forgotController.resetPassword as any);
+router.get("/verify-reset-token/:token", forgotController.verifyResetToken);
 
 // Protected routes
 router.use(verifyToken);

@@ -7,3 +7,4 @@ export { updateDocuments } from "./individual/updateDocuments.controller";
 export { updateSocialLinks } from "./individual/updateSocialLinks.controller";
 export { deleteArtist } from "./individual/deleteArtist.controller";
 export { getArtists } from "./individual/getArtists.controller";
+export { forgotPassword, resetPassword, verifyResetToken, } from "./individual/forgorpassword.controller";

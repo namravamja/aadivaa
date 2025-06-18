@@ -2,7 +2,6 @@
 
 import type React from "react";
 import { useState, useEffect, useRef } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Eye, EyeOff, Mail, Lock, Loader2, X } from "lucide-react";
 import toast from "react-hot-toast";
@@ -30,7 +29,7 @@ export default function ArtistLoginModal({
   });
 
   const hasRedirected = useRef(false);
-  const { openArtistSignup } = useAuthModal();
+  const { openArtistSignup, openForgotPassword } = useAuthModal();
 
   const [loginArtist, { isLoading, isSuccess, data }] =
     useLoginArtistMutation();
@@ -258,28 +257,31 @@ export default function ArtistLoginModal({
                   Remember me
                 </label>
               </div>
-              <Link
-                href="/forgot-password"
-                className="text-sm text-terracotta-600 hover:text-terracotta-500 font-medium"
-                onClick={onClose}
+              <button
+                type="button"
+                onClick={() => {
+                  onClose(); // Close current modal
+                  openForgotPassword("artist"); // Open forgot password modal for artist
+                }}
+                className="text-sm text-terracotta-600 hover:text-terracotta-500 font-medium cursor-pointer"
               >
                 Forgot password?
-              </Link>
+              </button>
             </div>
 
             <button
               type="submit"
               disabled={isLoading || isArtistLoading}
-              className="w-full cursor-pointer justify-center items-center py-3 px-4 border border-transparent rounded-md text-sm font-medium text-white bg-terracotta-600 hover:bg-terracotta-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-terracotta-500 transition-colors disabled:opacity-50"
+              className="w-full flex cursor-pointer justify-center items-center gap-2 py-3 px-4 border border-transparent rounded-md text-sm font-medium text-white bg-terracotta-600 hover:bg-terracotta-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-terracotta-500 transition-colors disabled:opacity-50"
             >
               {isLoading ? (
                 <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  <Loader2 className="h-4 w-4 animate-spin" />
                   Signing in...
                 </>
               ) : isArtistLoading ? (
                 <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  <Loader2 className="h-4 w-4 animate-spin" />
                   Loading profile...
                 </>
               ) : (
