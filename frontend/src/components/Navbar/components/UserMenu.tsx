@@ -1,7 +1,6 @@
 "use client";
 
 import type React from "react";
-
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -22,7 +21,6 @@ import { useGetCartQuery } from "@/services/api/cartApi";
 import { useGetWishlistQuery } from "@/services/api/wishlistApi";
 import { useAuthModal } from "@/app/(auth)/components/auth-modal-provider";
 
-// Types
 interface UserMenuProps {
   isMobile?: boolean;
   onClose?: () => void;
@@ -45,18 +43,14 @@ interface ActionMenuItem extends MenuItem {
 interface BuyerData {
   firstName?: string;
   avatar?: string;
+  fullName?: string;
   [key: string]: any;
 }
 
 interface User {
   name: string;
   image: string;
-}
-
-interface ApiError {
-  status?: number;
-  data?: any;
-  [key: string]: any;
+  fullName?: string;
 }
 
 const userMenuItems: MenuItem[] = [
@@ -70,47 +64,42 @@ const mobileActionItems: ActionMenuItem[] = [
   { name: "Wishlist", href: "/Buyer/Wishlist", icon: Heart },
 ];
 
-// Profile Photo Component for Navbar
 export function ProfilePhoto({ className = "w-8 h-8" }: ProfilePhotoProps) {
   const { data: buyerData, isLoading, isError } = useGetBuyerQuery(undefined);
-
-  const [hasTriedAuth, setHasTriedAuth] = useState<boolean>(false);
+  const [hasTriedAuth, setHasTriedAuth] = useState(false);
 
   useEffect(() => {
-    if (isError || buyerData) {
-      setHasTriedAuth(true);
-    }
+    if (isError || buyerData) setHasTriedAuth(true);
   }, [isError, buyerData]);
 
-  const isAuthenticated: boolean = !isError && !!buyerData && hasTriedAuth;
+  const isAuthenticated = !isError && !!buyerData && hasTriedAuth;
 
-  const user: User | null =
+  const user =
     isAuthenticated && buyerData
       ? {
-          name: (buyerData as BuyerData).firstName || "User",
-          image: (buyerData as BuyerData).avatar || "/Profile.jpg",
+          name: buyerData.firstName || "User",
+          image: buyerData.avatar || "/Profile.jpg",
         }
       : null;
 
   const handleImageError = (
     e: React.SyntheticEvent<HTMLImageElement, Event>
-  ): void => {
-    const target = e.currentTarget;
-    target.style.display = "none";
+  ) => {
+    e.currentTarget.style.display = "none";
   };
 
   if (!isAuthenticated) return null;
 
   return user?.image ? (
     <img
-      src={user.image || "/Profile.jpg"}
+      src={user.image}
       alt={user.name}
-      className={`${className} rounded-full object-cover border-2 border-stone-200`}
+      className={`${className} rounded-full object-cover border-2 border-stone-200 cursor-pointer`}
       onError={handleImageError}
     />
   ) : (
     <div
-      className={`${className} bg-stone-200 rounded-full flex items-center justify-center`}
+      className={`${className} bg-stone-200 rounded-full flex items-center justify-center cursor-pointer`}
     >
       <User className="w-4 h-4 text-stone-600" />
     </div>
@@ -119,24 +108,19 @@ export function ProfilePhoto({ className = "w-8 h-8" }: ProfilePhotoProps) {
 
 export default function UserMenu({ isMobile = false, onClose }: UserMenuProps) {
   const router = useRouter();
-  const [hasTriedAuth, setHasTriedAuth] = useState<boolean>(false);
-  const [showLogoutConfirm, setShowLogoutConfirm] = useState<boolean>(false);
-  const [isLoggingOut, setIsLoggingOut] = useState<boolean>(false);
-
-  // Add the auth modal hook
+  const [hasTriedAuth, setHasTriedAuth] = useState(false);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
   const { openBuyerLogin } = useAuthModal();
 
-  // Fetch buyer data - RTK Query will handle error states automatically
   const {
     data: buyerData,
     isLoading,
     isError,
-    error,
     refetch,
   } = useGetBuyerQuery(undefined);
 
-  // Determine authentication state
-  const isAuthenticated: boolean = !isError && !!buyerData && hasTriedAuth;
+  const isAuthenticated = !isError && !!buyerData && hasTriedAuth;
 
   const { data: cartData, isLoading: cartLoading } = useGetCartQuery(
     undefined,
@@ -154,100 +138,64 @@ export default function UserMenu({ isMobile = false, onClose }: UserMenuProps) {
       refetchOnReconnect: true,
     });
 
-  // Handle logout mutation
   const [logout] = useLogoutMutation();
 
-  // Track when we've tried authentication
   useEffect(() => {
-    if (isError || buyerData) {
-      setHasTriedAuth(true);
-    }
+    if (isError || buyerData) setHasTriedAuth(true);
   }, [isError, buyerData]);
 
-  // Extract user data from RTK query response
   const user: User | null =
     isAuthenticated && buyerData
       ? {
-          name: (buyerData as BuyerData).firstName || "User",
-          image: (buyerData as BuyerData).avatar || "/Profile.jpg",
+          name: buyerData.firstName || "User",
+          image: buyerData.avatar || "/Profile.jpg",
+          fullName: buyerData.fullName || buyerData.firstName,
         }
       : null;
 
   const cartItems = cartData || [];
   const wishlistItems = wishlistData || [];
+
   const actualCartCount = cartItems.reduce(
     (total: number, item: any) => total + item.quantity,
     0
   );
   const actualWishlistCount = wishlistItems.length;
 
-  // Handle buyer login modal
-  const handleBuyerLogin = (): void => {
+  const handleBuyerLogin = () => {
     openBuyerLogin();
-    if (onClose) {
-      onClose(); // Close the menu if it's mobile
-    }
+    if (onClose) onClose();
   };
 
-  const handleLogout = (): void => {
+  const handleLogout = () => {
     if (showLogoutConfirm) {
-      // Second click - proceed with logout
       performLogout();
     } else {
-      // First click - show confirmation
       setShowLogoutConfirm(true);
-      toast("Click logout again to confirm", {
-        icon: "⚠️",
-        duration: 3000,
-      });
-
-      // Reset confirmation after 3 seconds
-      setTimeout(() => {
-        setShowLogoutConfirm(false);
-      }, 3000);
+      toast("Click logout again to confirm", { icon: "⚠️", duration: 3000 });
+      setTimeout(() => setShowLogoutConfirm(false), 3000);
     }
   };
 
-  const performLogout = async (): Promise<void> => {
+  const performLogout = async () => {
     setIsLoggingOut(true);
-
-    // Show loading toast
     const loadingToastId = toast.loading("Logging out...");
 
     try {
       await logout({}).unwrap();
-
-      // Dismiss loading toast
       toast.dismiss(loadingToastId);
-
-      // Show success toast
-      toast.success("Successfully logged out!", {
-        duration: 2000,
-      });
-
-      // Close mobile menu if open
-      if (onClose) {
-        onClose();
-      }
-
-      // Redirect using Next.js router after a short delay
+      toast.success("Successfully logged out!", { duration: 2000 });
+      if (onClose) onClose();
       router.push("/");
-
       refetch();
     } catch (err: any) {
-      console.error("Logout failed:", err);
-
-      // Dismiss loading toast
       toast.dismiss(loadingToastId);
-
-      // Show error toast
-      const errorMessage =
+      toast.error(
         err?.data?.message ||
-        err?.message ||
-        "Failed to logout. Please try again.";
-      toast.error(errorMessage, {
-        duration: 4000,
-      });
+          err?.message ||
+          "Failed to logout. Please try again.",
+        { duration: 4000 }
+      );
     } finally {
       setIsLoggingOut(false);
       setShowLogoutConfirm(false);
@@ -256,12 +204,10 @@ export default function UserMenu({ isMobile = false, onClose }: UserMenuProps) {
 
   const handleImageError = (
     e: React.SyntheticEvent<HTMLImageElement, Event>
-  ): void => {
-    const target = e.currentTarget;
-    target.style.display = "none";
+  ) => {
+    e.currentTarget.style.display = "none";
   };
 
-  // Show loading only on initial load, not on 401 errors
   if (isLoading && !hasTriedAuth) {
     return (
       <div className="flex items-center justify-center p-3">
@@ -271,109 +217,96 @@ export default function UserMenu({ isMobile = false, onClose }: UserMenuProps) {
   }
 
   if (isMobile) {
-    // Show login button if not authenticated or got 401
     if (!isAuthenticated) {
       return (
         <button
           onClick={handleBuyerLogin}
-          className="text-stone-900 text-base sm:text-lg md:text-xl font-light flex items-center gap-3 hover:text-terracotta-600 transition-colors  duration-300 p-3 hover:bg-stone-50 rounded-lg w-full text-left"
-          type="button"
+          className="text-stone-900 text-lg font-light flex items-center gap-4 hover:text-terracotta-600 transition-colors p-4 hover:bg-stone-50 rounded-lg w-full text-left cursor-pointer"
         >
-          <User className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 flex-shrink-0" />
-          <span className="cursor-pointer">Login</span>
+          <User className="w-6 h-6" />
+          <span>Login</span>
         </button>
       );
     }
 
     return (
       <>
-        {userMenuItems.map((item: MenuItem) => {
-          const IconComponent = item.icon;
+        <div className="px-4 py-3 text-lg font-medium text-stone-800 cursor-default">
+          Hello, {user?.fullName || "User"}
+        </div>
+        {userMenuItems.map((item) => {
+          const Icon = item.icon;
           return (
             <Link
               key={item.name}
               href={item.href}
-              className="text-stone-900 text-base sm:text-lg md:text-xl font-light flex items-center gap-3 hover:text-terracotta-600 transition-colors duration-300 p-3 hover:bg-stone-50 rounded-lg"
+              className="text-stone-900 text-lg font-light flex items-center gap-4 hover:text-terracotta-600 transition-colors p-4 hover:bg-stone-50 rounded-lg cursor-pointer"
               onClick={onClose}
             >
-              <IconComponent className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 flex-shrink-0" />
+              <Icon className="w-6 h-6" />
               <span>{item.name}</span>
             </Link>
           );
         })}
-
-        {mobileActionItems.map((item: ActionMenuItem) => {
-          const IconComponent = item.icon;
-          const isCartItem = item.name === "Cart";
-          const isWishlistItem = item.name === "Wishlist";
-          const badgeCount = isCartItem
-            ? actualCartCount
-            : isWishlistItem
-            ? actualWishlistCount
-            : 0;
-          const isLoadingCount = isCartItem
-            ? cartLoading
-            : isWishlistItem
-            ? wishlistLoading
-            : false;
+        {mobileActionItems.map((item) => {
+          const Icon = item.icon;
+          const badgeCount =
+            item.name === "Cart"
+              ? actualCartCount
+              : item.name === "Wishlist"
+              ? actualWishlistCount
+              : 0;
+          const isLoadingCount =
+            item.name === "Cart" ? cartLoading : wishlistLoading;
 
           return (
             <Link
               key={item.name}
               href={item.href}
-              className="text-stone-900 text-base sm:text-lg md:text-xl font-light flex items-center gap-3 hover:text-terracotta-600 transition-colors duration-300 p-3 hover:bg-stone-50 rounded-lg relative"
+              className="text-stone-900 text-lg font-light flex items-center gap-4 hover:text-terracotta-600 transition-colors p-4 hover:bg-stone-50 rounded-lg relative cursor-pointer"
               onClick={onClose}
             >
-              <div className="relative flex-shrink-0">
-                <IconComponent className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6" />
-                {item.showBadge &&
-                  !isLoadingCount &&
-                  isAuthenticated &&
-                  badgeCount > 0 && (
-                    <span className="absolute -top-2 -right-2 bg-terracotta-600 text-white text-[9px] sm:text-[10px] w-4 h-4 sm:w-5 sm:h-5 flex items-center justify-center rounded-full font-medium shadow-sm">
-                      {badgeCount > 99 ? "99+" : badgeCount}
-                    </span>
-                  )}
+              <div className="relative">
+                <Icon className="w-6 h-6" />
+                {item.showBadge && !isLoadingCount && badgeCount > 0 && (
+                  <span className="absolute -top-2 -right-2 bg-terracotta-600 text-white text-[10px] w-5 h-5 flex items-center justify-center rounded-full font-medium shadow-sm">
+                    {badgeCount > 99 ? "99+" : badgeCount}
+                  </span>
+                )}
               </div>
               <span>{item.name}</span>
             </Link>
           );
         })}
-
         <button
           onClick={handleLogout}
           disabled={isLoggingOut}
-          className={`text-stone-900 text-base sm:text-lg md:text-xl font-light flex items-center gap-3 hover:text-terracotta-600 transition-colors duration-300 p-3 hover:bg-stone-50 rounded-lg w-full text-left cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${
+          className={`text-stone-900 text-lg font-light flex items-center gap-4 hover:text-terracotta-600 transition-colors p-4 hover:bg-stone-50 rounded-lg w-full text-left cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${
             showLogoutConfirm ? "bg-red-50 border border-red-200" : ""
           }`}
-          type="button"
         >
-          <LogOut className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 flex-shrink-0" />
+          <LogOut className="w-6 h-6" />
           <span>{showLogoutConfirm ? "Click again to confirm" : "Logout"}</span>
         </button>
       </>
     );
   }
 
-  // Desktop version
   if (!isAuthenticated) {
     return (
       <div className="relative group">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 cursor-pointer">
           <span className="text-sm text-stone-600 hidden lg:inline">
             My Account
           </span>
-          <div className="text-stone-600 hover:text-terracotta-600 transition-colors duration-300 p-1 rounded-md hover:bg-stone-50 cursor-pointer">
-            <User className="w-4 h-4 lg:w-5 lg:h-5" />
+          <div className="text-stone-600 hover:text-terracotta-600 transition-colors p-1 rounded-md hover:bg-stone-50 cursor-pointer">
+            <User className="w-5 h-5" />
           </div>
         </div>
-
-        {/* Hover dropdown with login button */}
         <div className="absolute right-0 mt-2 w-32 bg-white border border-stone-100 rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 transform origin-top-right scale-95 group-hover:scale-100 z-50">
           <button
             onClick={handleBuyerLogin}
-            className="flex items-center justify-center px-4 py-3 text-sm text-stone-700 hover:bg-stone-50 hover:text-terracotta-600 cursor-pointer transition-colors duration-200 rounded-lg font-medium w-full"
-            type="button"
+            className="flex items-center justify-center px-4 py-3 text-sm text-stone-700 hover:bg-stone-50 hover:text-terracotta-600 w-full font-medium cursor-pointer"
           >
             Login
           </button>
@@ -382,38 +315,35 @@ export default function UserMenu({ isMobile = false, onClose }: UserMenuProps) {
     );
   }
 
-  // Logged in user - hover dropdown
   return (
     <div className="relative group py-2">
-      <div className="flex items-center cursor-pointer p-1 rounded-md hover:bg-stone-50 transition-colors duration-300 gap-2">
+      <div className="flex items-center cursor-pointer p-1 rounded-md hover:bg-stone-50 transition-colors gap-2">
         <span className="text-sm text-stone-600 hidden lg:inline">
-          My Account
+          {user?.name}'s Account
         </span>
         {user?.image ? (
           <img
-            src={user.image || "/Profile.jpg"}
+            src={user.image}
             alt={user.name}
-            className="w-7 h-7 lg:w-8 lg:h-8 rounded-full object-cover border-2 border-stone-200 group-hover:border-terracotta-600 transition-colors duration-300"
+            className="w-8 h-8 rounded-full object-cover border-2 border-stone-200 group-hover:border-terracotta-600 transition cursor-pointer"
             onError={handleImageError}
           />
         ) : (
-          <div className="w-7 h-7 lg:w-8 lg:h-8 bg-stone-200 rounded-full flex items-center justify-center group-hover:bg-terracotta-100 transition-colors duration-300">
-            <User className="w-3 h-3 lg:w-4 lg:h-4 text-stone-600" />
+          <div className="w-8 h-8 bg-stone-200 rounded-full flex items-center justify-center group-hover:bg-terracotta-100 transition cursor-pointer">
+            <User className="w-4 h-4 text-stone-600" />
           </div>
         )}
       </div>
-
-      {/* Hover dropdown menu */}
-      <div className="absolute right-0 mt-2 w-48 lg:w-52 bg-white border border-stone-100 rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 transform origin-top-right scale-95 group-hover:scale-100 z-50">
-        {userMenuItems.map((item: MenuItem) => {
-          const IconComponent = item.icon;
+      <div className="absolute right-0 mt-2 w-52 bg-white border border-stone-100 rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all transform scale-95 group-hover:scale-100 z-50">
+        {userMenuItems.map((item) => {
+          const Icon = item.icon;
           return (
             <Link
               key={item.name}
               href={item.href}
-              className="flex items-center px-4 py-3 text-xs lg:text-sm text-stone-700 hover:bg-stone-50 hover:text-terracotta-600 transition-colors duration-200 first:rounded-t-lg last:rounded-b-lg"
+              className="flex items-center px-4 py-3 text-sm text-stone-700 hover:bg-stone-50 hover:text-terracotta-600 transition-colors first:rounded-t-lg last:rounded-b-lg cursor-pointer"
             >
-              <IconComponent className="w-4 h-4 mr-3 flex-shrink-0" />
+              <Icon className="w-4 h-4 mr-3" />
               {item.name}
             </Link>
           );
@@ -421,12 +351,11 @@ export default function UserMenu({ isMobile = false, onClose }: UserMenuProps) {
         <button
           onClick={handleLogout}
           disabled={isLoggingOut}
-          className={`flex items-center cursor-pointer w-full text-left px-4 py-3 text-xs lg:text-sm text-stone-700 hover:bg-stone-50 hover:text-terracotta-600 transition-colors duration-200 rounded-b-lg disabled:opacity-50 disabled:cursor-not-allowed ${
+          className={`flex items-center w-full px-4 py-3 text-sm text-stone-700 hover:bg-stone-50 hover:text-terracotta-600 transition-colors rounded-b-lg disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer ${
             showLogoutConfirm ? "bg-red-50 text-red-700" : ""
           }`}
-          type="button"
         >
-          <LogOut className="w-4 h-4 mr-3 flex-shrink-0" />
+          <LogOut className="w-4 h-4 mr-3" />
           {showLogoutConfirm ? "Click again to confirm" : "Logout"}
         </button>
       </div>

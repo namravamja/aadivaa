@@ -45,33 +45,39 @@ export default function MobileMenu({
         <nav className="flex flex-col space-y-4 md:space-y-5">
           {navigation.map((item) =>
             !item.children ? (
-              <Link
-                key={item.name}
-                href={item.href}
-                className={`text-lg sm:text-xl md:text-2xl font-light py-2 px-3 rounded-md transition-all duration-300 ${
-                  pathname === item.href
-                    ? "text-terracotta-600 bg-terracotta-50"
-                    : "text-stone-900 hover:text-terracotta-600 hover:bg-stone-50"
-                } ${
-                  pathname === item.href
-                    ? "border-l-4 border-terracotta-600"
-                    : ""
-                }`}
-                onClick={onClose}
-              >
-                {item.name}
-              </Link>
+              item.onClick ? (
+                <button
+                  key={item.name}
+                  onClick={(e) => handleItemClick(item, e)}
+                  className="cursor-pointer text-lg sm:text-xl md:text-2xl font-light py-2 px-3 rounded-md text-left text-stone-900 hover:text-terracotta-600 hover:bg-stone-50 transition-colors duration-300"
+                >
+                  {item.name}
+                </button>
+              ) : (
+                <Link
+                  key={item.name}
+                  href={item.href}
+                  onClick={onClose}
+                  className={`cursor-pointer text-lg sm:text-xl md:text-2xl font-light py-2 px-3 rounded-md transition-all duration-300 ${
+                    pathname === item.href
+                      ? "text-terracotta-600 bg-terracotta-50 border-l-4 border-terracotta-600"
+                      : "text-stone-900 hover:text-terracotta-600 hover:bg-stone-50"
+                  }`}
+                >
+                  {item.name}
+                </Link>
+              )
             ) : (
               <div key={item.name} className="flex flex-col">
                 <button
                   onClick={() => toggleSubmenu(item.name)}
-                  className="flex items-center justify-between text-lg sm:text-xl md:text-2xl font-light text-stone-900 w-full text-left py-2 px-3 rounded-md hover:bg-stone-50 transition-colors duration-300"
+                  className="cursor-pointer flex items-center justify-between text-lg sm:text-xl md:text-2xl font-light text-stone-900 w-full text-left py-2 px-3 rounded-md hover:bg-stone-50 transition-colors duration-300"
                   aria-expanded={openSubmenu === item.name}
                 >
                   <span>{item.name}</span>
                   <ChevronDown
                     className={`w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 text-stone-900 transition-transform duration-300 ${
-                      openSubmenu === item.name ? "transform rotate-180" : ""
+                      openSubmenu === item.name ? "rotate-180" : ""
                     }`}
                   />
                 </button>
@@ -89,7 +95,7 @@ export default function MobileMenu({
                         <button
                           key={child.name}
                           onClick={(e) => handleItemClick(child, e)}
-                          className={`text-base sm:text-lg md:text-xl py-2 px-3 rounded-md transition-colors duration-300 text-left w-full ${
+                          className={`cursor-pointer text-base sm:text-lg md:text-xl py-2 px-3 rounded-md text-left w-full transition-colors duration-300 ${
                             pathname === child.href
                               ? "text-terracotta-600 bg-terracotta-50"
                               : "text-stone-700 hover:text-terracotta-600 hover:bg-stone-50"
@@ -101,12 +107,12 @@ export default function MobileMenu({
                         <Link
                           key={child.name}
                           href={child.href}
-                          className={`text-base sm:text-lg md:text-xl py-2 px-3 rounded-md transition-colors duration-300 ${
+                          onClick={onClose}
+                          className={`cursor-pointer text-base sm:text-lg md:text-xl py-2 px-3 rounded-md transition-colors duration-300 ${
                             pathname === child.href
                               ? "text-terracotta-600 bg-terracotta-50"
                               : "text-stone-700 hover:text-terracotta-600 hover:bg-stone-50"
                           }`}
-                          onClick={onClose}
                         >
                           {child.name}
                         </Link>
