@@ -1,10 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import {
   Package,
   Users,
-  DollarSign,
   Star,
   ShoppingBag,
   MessageSquare,
@@ -13,14 +12,9 @@ import {
   BarChart3,
   TrendingUp,
   ShoppingCart,
-  AlertCircle,
-  Clock,
-  Bell,
-  CheckCircle2,
   ChevronRight,
   Layers,
-  Activity,
-  Eye,
+  DollarSign,
 } from "lucide-react";
 import Image from "next/image";
 import {
@@ -31,217 +25,10 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  AreaChart,
-  Area,
   type TooltipProps,
 } from "recharts";
 import Link from "next/link";
-
-// Mock data - in a real app, this would come from APIs
-const revenueData = [
-  { date: "Jan", revenue: 12500 },
-  { date: "Feb", revenue: 18200 },
-  { date: "Mar", revenue: 15800 },
-  { date: "Apr", revenue: 21500 },
-  { date: "May", revenue: 19800 },
-  { date: "Jun", revenue: 24500 },
-  { date: "Jul", revenue: 28900 },
-];
-
-const salesData = [
-  { name: "Jewelry", value: 35 },
-  { name: "Home Decor", value: 25 },
-  { name: "Textiles", value: 20 },
-  { name: "Pottery", value: 15 },
-  { name: "Accessories", value: 5 },
-];
-
-const visitorData = [
-  { date: "Mon", visitors: 520 },
-  { date: "Tue", visitors: 680 },
-  { date: "Wed", visitors: 750 },
-  { date: "Thu", visitors: 890 },
-  { date: "Fri", visitors: 920 },
-  { date: "Sat", visitors: 1100 },
-  { date: "Sun", visitors: 980 },
-];
-
-const recentOrders = [
-  {
-    id: "ORD-2024-001",
-    customer: "John Smith",
-    date: "2024-05-22",
-    amount: 145.99,
-    status: "delivered",
-    items: 3,
-    image: "/placeholder.svg?height=40&width=40",
-  },
-  {
-    id: "ORD-2024-002",
-    customer: "Sarah Johnson",
-    date: "2024-05-22",
-    amount: 89.99,
-    status: "processing",
-    items: 1,
-    image: "/placeholder.svg?height=40&width=40",
-  },
-  {
-    id: "ORD-2024-003",
-    customer: "Michael Brown",
-    date: "2024-05-21",
-    amount: 235.5,
-    status: "shipped",
-    items: 4,
-    image: "/placeholder.svg?height=40&width=40",
-  },
-  {
-    id: "ORD-2024-004",
-    customer: "Emily Davis",
-    date: "2024-05-21",
-    amount: 67.25,
-    status: "processing",
-    items: 2,
-    image: "/placeholder.svg?height=40&width=40",
-  },
-  {
-    id: "ORD-2024-005",
-    customer: "Robert Wilson",
-    date: "2024-05-20",
-    amount: 129.99,
-    status: "cancelled",
-    items: 1,
-    image: "/placeholder.svg?height=40&width=40",
-  },
-];
-
-const topProducts = [
-  {
-    id: "1",
-    name: "Beaded Turquoise Necklace",
-    sales: 45,
-    revenue: 2069.55,
-    stock: 12,
-    image: "/placeholder.svg?height=40&width=40",
-  },
-  {
-    id: "2",
-    name: "Handwoven Wool Scarf",
-    sales: 38,
-    revenue: 3419.62,
-    stock: 8,
-    image: "/placeholder.svg?height=40&width=40",
-  },
-  {
-    id: "3",
-    name: "Ceramic Vase Set",
-    sales: 32,
-    revenue: 2080.0,
-    stock: 15,
-    image: "/placeholder.svg?height=40&width=40",
-  },
-  {
-    id: "4",
-    name: "Silver Bracelet",
-    sales: 29,
-    revenue: 3480.0,
-    stock: 7,
-    image: "/placeholder.svg?height=40&width=40",
-  },
-];
-
-const notifications = [
-  {
-    id: "1",
-    type: "alert",
-    message: "Low stock alert for 'Beaded Turquoise Necklace'",
-    time: "10 minutes ago",
-  },
-  {
-    id: "2",
-    type: "order",
-    message: "New order #ORD-2024-006 received",
-    time: "25 minutes ago",
-  },
-  {
-    id: "3",
-    type: "review",
-    message: "New 5-star review for 'Handwoven Wool Scarf'",
-    time: "1 hour ago",
-  },
-  {
-    id: "4",
-    type: "system",
-    message: "System update scheduled for tonight at 2 AM",
-    time: "2 hours ago",
-  },
-];
-
-const tasks = [
-  {
-    id: "1",
-    title: "Update product descriptions",
-    priority: "high",
-    due: "Today",
-    completed: false,
-  },
-  {
-    id: "2",
-    title: "Approve new product listings",
-    priority: "medium",
-    due: "Today",
-    completed: false,
-  },
-  {
-    id: "3",
-    title: "Respond to customer inquiries",
-    priority: "high",
-    due: "Tomorrow",
-    completed: false,
-  },
-  {
-    id: "4",
-    title: "Review inventory reports",
-    priority: "medium",
-    due: "Tomorrow",
-    completed: true,
-  },
-  {
-    id: "5",
-    title: "Plan summer promotion campaign",
-    priority: "low",
-    due: "May 28",
-    completed: false,
-  },
-];
-
-const customerReviews = [
-  {
-    id: "1",
-    customer: "Jennifer L.",
-    product: "Beaded Turquoise Necklace",
-    rating: 5,
-    comment:
-      "Absolutely beautiful craftsmanship! The necklace exceeded my expectations.",
-    date: "2024-05-22",
-  },
-  {
-    id: "2",
-    customer: "David M.",
-    product: "Ceramic Vase Set",
-    rating: 4,
-    comment:
-      "Great quality and design. Shipping was a bit slow but worth the wait.",
-    date: "2024-05-21",
-  },
-  {
-    id: "3",
-    customer: "Sophia K.",
-    product: "Handwoven Wool Scarf",
-    rating: 5,
-    comment: "So soft and warm! The colors are even more vibrant in person.",
-    date: "2024-05-20",
-  },
-];
+import { useGetartistQuery } from "@/services/api/artistApi";
 
 // Custom tooltip component for charts
 const CustomTooltip = ({
@@ -254,7 +41,8 @@ const CustomTooltip = ({
       <div className="bg-white p-3 border border-stone-200 shadow-md rounded-md">
         <p className="text-sm font-medium text-stone-900">{label}</p>
         <p className="text-sm text-terracotta-600">
-          {payload[0].name === "revenue" ? "$" : ""}
+          {" "}
+          {payload[0].name === "revenue" ? "₹" : ""}
           {payload[0].value?.toLocaleString()}
           {payload[0].name === "visitors" ? " visitors" : ""}
           {payload[0].name === "value" ? "%" : ""}
@@ -265,46 +53,336 @@ const CustomTooltip = ({
   return null;
 };
 
-const stats = [
-  {
-    title: "Total Products",
-    value: "127",
-    change: "+12%",
-    trend: "up",
-    icon: Package,
-    color: "terracotta",
-  },
-  {
-    title: "Orders",
-    value: "89",
-    change: "+15%",
-    trend: "up",
-    icon: ShoppingBag,
-    color: "clay",
-  },
-  {
-    title: "Reviews",
-    value: "4.8",
-    change: "+0.2",
-    trend: "up",
-    icon: Star,
-    color: "terracotta",
-  },
-  {
-    title: "Total Revenue",
-    value: "4.8",
-    change: "+0.2",
-    trend: "up",
-    icon: Star,
-    color: "terracotta",
-  },
-];
-
 export default function ArtistDashboard() {
   const [timeRange, setTimeRange] = useState("30d");
   const [selectedTimeframe, setSelectedTimeframe] = useState("weekly");
+
+  // Fetch artist data using RTK Query
+  const { data: artistData, isLoading, error } = useGetartistQuery(undefined);
+
+  // Helper function to group order items by orderId and filter by time range
+  const getOrdersFromOrderItems = (orderItems: any[], range: string) => {
+    if (!orderItems || orderItems.length === 0) return [];
+
+    const now = new Date();
+    const rangeDate = new Date();
+
+    switch (range) {
+      case "7d":
+        rangeDate.setDate(now.getDate() - 7);
+        break;
+      case "30d":
+        rangeDate.setDate(now.getDate() - 30);
+        break;
+      case "90d":
+        rangeDate.setDate(now.getDate() - 90);
+        break;
+      case "1y":
+        rangeDate.setFullYear(now.getFullYear() - 1);
+        break;
+      default:
+        rangeDate.setDate(now.getDate() - 30);
+    }
+
+    // Group order items by orderId
+    const orderGroups: { [key: string]: any } = {};
+    orderItems.forEach((orderItem) => {
+      const orderId = orderItem.orderId;
+      if (!orderGroups[orderId]) {
+        orderGroups[orderId] = {
+          orderId,
+          items: [],
+          totalAmount: 0,
+          totalItems: 0,
+          date:
+            orderItem.createdAt ||
+            orderItem.updatedAt ||
+            new Date().toISOString(),
+        };
+      }
+      orderGroups[orderId].items.push(orderItem);
+      orderGroups[orderId].totalAmount +=
+        (orderItem.priceAtPurchase || 0) * (orderItem.quantity || 1);
+      orderGroups[orderId].totalItems += orderItem.quantity || 1;
+    });
+
+    // Convert to array and filter by date range
+    const orders = Object.values(orderGroups).filter((order: any) => {
+      const orderDate = new Date(order.date);
+      return !isNaN(orderDate.getTime()) && orderDate >= rangeDate;
+    });
+
+    return orders;
+  };
+
+  // Generate revenue data based on grouped orders
+  const revenueData = useMemo(() => {
+    if (!artistData?.orderItems || artistData.orderItems.length === 0) {
+      return [
+        { date: "Week 1", revenue: 0 },
+        { date: "Week 2", revenue: 0 },
+        { date: "Week 3", revenue: 0 },
+        { date: "Week 4", revenue: 0 },
+      ];
+    }
+
+    const orders = getOrdersFromOrderItems(artistData.orderItems, timeRange);
+
+    if (orders.length === 0) {
+      return [
+        { date: "Week 1", revenue: 0 },
+        { date: "Week 2", revenue: 0 },
+        { date: "Week 3", revenue: 0 },
+        { date: "Week 4", revenue: 0 },
+      ];
+    }
+
+    const revenueByPeriod: { [key: string]: number } = {};
+
+    orders.forEach((order: any) => {
+      const orderDate = new Date(order.date);
+      const revenue = order.totalAmount;
+
+      let periodKey;
+      if (selectedTimeframe === "weekly") {
+        const startOfYear = new Date(orderDate.getFullYear(), 0, 1);
+        const dayOfYear = Math.floor(
+          (orderDate.getTime() - startOfYear.getTime()) / (24 * 60 * 60 * 1000)
+        );
+        const weekNumber = Math.ceil(
+          (dayOfYear + startOfYear.getDay() + 1) / 7
+        );
+        periodKey = `Week ${weekNumber}`;
+      } else if (selectedTimeframe === "monthly") {
+        periodKey = orderDate.toLocaleDateString("en-US", {
+          month: "short",
+          year: "numeric",
+        });
+      } else {
+        periodKey = orderDate.getFullYear().toString();
+      }
+
+      revenueByPeriod[periodKey] = (revenueByPeriod[periodKey] || 0) + revenue;
+    });
+
+    const result = Object.entries(revenueByPeriod).map(([date, revenue]) => ({
+      date,
+      revenue: Math.round(revenue),
+    }));
+
+    return result.sort((a, b) => a.date.localeCompare(b.date));
+  }, [artistData, timeRange, selectedTimeframe]);
+
+  // Calculate stats from real data with time filtering
+  const stats = useMemo(() => {
+    if (!artistData) {
+      return [
+        {
+          title: "Total Products",
+          value: "0",
+          change: "0%",
+          trend: "up" as const,
+          icon: Package,
+          color: "terracotta",
+        },
+        {
+          title: "Orders",
+          value: "0",
+          change: "0%",
+          trend: "up" as const,
+          icon: ShoppingBag,
+          color: "clay",
+        },
+        {
+          title: "Reviews",
+          value: "0",
+          change: "0",
+          trend: "up" as const,
+          icon: Star,
+          color: "terracotta",
+        },
+        {
+          title: "Total Revenue",
+          value: "$0",
+          change: "0%",
+          trend: "up" as const,
+          icon: DollarSign,
+          color: "sage",
+        },
+      ];
+    }
+
+    const totalProducts = artistData.products?.length || 0;
+    const orders = getOrdersFromOrderItems(
+      artistData.orderItems || [],
+      timeRange
+    );
+    const totalOrders = orders.length;
+    const totalReviews = artistData.Review?.length || 0;
+    const averageRating =
+      totalReviews > 0
+        ? (
+            artistData.Review.reduce(
+              (sum: number, review: any) => sum + (review.rating || 0),
+              0
+            ) / totalReviews
+          ).toFixed(1)
+        : "0";
+
+    // Calculate total revenue from orders
+    const totalRevenue = orders.reduce(
+      (sum: number, order: any) => sum + order.totalAmount,
+      0
+    );
+
+    return [
+      {
+        title: "Total Products",
+        value: totalProducts.toString(),
+        change: "+12%",
+        trend: "up" as const,
+        icon: Package,
+        color: "terracotta",
+      },
+      {
+        title: "Orders",
+        value: totalOrders.toString(),
+        change: "+15%",
+        trend: "up" as const,
+        icon: ShoppingBag,
+        color: "clay",
+      },
+      {
+        title: "Avg Rating",
+        value: averageRating,
+        change: "+0.2",
+        trend: "up" as const,
+        icon: Star,
+        color: "terracotta",
+      },
+      {
+        title: "Total Revenue",
+        value: `₹${totalRevenue.toLocaleString()}`,
+        change: "+18%",
+        trend: "up" as const,
+        icon: DollarSign,
+        color: "sage",
+      },
+    ];
+  }, [artistData, timeRange]);
+
+  // Calculate sales by category from order items
+  const salesByCategory = useMemo(() => {
+    if (!artistData?.orderItems || artistData.orderItems.length === 0) {
+      return [];
+    }
+
+    const orders = getOrdersFromOrderItems(artistData.orderItems, timeRange);
+
+    if (orders.length === 0) {
+      return [];
+    }
+
+    const categoryRevenue: { [key: string]: number } = {};
+    let totalRevenue = 0;
+
+    // Get all order items from filtered orders
+    const allOrderItems = orders.flatMap((order: any) => order.items);
+
+    allOrderItems.forEach((orderItem: any) => {
+      const category = orderItem.product?.category || "Other";
+      const revenue =
+        (orderItem.priceAtPurchase || 0) * (orderItem.quantity || 1);
+      categoryRevenue[category] = (categoryRevenue[category] || 0) + revenue;
+      totalRevenue += revenue;
+    });
+
+    return Object.entries(categoryRevenue).map(([name, revenue]) => ({
+      name,
+      value: totalRevenue > 0 ? Math.round((revenue / totalRevenue) * 100) : 0,
+    }));
+  }, [artistData, timeRange]);
+
+  // Get recent orders (properly grouped)
+  const recentOrders = useMemo(() => {
+    if (!artistData?.orderItems || artistData.orderItems.length === 0)
+      return [];
+
+    const orders = getOrdersFromOrderItems(artistData.orderItems, timeRange);
+
+    return orders
+      .sort((a: any, b: any) => {
+        const dateA = new Date(a.date);
+        const dateB = new Date(b.date);
+        return dateB.getTime() - dateA.getTime();
+      })
+      .slice(0, 4)
+      .map((order: any, index: number) => {
+        const orderDate = new Date(order.date);
+        const shortOrderId = order.orderId.split("-")[0].toUpperCase();
+
+        return {
+          id: `ORD-${shortOrderId}`,
+          customer: "Customer",
+          date: order.date,
+          amount: order.totalAmount,
+          status: order.items[0]?.status || "processing",
+          items: order.totalItems,
+          image: "/Profile.jpg",
+        };
+      });
+  }, [artistData, timeRange]);
+
+  // Get top products based on sales from order items
+  const topProducts = useMemo(() => {
+    if (!artistData?.products || !artistData?.orderItems) return [];
+
+    const orders = getOrdersFromOrderItems(artistData.orderItems, timeRange);
+    const allOrderItems = orders.flatMap((order: any) => order.items);
+
+    const productSales: { [key: string]: { sales: number; revenue: number } } =
+      {};
+
+    // Calculate sales for each product from order items
+    allOrderItems.forEach((orderItem: any) => {
+      const productId = orderItem.product?.id || orderItem.productId;
+      if (productId) {
+        const quantity = orderItem.quantity || 0;
+        const revenue = (orderItem.priceAtPurchase || 0) * quantity;
+
+        if (!productSales[productId]) {
+          productSales[productId] = { sales: 0, revenue: 0 };
+        }
+        productSales[productId].sales += quantity;
+        productSales[productId].revenue += revenue;
+      }
+    });
+
+    return artistData.products
+      .map((product: any) => {
+        const sales = productSales[product.id]?.sales || 0;
+        const revenue = productSales[product.id]?.revenue || 0;
+
+        return {
+          id: product.id,
+          name:
+            product.productName ||
+            product.name ||
+            product.title ||
+            "Unnamed Product",
+          sales: sales,
+          revenue: revenue,
+          stock: parseInt(product.availableStock) || 0,
+          image:
+            product.productImages?.[0] || product.images?.[0] || "/Profile.jpg",
+        };
+      })
+      .sort((a: { sales: number }, b: { sales: number }) => b.sales - a.sales)
+      .slice(0, 4);
+  }, [artistData, timeRange]);
+
   const getStatusColor = (status: string) => {
-    switch (status) {
+    switch (status.toLowerCase()) {
       case "delivered":
         return "bg-green-100 text-green-800";
       case "processing":
@@ -317,13 +395,48 @@ export default function ArtistDashboard() {
         return "bg-gray-100 text-gray-800";
     }
   };
+
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-terracotta-500 mx-auto mb-4"></div>
+            <p className="text-stone-600">Loading dashboard data...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="text-center">
+            <p className="text-red-600 mb-4">Error loading dashboard data</p>
+            <button
+              onClick={() => window.location.reload()}
+              className="bg-terracotta-500 hover:bg-terracotta-600 text-white px-4 py-2 rounded transition-colors"
+            >
+              Retry
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="container mx-auto px-4 py-8">
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-3xl font-light text-stone-900 mb-2">Dashboard</h1>
         <p className="text-stone-600">
-          Welcome back! Here's what's happening with your store.
+          Welcome back, {artistData?.fullName || "Artist"}! Here's what's
+          happening with your store.
         </p>
       </div>
 
@@ -334,7 +447,7 @@ export default function ArtistDashboard() {
             <button
               key={range}
               onClick={() => setTimeRange(range)}
-              className={`px-4 py-2 text-sm font-medium rounded-sm transition-colors ${
+              className={`px-4 py-2 text-sm font-medium rounded-sm transition-colors cursor-pointer ${
                 timeRange === range
                   ? "bg-terracotta-600 text-white"
                   : "bg-white text-stone-600 border border-stone-300 hover:bg-stone-50"
@@ -389,7 +502,7 @@ export default function ArtistDashboard() {
       {/* Charts Section */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6 sm:mb-8">
         {/* Revenue Chart */}
-        <div className="lg:col-span-2 bg-white rounded-lg shadow-sm border border-stone-200 p-5 hover:shadow-md transition-shadow">
+        <div className="lg:col-span-2 bg-white shadow-sm border border-stone-200 p-5 hover:shadow-md transition-shadow">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-medium text-stone-900 flex items-center">
               <BarChart3 className="w-5 h-5 mr-2 text-terracotta-600" />
@@ -399,7 +512,7 @@ export default function ArtistDashboard() {
               <select
                 value={selectedTimeframe}
                 onChange={(e) => setSelectedTimeframe(e.target.value)}
-                className="text-sm border border-stone-300 rounded-md px-2 py-1 focus:outline-none focus:ring-1 focus:ring-terracotta-500"
+                className="text-sm border border-stone-300 rounded-md px-2 py-1 focus:outline-none focus:ring-1 focus:ring-terracotta-500 cursor-pointer"
               >
                 <option value="weekly">Weekly</option>
                 <option value="monthly">Monthly</option>
@@ -425,7 +538,7 @@ export default function ArtistDashboard() {
                   axisLine={false}
                 />
                 <YAxis
-                  tickFormatter={(value) => `$${value.toLocaleString()}`}
+                  tickFormatter={(value) => `₹${value.toLocaleString()}`}
                   tick={{ fontSize: 12 }}
                   tickLine={false}
                   axisLine={false}
@@ -446,7 +559,7 @@ export default function ArtistDashboard() {
         </div>
 
         {/* Sales by Category */}
-        <div className="bg-white rounded-lg shadow-sm border border-stone-200 p-5 hover:shadow-md transition-shadow">
+        <div className="bg-white shadow-sm border border-stone-200 p-5 hover:shadow-md transition-shadow">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-medium text-stone-900 flex items-center">
               <Layers className="w-5 h-5 mr-2 text-sage-600" />
@@ -454,52 +567,61 @@ export default function ArtistDashboard() {
             </h3>
           </div>
           <div className="h-80">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart
-                data={salesData}
-                layout="vertical"
-                margin={{ top: 10, right: 10, bottom: 20, left: 80 }}
-              >
-                <CartesianGrid
-                  strokeDasharray="3 3"
-                  horizontal={true}
-                  vertical={false}
-                  stroke="#f1f1f1"
-                />
-                <XAxis
-                  type="number"
-                  tickFormatter={(value) => `${value}%`}
-                  tick={{ fontSize: 12 }}
-                  tickLine={false}
-                  axisLine={false}
-                />
-                <YAxis
-                  dataKey="name"
-                  type="category"
-                  tick={{ fontSize: 12 }}
-                  tickLine={false}
-                  axisLine={false}
-                  width={80}
-                />
-                <Tooltip content={<CustomTooltip />} />
-                <Bar
-                  dataKey="value"
-                  name="value"
-                  fill="rgba(107, 134, 107, 0.8)"
-                  radius={[0, 4, 4, 0]}
-                  barSize={20}
-                  className="hover:fill-sage-500"
-                />
-              </BarChart>
-            </ResponsiveContainer>
+            {salesByCategory.length > 0 ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart
+                  data={salesByCategory}
+                  layout="vertical"
+                  margin={{ top: 10, right: 10, bottom: 20, left: 80 }}
+                >
+                  <CartesianGrid
+                    strokeDasharray="3 3"
+                    horizontal={true}
+                    vertical={false}
+                    stroke="#f1f1f1"
+                  />
+                  <XAxis
+                    type="number"
+                    tickFormatter={(value) => `${value}%`}
+                    tick={{ fontSize: 12 }}
+                    tickLine={false}
+                    axisLine={false}
+                  />
+                  <YAxis
+                    dataKey="name"
+                    type="category"
+                    tick={{ fontSize: 12 }}
+                    tickLine={false}
+                    axisLine={false}
+                    width={80}
+                  />
+                  <Tooltip content={<CustomTooltip />} />
+                  <Bar
+                    dataKey="value"
+                    name="value"
+                    fill="rgba(107, 134, 107, 0.8)"
+                    radius={[0, 4, 4, 0]}
+                    barSize={20}
+                    className="hover:fill-sage-500"
+                  />
+                </BarChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="flex items-center justify-center h-full">
+                <p className="text-stone-500 text-sm">
+                  No sales data found for selected period
+                </p>
+              </div>
+            )}
           </div>
         </div>
       </div>
 
       {/* Recent Orders and Top Products */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6 sm:mb-8">
+        {" "}
         {/* Recent Orders */}
-        <div className="bg-white rounded-lg shadow-sm border border-stone-200 hover:shadow-md transition-shadow">
+        <div className="bg-white shadow-sm border border-stone-200 hover:shadow-md transition-shadow">
           <div className="flex items-center justify-between p-5 border-b border-stone-100">
             <h3 className="text-lg font-medium text-stone-900 flex items-center">
               <ShoppingCart className="w-5 h-5 mr-2 text-terracotta-600" />
@@ -514,87 +636,85 @@ export default function ArtistDashboard() {
             </Link>
           </div>
           <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-stone-50 text-left">
-                <tr>
-                  <th className="px-5 py-3 text-xs font-medium text-stone-500 uppercase tracking-wider">
-                    Order
-                  </th>
-                  <th className="px-5 py-3 text-xs font-medium text-stone-500 uppercase tracking-wider">
-                    Customer
-                  </th>
-                  <th className="px-5 py-3 text-xs font-medium text-stone-500 uppercase tracking-wider">
-                    Date
-                  </th>
-                  <th className="px-5 py-3 text-xs font-medium text-stone-500 uppercase tracking-wider">
-                    Amount
-                  </th>
-                  <th className="px-5 py-3 text-xs font-medium text-stone-500 uppercase tracking-wider">
-                    Status
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-stone-100">
-                {recentOrders.map((order) => (
-                  <tr
-                    key={order.id}
-                    className="hover:bg-stone-50 transition-colors"
-                  >
-                    <td className="px-5 py-4 whitespace-nowrap">
-                      <span className="text-sm font-medium text-stone-900">
-                        {order.id}
-                      </span>
-                    </td>
-                    <td className="px-5 py-4 whitespace-nowrap">
-                      <div className="flex items-center">
-                        <div className="relative w-8 h-8 mr-3 rounded-full overflow-hidden">
-                          <Image
-                            src={order.image || "/Profile.jpg"}
-                            alt={order.customer}
-                            fill
-                            className="object-cover"
-                          />
-                        </div>
-                        <span className="text-sm text-stone-900">
-                          {order.customer}
-                        </span>
-                      </div>
-                    </td>
-                    <td className="px-5 py-4 whitespace-nowrap">
-                      <span className="text-sm text-stone-600">
-                        {new Date(order.date).toLocaleDateString()}
-                      </span>
-                    </td>
-                    <td className="px-5 py-4 whitespace-nowrap">
-                      <span className="text-sm font-medium text-stone-900">
-                        ${order.amount.toFixed(2)}
-                      </span>
-                    </td>
-                    <td className="px-5 py-4 whitespace-nowrap">
-                      <span
-                        className={`px-2.5 py-1 text-xs rounded-full ${getStatusColor(
-                          order.status
-                        )}`}
-                      >
-                        {order.status}
-                      </span>
-                    </td>
+            {recentOrders.length > 0 ? (
+              <table className="w-full">
+                <thead className="bg-stone-50 text-left">
+                  <tr>
+                    <th className="px-5 py-3 text-xs font-medium text-stone-500 uppercase tracking-wider">
+                      Order
+                    </th>
+                    <th className="px-5 py-3 text-xs font-medium text-stone-500 uppercase tracking-wider">
+                      Date
+                    </th>
+                    <th className="px-5 py-3 text-xs font-medium text-stone-500 uppercase tracking-wider">
+                      Amount
+                    </th>
+                    <th className="px-5 py-3 text-xs font-medium text-stone-500 uppercase tracking-wider">
+                      Items
+                    </th>
+                    <th className="px-5 py-3 text-xs font-medium text-stone-500 uppercase tracking-wider">
+                      Status
+                    </th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-stone-100">
+                  {recentOrders.map((order) => (
+                    <tr
+                      key={order.id}
+                      className="hover:bg-stone-50 transition-colors"
+                    >
+                      <td className="px-5 py-4 whitespace-nowrap">
+                        <span className="text-sm font-medium text-stone-900">
+                          {order.id}
+                        </span>
+                      </td>
+                      <td className="px-5 py-4 whitespace-nowrap">
+                        <span className="text-sm text-stone-600">
+                          {new Date(order.date).toLocaleDateString()}
+                        </span>
+                      </td>
+                      <td className="px-5 py-4 whitespace-nowrap">
+                        <span className="text-sm font-medium text-stone-900">
+                          ₹{order.amount.toFixed(2)}
+                        </span>
+                      </td>
+                      <td className="px-5 py-4 whitespace-nowrap">
+                        <span className="text-sm text-stone-600">
+                          {order.items} items
+                        </span>
+                      </td>
+                      <td className="px-5 py-4 whitespace-nowrap">
+                        <span
+                          className={`px-2.5 py-1 text-xs rounded-full ${getStatusColor(
+                            order.status
+                          )}`}
+                        >
+                          {order.status}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            ) : (
+              <div className="p-8 text-center">
+                <ShoppingCart className="w-12 h-12 text-stone-300 mx-auto mb-4" />
+                <p className="text-stone-500">
+                  No recent orders found for selected period
+                </p>
+              </div>
+            )}
           </div>
         </div>
-
         {/* Top Products */}
-        <div className="bg-white rounded-lg shadow-sm border border-stone-200 hover:shadow-md transition-shadow">
+        <div className="bg-white shadow-sm border border-stone-200 hover:shadow-md transition-shadow">
           <div className="flex items-center justify-between p-5 border-b border-stone-100">
             <h3 className="text-lg font-medium text-stone-900 flex items-center">
               <TrendingUp className="w-5 h-5 mr-2 text-sage-600" />
               Top Selling Products
             </h3>
             <Link
-              href="/Artist/Products"
+              href="/Artist/Product"
               className="text-sm text-sage-600 hover:text-sage-700 flex items-center"
             >
               View All
@@ -602,71 +722,90 @@ export default function ArtistDashboard() {
             </Link>
           </div>
           <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-stone-50 text-left">
-                <tr>
-                  <th className="px-5 py-3 text-xs font-medium text-stone-500 uppercase tracking-wider">
-                    Product
-                  </th>
-                  <th className="px-5 py-3 text-xs font-medium text-stone-500 uppercase tracking-wider">
-                    Sales
-                  </th>
-                  <th className="px-5 py-3 text-xs font-medium text-stone-500 uppercase tracking-wider">
-                    Revenue
-                  </th>
-                  <th className="px-5 py-3 text-xs font-medium text-stone-500 uppercase tracking-wider">
-                    Stock
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-stone-100">
-                {topProducts.map((product) => (
-                  <tr
-                    key={product.id}
-                    className="hover:bg-stone-50 transition-colors"
-                  >
-                    <td className="px-5 py-4 whitespace-nowrap">
-                      <div className="flex items-center">
-                        <div className="relative w-8 h-8 mr-3 rounded overflow-hidden">
-                          <Image
-                            src={product.image || "/Profile.jpg"}
-                            alt={product.name}
-                            fill
-                            className="object-cover"
-                          />
-                        </div>
-                        <span className="text-sm font-medium text-stone-900">
-                          {product.name}
-                        </span>
-                      </div>
-                    </td>
-                    <td className="px-5 py-4 whitespace-nowrap">
-                      <span className="text-sm text-stone-600">
-                        {product.sales} units
-                      </span>
-                    </td>
-                    <td className="px-5 py-4 whitespace-nowrap">
-                      <span className="text-sm font-medium text-stone-900">
-                        ${product.revenue.toFixed(2)}
-                      </span>
-                    </td>
-                    <td className="px-5 py-4 whitespace-nowrap">
-                      <span
-                        className={`text-sm ${
-                          product.stock < 10 ? "text-red-600" : "text-stone-600"
-                        }`}
-                      >
-                        {product.stock} in stock
-                      </span>
-                    </td>
+            {topProducts.length > 0 ? (
+              <table className="w-full">
+                <thead className="bg-stone-50 text-left">
+                  <tr>
+                    <th className="px-5 py-3 text-xs font-medium text-stone-500 uppercase tracking-wider">
+                      Product
+                    </th>
+                    <th className="px-5 py-3 text-xs font-medium text-stone-500 uppercase tracking-wider">
+                      Sales
+                    </th>
+                    <th className="px-5 py-3 text-xs font-medium text-stone-500 uppercase tracking-wider">
+                      Revenue
+                    </th>
+                    <th className="px-5 py-3 text-xs font-medium text-stone-500 uppercase tracking-wider">
+                      Stock
+                    </th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-stone-100">
+                  {topProducts.map(
+                    (product: {
+                      id: string;
+                      name: string;
+                      sales: number;
+                      revenue: number;
+                      stock: number;
+                      image: string;
+                    }) => (
+                      <tr
+                        key={product.id}
+                        className="hover:bg-stone-50 transition-colors"
+                      >
+                        <td className="px-5 py-4 whitespace-nowrap">
+                          <div className="flex items-center">
+                            <div className="relative w-8 h-8 mr-3 rounded overflow-hidden">
+                              <Image
+                                src={product.image}
+                                alt={product.name}
+                                fill
+                                className="object-cover"
+                              />
+                            </div>
+                            <span className="text-sm font-medium text-stone-900">
+                              {product.name}
+                            </span>
+                          </div>
+                        </td>
+                        <td className="px-5 py-4 whitespace-nowrap">
+                          <span className="text-sm text-stone-600">
+                            {product.sales} units
+                          </span>
+                        </td>
+                        <td className="px-5 py-4 whitespace-nowrap">
+                          <span className="text-sm font-medium text-stone-900">
+                            ₹{product.revenue.toFixed(2)}
+                          </span>
+                        </td>
+                        <td className="px-5 py-4 whitespace-nowrap">
+                          <span
+                            className={`text-sm ${
+                              product.stock < 10
+                                ? "text-red-600"
+                                : "text-stone-600"
+                            }`}
+                          >
+                            {product.stock} in stock
+                          </span>
+                        </td>
+                      </tr>
+                    )
+                  )}
+                </tbody>
+              </table>
+            ) : (
+              <div className="p-8 text-center">
+                <TrendingUp className="w-12 h-12 text-stone-300 mx-auto mb-4" />
+                <p className="text-stone-500">
+                  No product sales found for selected period
+                </p>
+              </div>
+            )}
           </div>
         </div>
       </div>
-
       {/* Quick Actions */}
       <div className="mt-8">
         <h2 className="text-xl font-medium text-stone-900 mb-4">
@@ -674,7 +813,7 @@ export default function ArtistDashboard() {
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <Link
-            href="/Artist/products/new"
+            href="/Artist/Product/AddProduct"
             className="bg-white border border-stone-200 p-6 hover:shadow-md transition-shadow"
           >
             <Package className="w-8 h-8 text-terracotta-600 mb-3" />
@@ -684,17 +823,17 @@ export default function ArtistDashboard() {
             </p>
           </Link>
           <Link
-            href="/Artist/journal/new"
+            href="/Artist/Reviews"
             className="bg-white border border-stone-200 p-6 hover:shadow-md transition-shadow"
           >
             <MessageSquare className="w-8 h-8 text-sage-600 mb-3" />
-            <h3 className="font-medium text-stone-900 mb-1">Write Article</h3>
+            <h3 className="font-medium text-stone-900 mb-1">Check Reviews</h3>
             <p className="text-stone-500 text-sm">
-              Share your story in the journal
+              Check all reviews from buyers
             </p>
           </Link>
           <Link
-            href="/Artist/profile"
+            href="/Artist/MakeProfile"
             className="bg-white border border-stone-200 p-6 hover:shadow-md transition-shadow"
           >
             <Users className="w-8 h-8 text-clay-600 mb-3" />

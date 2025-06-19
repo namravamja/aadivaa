@@ -186,7 +186,7 @@ export default function UserMenu({ isMobile = false, onClose }: UserMenuProps) {
       toast.dismiss(loadingToastId);
       toast.success("Successfully logged out!", { duration: 2000 });
       if (onClose) onClose();
-      router.push("/");
+      router.replace("/");
       refetch();
     } catch (err: any) {
       toast.dismiss(loadingToastId);

@@ -90,13 +90,12 @@ const transformApiOrderToOrder = (apiOrder: ApiOrder): Order => {
     orderNumber: `ORD-${apiOrder.id.slice(0, 8).toUpperCase()}`,
     date: apiOrder.placedAt,
     status: apiOrder.status,
-    total: apiOrder.totalAmount / 100, // Convert from paise to rupees if needed
+    total: apiOrder.totalAmount,
     items: apiOrder.orderItems.map((item) => ({
       id: item.id,
       name: item.product.productName,
-      image:
-        item.product.productImages[0] || "/Profile.jpg?height=80&width=80",
-      price: item.priceAtPurchase / 100, // Convert from paise to rupees if needed
+      image: item.product.productImages[0] || "/Profile.jpg?height=80&width=80",
+      price: item.priceAtPurchase,
       quantity: item.quantity,
       sku: item.product.skuCode,
     })),
@@ -336,7 +335,7 @@ export default function OrdersPage() {
                       </div>
                       <div>
                         <span className="font-medium">Total:</span> ₹
-                        {order.total.toFixed(2)}
+                        {order.total}
                       </div>
                       <div>
                         <span className="font-medium">Items:</span>{" "}

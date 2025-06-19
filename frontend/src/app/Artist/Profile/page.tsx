@@ -17,7 +17,6 @@ export default function ProfilePage() {
 
   // Use the actual RTK Query hook
   const { data: artistData, isLoading, error } = useGetartistQuery(undefined);
-
   const handleEditProfile = () => {
     router.push("/Artist/MakeProfile");
   };
