@@ -23,7 +23,7 @@ import { useAuthModal } from "@/app/(auth)/components/auth-modal-provider";
 
 export default function BuyerCartPage() {
   const [isLoading, setIsLoading] = useState(false);
-  const { isAuthenticated, isLoading: authLoading } = useAuth();
+  const { isAuthenticated, isLoading: authLoading } = useAuth("buyer");
   const { openBuyerLogin } = useAuthModal();
 
   // RTK Query hooks - only run if authenticated
@@ -296,8 +296,7 @@ export default function BuyerCartPage() {
                       <div className="relative w-20 h-20 flex-shrink-0">
                         <Image
                           src={
-                            item.product.productImages?.[0] ||
-                            "/Profile.jpg"
+                            item.product.productImages?.[0] || "/Profile.jpg"
                           }
                           alt={item.product.productName}
                           fill

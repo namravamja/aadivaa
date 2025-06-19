@@ -2,25 +2,37 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import { Star, MessageSquare, Trash2, Shield, ShieldCheck } from "lucide-react";
+import {
+  Star,
+  MessageSquare,
+  Trash2,
+  Shield,
+  ShieldCheck,
+  User,
+} from "lucide-react";
 import toast from "react-hot-toast";
 import {
   useGetArtistReviewsQuery,
   useUpdateReviewVerificationStatusMutation,
   useDeleteReviewByArtistMutation,
 } from "@/services/api/artistApi";
+import { useAuth } from "@/hooks/useAuth";
+import { useAuthModal } from "@/app/(auth)/components/auth-modal-provider";
 
 export default function ArtistReviews() {
-  const [filterStatus, setFilterStatus] = useState("all");
   const [filterRating, setFilterRating] = useState("all");
 
-  // RTK Query hooks
+  const { isAuthenticated, isLoading: authLoading } = useAuth("artist");
+  const { openArtistLogin } = useAuthModal();
+
+  // RTK Query hooks - only run if authenticated
   const {
     data: reviews = [],
     isLoading,
     error,
     refetch,
   } = useGetArtistReviewsQuery(undefined, {
+    skip: !isAuthenticated,
     refetchOnMountOrArgChange: true,
   });
   const [updateVerificationStatus, { isLoading: isUpdatingVerification }] =
@@ -112,7 +124,30 @@ export default function ArtistReviews() {
   ).length;
   const unverifiedReviews = totalReviews - verifiedReviews;
 
-  if (isLoading) {
+  // Show login prompt if not authenticated
+  if (!authLoading && !isAuthenticated) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="text-center py-16">
+          <User className="w-24 h-24 mx-auto text-stone-300 mb-6" />
+          <h1 className="text-3xl font-light text-stone-900 mb-4">
+            Login Required
+          </h1>
+          <p className="text-stone-600 mb-8">
+            Please login to manage your reviews.
+          </p>
+          <button
+            onClick={openArtistLogin}
+            className="bg-terracotta-600 hover:bg-terracotta-700 text-white px-6 py-3 font-medium transition-colors cursor-pointer"
+          >
+            Login to Continue
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (authLoading || isLoading) {
     return (
       <div className="container mx-auto px-4 py-8">
         <div className="text-center py-12">
@@ -231,7 +266,11 @@ export default function ArtistReviews() {
               <div className="flex items-start mb-4 lg:mb-0">
                 <div className="relative w-16 h-16 mr-4 flex-shrink-0">
                   <Image
-                    src={review.buyer?.avatar || "/Profile.jpg"}
+                    src={
+                      review.buyer?.avatar ||
+                      "/Profile.jpg" ||
+                      "/placeholder.svg"
+                    }
                     alt={getUserDisplayName(review.buyer)}
                     fill
                     className="object-cover rounded-full"

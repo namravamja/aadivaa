@@ -115,7 +115,7 @@ const ConfirmationDialog = ({
 export default function OrderDetailsPage() {
   const params = useParams();
   const orderId = params.orderId as string;
-  const { isAuthenticated, isLoading: authLoading } = useAuth();
+  const { isAuthenticated, isLoading: authLoading } = useAuth("buyer");
   const { openBuyerLogin } = useAuthModal();
 
   // State for confirmation dialog

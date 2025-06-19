@@ -1,28 +1,62 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { Edit } from "lucide-react";
+import { Edit, User } from "lucide-react";
 import BasicInformation from "./components/basic-information";
 import AddressInformation from "./components/address-information";
 import BankingTaxInformation from "./components/banking-tax-information";
 import ShippingLogistics from "./components/shipping-logistics";
 import SocialMediaLinks from "./components/social-media-links";
-
-// Import your RTK Query hook - adjust the import path as needed
-import { useGetartistQuery } from "@/services/api/artistApi"; // Adjust this import path
+import { useGetartistQuery } from "@/services/api/artistApi";
 import ProfileProgress from "../MakeProfile/components/ProfileProgress";
+import { useAuth } from "@/hooks/useAuth";
+import { useAuthModal } from "@/app/(auth)/components/auth-modal-provider";
 
 export default function ProfilePage() {
   const router = useRouter();
+  const { isAuthenticated, isLoading: authLoading } = useAuth("artist");
+  const { openArtistLogin } = useAuthModal();
 
-  // Use the actual RTK Query hook
-  const { data: artistData, isLoading, error } = useGetartistQuery(undefined);
+  // Use the actual RTK Query hook - only run if authenticated
+  const {
+    data: artistData,
+    isLoading,
+    error,
+  } = useGetartistQuery(undefined, {
+    skip: !isAuthenticated,
+  });
+
   const handleEditProfile = () => {
     router.push("/Artist/MakeProfile");
   };
 
+  // Show login prompt if not authenticated
+  if (!authLoading && !isAuthenticated) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="text-center">
+            <User className="w-24 h-24 mx-auto text-stone-300 mb-6" />
+            <h1 className="text-3xl font-light text-stone-900 mb-4">
+              Login Required
+            </h1>
+            <p className="text-stone-600 mb-8">
+              Please login to view your profile.
+            </p>
+            <button
+              onClick={openArtistLogin}
+              className="bg-terracotta-600 hover:bg-terracotta-700 text-white px-6 py-3 font-medium transition-colors cursor-pointer"
+            >
+              Login to Continue
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   // Handle loading state
-  if (isLoading) {
+  if (authLoading || isLoading) {
     return (
       <div className="container mx-auto px-4 py-8">
         <div className="flex items-center justify-center min-h-[400px]">
@@ -44,7 +78,7 @@ export default function ProfilePage() {
             <p className="text-red-600 mb-4">Error loading profile data</p>
             <button
               onClick={() => window.location.reload()}
-              className="bg-terracotta-500 hover:bg-terracotta-600 text-white px-4 py-2 rounded transition-colors"
+              className="bg-terracotta-500 hover:bg-terracotta-600 text-white px-4 py-2 rounded transition-colors cursor-pointer"
             >
               Retry
             </button>
@@ -63,7 +97,7 @@ export default function ProfilePage() {
             <p className="text-stone-600 mb-4">No profile data found</p>
             <button
               onClick={handleEditProfile}
-              className="bg-terracotta-500 hover:bg-terracotta-600 text-white px-4 py-2 rounded transition-colors"
+              className="bg-terracotta-500 hover:bg-terracotta-600 text-white px-4 py-2 rounded transition-colors cursor-pointer"
             >
               Create Profile
             </button>

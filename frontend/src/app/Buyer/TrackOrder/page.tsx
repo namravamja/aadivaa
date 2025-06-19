@@ -38,7 +38,7 @@ export default function BuyerOrdersPage() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [dateFilter, setDateFilter] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
-  const { isAuthenticated, isLoading: authLoading } = useAuth();
+  const { isAuthenticated, isLoading: authLoading } = useAuth("buyer");
   const { openBuyerLogin } = useAuthModal();
 
   // RTK Query hook for fetching orders

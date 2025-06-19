@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Save, Check, FileText, MapPin, Settings } from "lucide-react";
+import { Save, Check, FileText, MapPin, Settings, User } from "lucide-react";
 import {
   useGetartistQuery,
   useUpdateartistMutation,
@@ -17,6 +17,8 @@ import Step4Summary from "./components/step4-summary";
 import ProfileProgress from "./components/ProfileProgress";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/hooks/useAuth";
+import { useAuthModal } from "@/app/(auth)/components/auth-modal-provider";
 
 // Define the complete profile data structure
 interface ProfileData {
@@ -85,6 +87,9 @@ export default function MakeProfile() {
   const [uploadedFiles, setUploadedFiles] = useState<Record<string, File>>({});
   const router = useRouter();
 
+  const { isAuthenticated, isLoading: authLoading } = useAuth("artist");
+  const { openArtistLogin } = useAuthModal();
+
   // RTK Query hooks - add the individual mutation hooks
   const {
     data: artistData,
@@ -92,7 +97,6 @@ export default function MakeProfile() {
     error: fetchError,
     refetch,
   } = useGetartistQuery(undefined);
-  // console.log(artistData);
   const [updateArtist, { isLoading: isUpdating }] = useUpdateartistMutation();
   const [updateBusinessAddress, { isLoading: isUpdatingBusinessAddress }] =
     useUpdateBusinessAddressMutation();
@@ -563,13 +567,6 @@ export default function MakeProfile() {
       }
 
       const submissionData = prepareDataForSubmission(profileData);
-
-      // Debug: Log the data being sent
-      console.log("Submitting data:", {
-        termsAgreed: submissionData.termsAgreed,
-        termsAgreedType: typeof submissionData.termsAgreed,
-        warehouseAddress: submissionData.warehouseAddress,
-      });
 
       // Check if we have any files to upload
       if (Object.keys(uploadedFiles).length > 0) {
@@ -1310,6 +1307,29 @@ export default function MakeProfile() {
       <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8">
         <div className="flex items-center justify-center h-64">
           <div className="text-lg text-stone-600">Loading profile data...</div>
+        </div>
+      </div>
+    );
+  }
+
+  // Show login prompt if not authenticated
+  if (!authLoading && !isAuthenticated) {
+    return (
+      <div className="container mx-auto px-4">
+        <div className="text-center py-16">
+          <User className="w-24 h-24 mx-auto text-stone-300 mb-6" />
+          <h1 className="text-3xl font-light text-stone-900 mb-4">
+            Login Required
+          </h1>
+          <p className="text-stone-600 mb-8">
+            Please login to view your artist dashboard.
+          </p>
+          <button
+            onClick={openArtistLogin}
+            className="bg-terracotta-600 hover:bg-terracotta-700 text-white px-6 py-3 font-medium transition-colors cursor-pointer"
+          >
+            Login to Continue
+          </button>
         </div>
       </div>
     );

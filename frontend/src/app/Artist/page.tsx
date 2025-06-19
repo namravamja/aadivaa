@@ -16,8 +16,11 @@ import {
   Zap,
   ChevronRight,
   Play,
+  User,
 } from "lucide-react";
 import Link from "next/link";
+import { useAuth } from "@/hooks/useAuth";
+import { useAuthModal } from "@/app/(auth)/components/auth-modal-provider";
 
 const features = [
   {
@@ -116,6 +119,8 @@ const platformBenefits = [
 
 export default function ArtistLanding() {
   const [greeting, setGreeting] = useState("");
+  const { isAuthenticated, isLoading: authLoading } = useAuth("artist");
+  const { openArtistLogin } = useAuthModal();
 
   useEffect(() => {
     const hour = new Date().getHours();
@@ -123,6 +128,46 @@ export default function ArtistLanding() {
     else if (hour < 17) setGreeting("Good afternoon");
     else setGreeting("Good evening");
   }, []);
+
+  // Show login prompt if not authenticated
+  if (!authLoading && !isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-stone-50 via-white to-stone-50">
+        <div className="container mx-auto px-4 py-20">
+          <div className="text-center py-16">
+            <User className="w-24 h-24 mx-auto text-stone-300 mb-6" />
+            <h1 className="text-3xl font-light text-stone-900 mb-4">
+              Login Required
+            </h1>
+            <p className="text-stone-600 mb-8">
+              Please login to access the artist platform.
+            </p>
+            <button
+              onClick={openArtistLogin}
+              className="bg-terracotta-600 hover:bg-terracotta-700 text-white px-6 py-3 font-medium transition-colors cursor-pointer"
+            >
+              Login to Continue
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-stone-50 via-white to-stone-50">
+        <div className="container mx-auto px-4 py-20">
+          <div className="flex items-center justify-center min-h-[400px]">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-terracotta-600 mx-auto mb-4"></div>
+              <p className="text-stone-600">Loading artist platform...</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-stone-50 via-white to-stone-50">

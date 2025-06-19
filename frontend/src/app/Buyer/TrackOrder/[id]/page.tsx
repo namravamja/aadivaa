@@ -214,7 +214,7 @@ export default function TrackOrderByIdPage() {
 
   // Authentication hooks
   const { openBuyerLogin } = useAuthModal();
-  const { isAuthenticated, isLoading: authLoading } = useAuth();
+  const { isAuthenticated, isLoading: authLoading } = useAuth("buyer");
 
   const {
     data: response,

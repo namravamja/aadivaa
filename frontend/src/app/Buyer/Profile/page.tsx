@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useGetBuyerQuery } from "@/services/api/buyerApi";
+import { useAuth } from "@/hooks/useAuth";
 import ProfileProgress from "./components/ProfileProgress";
 import AccountDetails from "./components/AccountDetails";
 import ShippingAddresses from "./components/ShippingAddresses";
@@ -39,6 +40,8 @@ const formatDateForDisplay = (dateString: string): string => {
 };
 
 export default function BuyerProfilePage() {
+  const { isAuthenticated, isLoading: authLoading } = useAuth("buyer");
+
   // Get buyer data for the profile progress component only
   const {
     data: buyerData,
@@ -47,6 +50,7 @@ export default function BuyerProfilePage() {
     error,
     refetch,
   } = useGetBuyerQuery(undefined, {
+    skip: !isAuthenticated,
     refetchOnMountOrArgChange: true,
     refetchOnFocus: true,
     refetchOnReconnect: true,
@@ -79,6 +83,81 @@ export default function BuyerProfilePage() {
   const handleRetry = () => {
     refetch();
   };
+
+  // Show loading if auth is loading
+  if (authLoading) {
+    return (
+      <main className="pt-24 pb-16">
+        <div className="container mx-auto px-4 max-w-4xl">
+          <div className="mb-8">
+            <LoadingSkeleton height="h-8" className="mb-2 w-48" />
+            <LoadingSkeleton height="h-5" className="w-80" />
+          </div>
+
+          <div className="space-y-8">
+            {/* Profile Progress Loading */}
+            <div className="bg-white border border-stone-200 shadow-sm">
+              <div className="p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <LoadingSkeleton height="h-6" className="mb-2 w-40" />
+                    <LoadingSkeleton height="h-4" className="w-32" />
+                  </div>
+                  <LoadingSkeleton height="h-8" className="w-16" />
+                </div>
+                <LoadingSkeleton height="h-3" className="w-full mb-4" />
+                <LoadingSkeleton lines={3} className="w-full" />
+              </div>
+            </div>
+
+            {/* Account Details Loading */}
+            <div className="bg-white border border-stone-200 shadow-sm">
+              <div className="p-6 border-b border-stone-200">
+                <div className="flex justify-between items-center">
+                  <LoadingSkeleton height="h-6" className="w-40" />
+                  <LoadingSkeleton height="h-10" className="w-32" />
+                </div>
+              </div>
+              <div className="p-6">
+                <div className="flex items-center space-x-6 mb-6">
+                  <LoadingSkeleton height="h-20" className="w-20 rounded" />
+                  <LoadingSkeleton height="h-8" className="w-32" />
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {Array.from({ length: 6 }).map((_, index) => (
+                    <div key={index}>
+                      <LoadingSkeleton height="h-4" className="mb-2 w-24" />
+                      <LoadingSkeleton height="h-10" />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Additional sections loading */}
+            {Array.from({ length: 3 }).map((_, index) => (
+              <div
+                key={index}
+                className="bg-white border border-stone-200 shadow-sm"
+              >
+                <div className="p-6 border-b border-stone-200">
+                  <LoadingSkeleton height="h-6" className="w-48" />
+                </div>
+                <div className="p-6">
+                  <LoadingSkeleton lines={4} />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </main>
+    );
+  }
+
+  // If not authenticated, the auth modal will handle signup
+  if (!isAuthenticated) {
+    return null;
+  }
 
   // Error state
   if (isError && !user) {

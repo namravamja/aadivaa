@@ -15,6 +15,7 @@ import {
   ChevronRight,
   Layers,
   DollarSign,
+  User,
 } from "lucide-react";
 import Image from "next/image";
 import {
@@ -29,6 +30,8 @@ import {
 } from "recharts";
 import Link from "next/link";
 import { useGetartistQuery } from "@/services/api/artistApi";
+import { useAuth } from "@/hooks/useAuth";
+import { useAuthModal } from "@/app/(auth)/components/auth-modal-provider";
 
 // Custom tooltip component for charts
 const CustomTooltip = ({
@@ -57,8 +60,17 @@ export default function ArtistDashboard() {
   const [timeRange, setTimeRange] = useState("30d");
   const [selectedTimeframe, setSelectedTimeframe] = useState("weekly");
 
+  const { isAuthenticated, isLoading: authLoading } = useAuth("artist");
+  const { openArtistLogin } = useAuthModal();
+
   // Fetch artist data using RTK Query
-  const { data: artistData, isLoading, error } = useGetartistQuery(undefined);
+  const {
+    data: artistData,
+    isLoading,
+    error,
+  } = useGetartistQuery(undefined, {
+    skip: !isAuthenticated,
+  });
 
   // Helper function to group order items by orderId and filter by time range
   const getOrdersFromOrderItems = (orderItems: any[], range: string) => {
@@ -372,7 +384,7 @@ export default function ArtistDashboard() {
             "Unnamed Product",
           sales: sales,
           revenue: revenue,
-          stock: parseInt(product.availableStock) || 0,
+          stock: Number.parseInt(product.availableStock) || 0,
           image:
             product.productImages?.[0] || product.images?.[0] || "/Profile.jpg",
         };
@@ -396,8 +408,31 @@ export default function ArtistDashboard() {
     }
   };
 
+  // Show login prompt if not authenticated
+  if (!authLoading && !isAuthenticated) {
+    return (
+      <div className="container mx-auto px-4">
+        <div className="text-center py-16">
+          <User className="w-24 h-24 mx-auto text-stone-300 mb-6" />
+          <h1 className="text-3xl font-light text-stone-900 mb-4">
+            Login Required
+          </h1>
+          <p className="text-stone-600 mb-8">
+            Please login to view your artist dashboard.
+          </p>
+          <button
+            onClick={openArtistLogin}
+            className="bg-terracotta-600 hover:bg-terracotta-700 text-white px-6 py-3 font-medium transition-colors cursor-pointer"
+          >
+            Login to Continue
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   // Loading state
-  if (isLoading) {
+  if (authLoading || isLoading) {
     return (
       <div className="container mx-auto px-4 py-8">
         <div className="flex items-center justify-center min-h-[400px]">
@@ -758,7 +793,7 @@ export default function ArtistDashboard() {
                           <div className="flex items-center">
                             <div className="relative w-8 h-8 mr-3 rounded overflow-hidden">
                               <Image
-                                src={product.image}
+                                src={product.image || "/Profile.jpg"}
                                 alt={product.name}
                                 fill
                                 className="object-cover"

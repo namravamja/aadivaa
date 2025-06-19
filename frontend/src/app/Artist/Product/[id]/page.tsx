@@ -10,13 +10,15 @@ import ShippingInformation from "./components/ShippingInformation";
 import ProductImages from "./components/ProductImages";
 import ActivityLog from "./components/ActivityLog";
 import DeleteModal from "./components/DeleteModal";
-import { ArrowLeft, Package } from "lucide-react";
+import { ArrowLeft, Package, User } from "lucide-react";
 import {
   useGetProductByIdQuery,
   useUpdateProductMutation,
   useDeleteProductMutation,
 } from "@/services/api/productApi";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/hooks/useAuth";
+import { useAuthModal } from "@/app/(auth)/components/auth-modal-provider";
 
 interface Params {
   params: Promise<{
@@ -30,6 +32,8 @@ function isObjectURL(url: string): boolean {
 
 function ProductPreview({ params }: Params) {
   const { id } = use(params);
+  const { isAuthenticated, isLoading: authLoading } = useAuth("artist");
+  const { openArtistLogin } = useAuthModal();
 
   const {
     data: product,
@@ -37,6 +41,7 @@ function ProductPreview({ params }: Params) {
     error,
     refetch,
   } = useGetProductByIdQuery(id, {
+    skip: !isAuthenticated,
     refetchOnMountOrArgChange: true,
   });
 
@@ -259,7 +264,32 @@ function ProductPreview({ params }: Params) {
     };
   }, [previewImages]);
 
-  if (isLoading) {
+  // Show login prompt if not authenticated
+  if (!authLoading && !isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-gray-100">
+        <div className="container mx-auto px-4 py-6 max-w-7xl">
+          <div className="text-center py-16">
+            <User className="w-24 h-24 mx-auto text-stone-300 mb-6" />
+            <h1 className="text-3xl font-light text-stone-900 mb-4">
+              Login Required
+            </h1>
+            <p className="text-stone-600 mb-8">
+              Please login to view product details.
+            </p>
+            <button
+              onClick={openArtistLogin}
+              className="bg-terracotta-600 hover:bg-terracotta-700 text-white px-6 py-3 font-medium transition-colors cursor-pointer"
+            >
+              Login to Continue
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (authLoading || isLoading) {
     return (
       <div className="min-h-screen bg-gray-100">
         <div className="container mx-auto px-4 py-6 max-w-7xl">
@@ -290,7 +320,10 @@ function ProductPreview({ params }: Params) {
           <p className="text-gray-600 mb-6">
             The product you're looking for doesn't exist.
           </p>
-          <button className="inline-flex cursor-pointer items-center px-6 py-3 bg-terracotta-600 text-white hover:bg-terracotta-700 transition-colors">
+          <button
+            onClick={() => router.push("/Artist/Product")}
+            className="inline-flex cursor-pointer items-center px-6 py-3 bg-terracotta-600 text-white hover:bg-terracotta-700 transition-colors"
+          >
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back to Products
           </button>

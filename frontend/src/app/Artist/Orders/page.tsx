@@ -12,8 +12,11 @@ import {
   Clock,
   Eye,
   Loader2,
+  User,
 } from "lucide-react";
 import { useGetArtistOrdersQuery } from "@/services/api/artistOrderApi"; // Update with your actual API slice import
+import { useAuth } from "@/hooks/useAuth";
+import { useAuthModal } from "@/app/(auth)/components/auth-modal-provider";
 
 // Updated interfaces to match API response
 export interface ApiOrderItem {
@@ -154,17 +157,25 @@ export default function OrdersPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [limit] = useState(10);
 
+  const { isAuthenticated, isLoading: authLoading } = useAuth("artist");
+  const { openArtistLogin } = useAuthModal();
+
   // RTK Query hook
   const {
     data: apiResponse,
     isLoading,
     isError,
     error,
-  } = useGetArtistOrdersQuery({
-    page: currentPage,
-    limit,
-    status: statusFilter !== "all" ? statusFilter : undefined,
-  });
+  } = useGetArtistOrdersQuery(
+    {
+      page: currentPage,
+      limit,
+      status: statusFilter !== "all" ? statusFilter : undefined,
+    },
+    {
+      skip: !isAuthenticated,
+    }
+  );
 
   const getStatusIcon = (status: Order["status"]) => {
     switch (status) {
@@ -204,6 +215,29 @@ export default function OrdersPage() {
     router.push(`/Artist/Orders/${orderId}`);
   };
 
+  // Show login prompt if not authenticated
+  if (!authLoading && !isAuthenticated) {
+    return (
+      <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8 max-w-6xl">
+        <div className="text-center py-16">
+          <User className="w-24 h-24 mx-auto text-stone-300 mb-6" />
+          <h1 className="text-3xl font-light text-stone-900 mb-4">
+            Login Required
+          </h1>
+          <p className="text-stone-600 mb-8">
+            Please login to view your orders.
+          </p>
+          <button
+            onClick={openArtistLogin}
+            className="bg-terracotta-600 hover:bg-terracotta-700 text-white px-6 py-3 font-medium transition-colors cursor-pointer"
+          >
+            Login to Continue
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   // Transform API orders to component format
   const orders: Order[] = apiResponse?.data?.orders
     ? apiResponse.data.orders.map(transformApiOrderToOrder)
@@ -219,6 +253,17 @@ export default function OrdersPage() {
 
     return matchesSearch;
   });
+
+  if (authLoading || isLoading) {
+    return (
+      <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8 max-w-6xl">
+        <div className="text-center py-12">
+          <Loader2 className="w-8 h-8 text-terracotta-600 mx-auto mb-4 animate-spin" />
+          <p className="text-stone-600">Loading your orders...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (isError) {
     return (
@@ -282,123 +327,114 @@ export default function OrdersPage() {
         </div>
       </div>
 
-      {/* Loading State */}
-      {isLoading && (
-        <div className="text-center py-12">
-          <Loader2 className="w-8 h-8 text-terracotta-600 mx-auto mb-4 animate-spin" />
-          <p className="text-stone-600">Loading your orders...</p>
-        </div>
-      )}
-
       {/* Orders List */}
-      {!isLoading && (
-        <div className="space-y-4">
-          {filteredOrders.length === 0 ? (
-            <div className="text-center py-12">
-              <Package className="w-16 h-16 text-stone-300 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-stone-900 mb-2">
-                No orders found
-              </h3>
-              <p className="text-stone-600">
-                {searchTerm || statusFilter !== "all"
-                  ? "Try adjusting your search or filter criteria"
-                  : "You haven't placed any orders yet"}
-              </p>
-            </div>
-          ) : (
-            filteredOrders.map((order) => (
-              <div
-                key={order.id}
-                className="bg-white border border-stone-200 rounded-md p-4 sm:p-6 shadow-sm hover:shadow-md transition-shadow"
-              >
-                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-                  {/* Order Info */}
-                  <div className="flex-1">
-                    <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 mb-3">
-                      <h3 className="text-base sm:text-lg font-medium text-stone-900">
-                        {order.orderNumber}
-                      </h3>
-                      <div
-                        className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(
-                          order.status
-                        )}`}
-                      >
-                        {getStatusIcon(order.status)}
-                        <span className="ml-1 capitalize">{order.status}</span>
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-sm text-stone-600 mb-4">
-                      <div>
-                        <span className="font-medium">Order Date:</span>{" "}
-                        {new Date(order.date).toLocaleDateString()}
-                      </div>
-                      <div>
-                        <span className="font-medium">Total:</span> ₹
-                        {order.total}
-                      </div>
-                      <div>
-                        <span className="font-medium">Items:</span>{" "}
-                        {order.items.length} item
-                        {order.items.length > 1 ? "s" : ""}
-                      </div>
-                    </div>
-
-                    {/* Order Items Preview */}
-                    <div className="flex flex-wrap gap-2">
-                      {order.items.slice(0, 3).map((item, index) => (
-                        <div
-                          key={item.id}
-                          className="flex items-center bg-stone-50 rounded-md px-2 py-1"
-                        >
-                          <img
-                            src={item.image || "/Profile.jpg"}
-                            alt={item.name}
-                            className="w-6 h-6 object-cover rounded mr-2"
-                          />
-                          <span className="text-xs text-stone-700 truncate max-w-[120px]">
-                            {item.name}
-                          </span>
-                          {item.quantity > 1 && (
-                            <span className="text-xs text-stone-500 ml-1">
-                              ×{item.quantity}
-                            </span>
-                          )}
-                        </div>
-                      ))}
-                      {order.items.length > 3 && (
-                        <div className="flex items-center bg-stone-50 rounded-md px-2 py-1">
-                          <span className="text-xs text-stone-700">
-                            +{order.items.length - 3} more
-                          </span>
-                        </div>
-                      )}
+      <div className="space-y-4">
+        {filteredOrders.length === 0 ? (
+          <div className="text-center py-12">
+            <Package className="w-16 h-16 text-stone-300 mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-stone-900 mb-2">
+              No orders found
+            </h3>
+            <p className="text-stone-600">
+              {searchTerm || statusFilter !== "all"
+                ? "Try adjusting your search or filter criteria"
+                : "You haven't placed any orders yet"}
+            </p>
+          </div>
+        ) : (
+          filteredOrders.map((order) => (
+            <div
+              key={order.id}
+              className="bg-white border border-stone-200 rounded-md p-4 sm:p-6 shadow-sm hover:shadow-md transition-shadow"
+            >
+              <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                {/* Order Info */}
+                <div className="flex-1">
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 mb-3">
+                    <h3 className="text-base sm:text-lg font-medium text-stone-900">
+                      {order.orderNumber}
+                    </h3>
+                    <div
+                      className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(
+                        order.status
+                      )}`}
+                    >
+                      {getStatusIcon(order.status)}
+                      <span className="ml-1 capitalize">{order.status}</span>
                     </div>
                   </div>
 
-                  {/* Actions */}
-                  <div className="flex flex-col sm:flex-row gap-2 lg:flex-col lg:items-end">
-                    <button
-                      onClick={() => handleViewDetails(order.id)}
-                      className="px-4 py-2 cursor-pointer bg-terracotta-600 text-white rounded-md hover:bg-terracotta-700 transition-colors flex items-center justify-center text-sm"
-                    >
-                      <Eye className="w-4 h-4 mr-2" />
-                      View Details
-                    </button>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-sm text-stone-600 mb-4">
+                    <div>
+                      <span className="font-medium">Order Date:</span>{" "}
+                      {new Date(order.date).toLocaleDateString()}
+                    </div>
+                    <div>
+                      <span className="font-medium">Total:</span> ₹{order.total}
+                    </div>
+                    <div>
+                      <span className="font-medium">Items:</span>{" "}
+                      {order.items.length} item
+                      {order.items.length > 1 ? "s" : ""}
+                    </div>
+                  </div>
 
-                    {order.trackingNumber && (
-                      <button className="px-4 py-2 border border-stone-300 text-stone-700 rounded-md hover:bg-stone-50 transition-colors flex items-center justify-center text-sm">
-                        <Truck className="w-4 h-4 mr-2" />
-                        Track Order
-                      </button>
+                  {/* Order Items Preview */}
+                  <div className="flex flex-wrap gap-2">
+                    {order.items.slice(0, 3).map((item, index) => (
+                      <div
+                        key={item.id}
+                        className="flex items-center bg-stone-50 rounded-md px-2 py-1"
+                      >
+                        <img
+                          src={
+                            item.image || "/Profile.jpg" || "/placeholder.svg"
+                          }
+                          alt={item.name}
+                          className="w-6 h-6 object-cover rounded mr-2"
+                        />
+                        <span className="text-xs text-stone-700 truncate max-w-[120px]">
+                          {item.name}
+                        </span>
+                        {item.quantity > 1 && (
+                          <span className="text-xs text-stone-500 ml-1">
+                            ×{item.quantity}
+                          </span>
+                        )}
+                      </div>
+                    ))}
+                    {order.items.length > 3 && (
+                      <div className="flex items-center bg-stone-50 rounded-md px-2 py-1">
+                        <span className="text-xs text-stone-700">
+                          +{order.items.length - 3} more
+                        </span>
+                      </div>
                     )}
                   </div>
                 </div>
+
+                {/* Actions */}
+                <div className="flex flex-col sm:flex-row gap-2 lg:flex-col lg:items-end">
+                  <button
+                    onClick={() => handleViewDetails(order.id)}
+                    className="px-4 py-2 cursor-pointer bg-terracotta-600 text-white rounded-md hover:bg-terracotta-700 transition-colors flex items-center justify-center text-sm"
+                  >
+                    <Eye className="w-4 h-4 mr-2" />
+                    View Details
+                  </button>
+
+                  {order.trackingNumber && (
+                    <button className="px-4 py-2 border border-stone-300 text-stone-700 rounded-md hover:bg-stone-50 transition-colors flex items-center justify-center text-sm">
+                      <Truck className="w-4 h-4 mr-2" />
+                      Track Order
+                    </button>
+                  )}
+                </div>
               </div>
-            ))
-          )}
-        </div>
-      )}
+            </div>
+          ))
+        )}
+      </div>
 
       {/* Pagination */}
       {apiResponse?.data?.pagination &&

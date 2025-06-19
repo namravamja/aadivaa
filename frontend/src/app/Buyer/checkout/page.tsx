@@ -27,7 +27,7 @@ export default function CheckoutPage() {
   const [selectedAddressIndex, setSelectedAddressIndex] = useState(0);
   const [paymentMethod, setPaymentMethod] = useState("card");
   const router = useRouter();
-  const { isAuthenticated, isLoading: authLoading, user } = useAuth();
+  const { isAuthenticated, isLoading: authLoading, user } = useAuth("buyer");
   const { openBuyerLogin } = useAuthModal();
 
   const {
@@ -418,8 +418,7 @@ export default function CheckoutPage() {
                       <div className="relative w-12 h-12 flex-shrink-0">
                         <Image
                           src={
-                            item.product.productImages?.[0] ||
-                            "/Profile.jpg"
+                            item.product.productImages?.[0] || "/Profile.jpg"
                           }
                           alt={item.product.productName}
                           fill

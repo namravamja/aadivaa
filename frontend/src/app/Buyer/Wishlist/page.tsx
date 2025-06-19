@@ -15,7 +15,7 @@ import { useAuthModal } from "@/app/(auth)/components/auth-modal-provider";
 
 export default function BuyerWishlist() {
   const [addedToCart, setAddedToCart] = useState<Record<string, boolean>>({});
-  const { isAuthenticated, isLoading: authLoading } = useAuth();
+  const { isAuthenticated, isLoading: authLoading } = useAuth("buyer");
   const { openBuyerLogin } = useAuthModal();
 
   // RTK Query hooks - only run if authenticated
@@ -251,9 +251,7 @@ export default function BuyerWishlist() {
                   <div className="flex items-center">
                     <div className="relative w-16 h-16 mr-4">
                       <Image
-                        src={
-                          item.product.productImages?.[0] || "/Profile.jpg"
-                        }
+                        src={item.product.productImages?.[0] || "/Profile.jpg"}
                         alt={item.product.productName}
                         fill
                         className="object-cover"

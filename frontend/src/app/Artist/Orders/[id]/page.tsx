@@ -12,6 +12,7 @@ import {
   Save,
   X,
   Loader2,
+  User,
 } from "lucide-react";
 import Image from "next/image";
 import { useParams, useRouter } from "next/navigation";
@@ -26,6 +27,8 @@ import {
   useUpdateStockMutation,
   useGetProductByArtistQuery,
 } from "@/services/api/productApi";
+import { useAuth } from "@/hooks/useAuth";
+import { useAuthModal } from "@/app/(auth)/components/auth-modal-provider";
 
 export interface ProductData {
   id: string;
@@ -110,6 +113,9 @@ export default function OrderDetailsPage() {
   const router = useRouter();
   const orderId = params.id as string;
 
+  const { isAuthenticated, isLoading: authLoading } = useAuth("artist");
+  const { openArtistLogin } = useAuthModal();
+
   // State for editing
   const [isEditingStatus, setIsEditingStatus] = useState(false);
   const [isEditingPayment, setIsEditingPayment] = useState(false);
@@ -133,7 +139,9 @@ export default function OrderDetailsPage() {
     isLoading,
     error,
     refetch,
-  } = useGetArtistOrderByIdQuery(orderId);
+  } = useGetArtistOrderByIdQuery(orderId, {
+    skip: !isAuthenticated,
+  });
   const [updateOrderStatus, { isLoading: isUpdatingStatus }] =
     useUpdateOrderStatusMutation();
   const [updateOrderPaymentStatus, { isLoading: isUpdatingPayment }] =
@@ -145,6 +153,7 @@ export default function OrderDetailsPage() {
     isLoading: isLoadingProducts,
     refetch: refetchProducts,
   } = useGetProductByArtistQuery(undefined, {
+    skip: !isAuthenticated,
     refetchOnMountOrArgChange: true,
   });
 
@@ -524,8 +533,31 @@ export default function OrderDetailsPage() {
     }
   };
 
+  // Show login prompt if not authenticated
+  if (!authLoading && !isAuthenticated) {
+    return (
+      <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8 max-w-4xl">
+        <div className="text-center py-16">
+          <User className="w-24 h-24 mx-auto text-stone-300 mb-6" />
+          <h1 className="text-3xl font-light text-stone-900 mb-4">
+            Login Required
+          </h1>
+          <p className="text-stone-600 mb-8">
+            Please login to view order details.
+          </p>
+          <button
+            onClick={openArtistLogin}
+            className="bg-terracotta-600 hover:bg-terracotta-700 text-white px-6 py-3 font-medium transition-colors cursor-pointer"
+          >
+            Login to Continue
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   // Loading state
-  if (isLoading || isLoadingProducts) {
+  if (authLoading || isLoading || isLoadingProducts) {
     return (
       <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8 max-w-4xl">
         <div className="flex items-center justify-center min-h-[400px]">
@@ -798,7 +830,9 @@ export default function OrderDetailsPage() {
                   <div className="w-16 h-16 sm:w-20 sm:h-20 flex-shrink-0">
                     <Image
                       src={
-                        item.product.productImages?.[0] || "/Profile.jpg"
+                        item.product.productImages?.[0] ||
+                        "/Profile.jpg" ||
+                        "/placeholder.svg"
                       }
                       alt={item.product.productName}
                       width={80}
