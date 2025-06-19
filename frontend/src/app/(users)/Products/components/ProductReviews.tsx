@@ -11,8 +11,8 @@ import {
 } from "@/services/api/buyerApi";
 import Image from "next/image";
 import toast from "react-hot-toast";
-import { useAuth } from "@/hooks/useAuth";
 import { useAuthModal } from "@/app/(auth)/components/auth-modal-provider";
+import { useSimpleAuth } from "@/hooks/useSimpleAuth";
 
 // ReviewForm component with interactive stars
 const ReviewForm = ({
@@ -185,7 +185,7 @@ export default function ProductReviews({ productId }: ProductReviewsProps) {
   const [editingReview, setEditingReview] = useState<any>(null);
 
   // Authentication hooks
-  const { isAuthenticated, user, isLoading: authLoading } = useAuth();
+  const { isAuthenticated, user, isLoading: authLoading } = useSimpleAuth();
   const { openBuyerLogin } = useAuthModal();
 
   // RTK Query hooks

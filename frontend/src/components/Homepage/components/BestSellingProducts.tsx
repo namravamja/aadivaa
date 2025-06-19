@@ -12,7 +12,7 @@ import {
   useGetWishlistQuery,
 } from "@/services/api/wishlistApi";
 import { useAddToCartMutation, useGetCartQuery } from "@/services/api/cartApi";
-import { useAuth } from "@/hooks/useAuth";
+import { useSimpleAuth } from "@/hooks/useSimpleAuth";
 import { useAuthModal } from "@/app/(auth)/components/auth-modal-provider";
 
 interface Product {
@@ -44,7 +44,7 @@ export default function BestSellingProducts() {
   const [productStates, setProductStates] = useState<
     Record<string, ProductCardState>
   >({});
-  const { isAuthenticated, isLoading: authLoading } = useAuth();
+  const { isAuthenticated, isLoading: authLoading } = useSimpleAuth();
   const { openBuyerLogin } = useAuthModal();
 
   const {
@@ -279,7 +279,7 @@ export default function BestSellingProducts() {
                         <button
                           onClick={(e) => handleAddToCart(e, product.id)}
                           disabled={authLoading}
-                          className="bg-white text-stone-900 px-4 sm:px-6 py-2 sm:py-3 font-medium flex items-center disabled:opacity-50 disabled:cursor-not-allowed"
+                          className="bg-white text-stone-900 cursor-pointer px-4 sm:px-6 py-2 sm:py-3 font-medium flex items-center disabled:opacity-50 disabled:cursor-not-allowed"
                           aria-label="Add to cart"
                         >
                           {currentState.isAddedToCart ? (

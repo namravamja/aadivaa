@@ -13,8 +13,8 @@ import {
   useGetWishlistQuery,
 } from "@/services/api/wishlistApi";
 import { useAddToCartMutation, useGetCartQuery } from "@/services/api/cartApi";
-import { useAuth } from "@/hooks/useAuth";
 import { useAuthModal } from "@/app/(auth)/components/auth-modal-provider";
+import { useSimpleAuth } from "@/hooks/useSimpleAuth";
 
 type Product = {
   id: string;
@@ -34,8 +34,8 @@ export default function ProductCard({ product }: ProductCardProps) {
   const [isWishlisted, setIsWishlisted] = useState(false);
   const [isAddedToCart, setIsAddedToCart] = useState(false);
   const router = useRouter();
-  const { isAuthenticated, isLoading: authLoading } = useAuth();
-  const { openBuyerLogin } = useAuthModal(); // 👈 buyer login modal
+  const { isAuthenticated, isLoading: authLoading } = useSimpleAuth();
+  const { openBuyerLogin } = useAuthModal();
 
   const { data: wishlistData, refetch: refetchWishlist } = useGetWishlistQuery(
     undefined,

@@ -9,13 +9,13 @@ import UserMenu from "../Navbar/components/UserMenu";
 import MobileMenu from "../Navbar/components/MobileMenu";
 import type { NavigationItem } from "../Navbar/components/types";
 import { ProfilePhoto } from "../Navbar/components/UserMenu";
-import { useAuth } from "@/hooks/useAuth";
 import { useAuthModal } from "@/app/(auth)/components/auth-modal-provider";
+import { useSimpleAuth } from "@/hooks/useSimpleAuth";
 
 export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated } = useSimpleAuth();
   const { openArtistLogin, openArtistSignup, openBuyerSignup } = useAuthModal();
 
   const navigation: NavigationItem[] = [

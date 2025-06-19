@@ -4,7 +4,7 @@ import Link from "next/link";
 import { Heart, ShoppingBag, RefreshCw } from "lucide-react";
 import { useGetCartQuery } from "@/services/api/cartApi";
 import { useGetWishlistQuery } from "@/services/api/wishlistApi";
-import { useAuth } from "@/hooks/useAuth";
+import { useSimpleAuth } from "@/hooks/useSimpleAuth";
 
 interface ActionButtonsProps {
   showWishlist?: boolean;
@@ -15,7 +15,7 @@ export default function ActionButtons({
   showWishlist = true,
   showCart = true,
 }: ActionButtonsProps) {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated } = useSimpleAuth();
 
   // RTK Query hooks - only run if authenticated
   const {

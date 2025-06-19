@@ -4,8 +4,8 @@ import { useState } from "react";
 import { ShoppingBag, Check } from "lucide-react";
 import toast from "react-hot-toast";
 import { useAddToCartMutation, useGetCartQuery } from "@/services/api/cartApi";
-import { useAuth } from "@/hooks/useAuth";
 import { useAuthModal } from "@/app/(auth)/components/auth-modal-provider";
+import { useSimpleAuth } from "@/hooks/useSimpleAuth";
 
 type AddToCartButtonProps = {
   productId: string;
@@ -20,7 +20,7 @@ export default function AddToCartButton({
 }: AddToCartButtonProps) {
   const [quantity, setQuantity] = useState(1);
   const [isAdded, setIsAdded] = useState(false);
-  const { isAuthenticated, isLoading: authLoading } = useAuth();
+  const { isAuthenticated, isLoading: authLoading } = useSimpleAuth();
   const { openBuyerLogin } = useAuthModal();
 
   const { refetch: refetchCart } = useGetCartQuery(undefined, {

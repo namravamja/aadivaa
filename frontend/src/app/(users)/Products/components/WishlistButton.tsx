@@ -9,8 +9,8 @@ import {
   useRemoveFromWishlistMutation,
   useGetWishlistQuery,
 } from "@/services/api/wishlistApi";
-import { useAuth } from "@/hooks/useAuth";
 import { useAuthModal } from "@/app/(auth)/components/auth-modal-provider";
+import { useSimpleAuth } from "@/hooks/useSimpleAuth";
 
 type WishlistButtonProps = {
   productId: string;
@@ -19,7 +19,7 @@ type WishlistButtonProps = {
 export default function WishlistButton({ productId }: WishlistButtonProps) {
   const [isWishlisted, setIsWishlisted] = useState(false);
   const router = useRouter();
-  const { isAuthenticated, isLoading: authLoading } = useAuth();
+  const { isAuthenticated, isLoading: authLoading } = useSimpleAuth();
   const { openBuyerLogin } = useAuthModal();
 
   const {
