@@ -1,7 +1,7 @@
 "use client";
 
 import type React from "react";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { User, Edit, Save, X, Camera, Check } from "lucide-react";
 import ReactCrop, {
   type Crop,
@@ -189,6 +189,24 @@ export default function AccountDetails() {
     refetchOnReconnect: true,
   });
 
+  const extractedBuyerData = useMemo(() => {
+    if (!buyerData) return null;
+
+    // Handle both direct data and cache response format
+    const data = buyerData.data ? buyerData.data : buyerData;
+
+    return {
+      id: data.id || "",
+      email: data.email || "",
+      firstName: data.firstName || "",
+      lastName: data.lastName || "",
+      phone: data.phone || "",
+      avatar: data.avatar || "",
+      dateOfBirth: data.dateOfBirth || "",
+      gender: data.gender || "",
+    };
+  }, [buyerData]);
+
   const [updateBuyer, { isLoading: isUpdating }] = useUpdateBuyerMutation();
 
   const [isEditing, setIsEditing] = useState(false);
@@ -218,23 +236,23 @@ export default function AccountDetails() {
 
   // Update local state when API data changes
   useEffect(() => {
-    if (buyerData) {
+    if (extractedBuyerData) {
       const newData = {
-        id: buyerData.id,
-        email: buyerData.email,
-        firstName: buyerData.firstName || "",
-        lastName: buyerData.lastName || "",
-        phone: buyerData.phone || "",
-        avatar: buyerData.avatar || "",
-        dateOfBirth: buyerData.dateOfBirth
-          ? formatDateForDisplay(buyerData.dateOfBirth)
+        id: extractedBuyerData.id,
+        email: extractedBuyerData.email,
+        firstName: extractedBuyerData.firstName,
+        lastName: extractedBuyerData.lastName,
+        phone: extractedBuyerData.phone,
+        avatar: extractedBuyerData.avatar,
+        dateOfBirth: extractedBuyerData.dateOfBirth
+          ? formatDateForDisplay(extractedBuyerData.dateOfBirth)
           : "",
-        gender: buyerData.gender || "",
+        gender: extractedBuyerData.gender,
       };
       setFormData(newData);
       setOriginalData(newData);
     }
-  }, [buyerData]);
+  }, [extractedBuyerData]);
 
   // Check if form has changes
   const hasChanges = () => {
@@ -417,7 +435,7 @@ export default function AccountDetails() {
   }, [avatarPreview]);
 
   // Error state
-  if (fetchError && !buyerData) {
+  if (fetchError && !extractedBuyerData) {
     return (
       <div className="bg-white border border-stone-200 shadow-sm">
         <div className="p-6 border-b border-stone-200">
@@ -455,7 +473,7 @@ export default function AccountDetails() {
   }
 
   // Loading state
-  if (isFetching && !buyerData) {
+  if (isFetching && !extractedBuyerData) {
     return (
       <div className="bg-white border border-stone-200 shadow-sm">
         <div className="p-6 border-b border-stone-200">

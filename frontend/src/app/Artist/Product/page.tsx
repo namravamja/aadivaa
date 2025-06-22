@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -18,24 +18,43 @@ import { useGetProductByArtistQuery } from "@/services/api/productApi";
 import { useAuth } from "@/hooks/useAuth";
 import { useAuthModal } from "@/app/(auth)/components/auth-modal-provider";
 
+// Safe data access utilities
+const safeArray = <T,>(value: T[] | undefined | null): T[] => {
+  return Array.isArray(value) ? value : [];
+};
+
+const safeString = (value: any): string => {
+  return value ? String(value) : "";
+};
+
+const safeNumber = (value: any): number => {
+  const num = Number(value);
+  return isNaN(num) ? 0 : num;
+};
+
 export interface ProductData {
-  id: string;
-  productName: string;
-  category: string;
-  shortDescription: string;
-  sellingPrice: string;
-  mrp: string;
-  availableStock: string;
-  skuCode: string;
-  productImages: string[];
-  weight: string;
-  length: string;
-  width: string;
-  height: string;
-  shippingCost: string;
-  deliveryTimeEstimate: string;
-  createdAt: string;
-  updatedAt: string;
+  id?: string;
+  productName?: string;
+  category?: string;
+  shortDescription?: string;
+  sellingPrice?: string;
+  mrp?: string;
+  availableStock?: string;
+  skuCode?: string;
+  productImages?: string[];
+  weight?: string;
+  length?: string;
+  width?: string;
+  height?: string;
+  shippingCost?: string;
+  deliveryTimeEstimate?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+interface ProductsResponse {
+  source?: string;
+  data?: ProductData[];
 }
 
 export default function ArtistProducts() {
@@ -46,21 +65,57 @@ export default function ArtistProducts() {
   const { isAuthenticated, isLoading: authLoading } = useAuth("artist");
   const { openArtistLogin } = useAuthModal();
 
-  const { data, isLoading } = useGetProductByArtistQuery(undefined, {
+  const {
+    data: productResponse,
+    isLoading,
+    error,
+  } = useGetProductByArtistQuery(undefined, {
     skip: !isAuthenticated,
     refetchOnMountOrArgChange: true,
   });
-  const products: ProductData[] = (data ?? []) as ProductData[];
+
+  // Extract products data from cache response format using useMemo
+  const products: ProductData[] = useMemo(() => {
+    if (!productResponse) return [];
+
+    console.log("Raw products response:", productResponse);
+
+    // Handle cache response format: {source: 'cache', data: [...]}
+    if (productResponse.source && productResponse.data) {
+      return safeArray(productResponse.data);
+    }
+
+    // Handle direct array format as fallback
+    if (Array.isArray(productResponse)) {
+      return productResponse;
+    }
+
+    // Handle object with data property
+    if (
+      typeof productResponse === "object" &&
+      !Array.isArray(productResponse) &&
+      productResponse.data
+    ) {
+      return safeArray(productResponse.data);
+    }
+
+    return [];
+  }, [productResponse]);
 
   const filteredProducts = products.filter((product: ProductData) => {
     const matchesCategory =
-      filterCategory === "all" || product.category === filterCategory;
+      filterCategory === "all" ||
+      safeString(product.category) === filterCategory;
     return matchesCategory;
   });
 
   const categories: string[] = [
     "all",
-    ...Array.from(new Set(products.map((p: ProductData) => p.category))),
+    ...Array.from(
+      new Set(
+        products.map((p: ProductData) => safeString(p.category)).filter(Boolean)
+      )
+    ),
   ];
 
   // Show login prompt if not authenticated
@@ -89,10 +144,41 @@ export default function ArtistProducts() {
   if (authLoading || isLoading) {
     return (
       <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8 max-w-7xl">
-        <div className="text-center text-stone-600 py-20">Loading...</div>
+        <div className="text-center text-stone-600 py-20">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-terracotta-500 mx-auto mb-4"></div>
+          <p>Loading products...</p>
+        </div>
       </div>
     );
   }
+
+  // Error state
+  if (error) {
+    console.error("Products loading error:", error);
+    return (
+      <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8 max-w-7xl">
+        <div className="text-center py-12">
+          <Package className="w-16 h-16 text-red-400 mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-stone-900 mb-2">
+            Error loading products
+          </h3>
+          <p className="text-stone-600 mb-4">
+            {error && typeof error === "object" && "message" in error
+              ? String(error.message)
+              : "Something went wrong while fetching your products"}
+          </p>
+          <button
+            onClick={() => window.location.reload()}
+            className="bg-terracotta-500 hover:bg-terracotta-600 text-white px-4 py-2 rounded transition-colors cursor-pointer"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  console.log("Final products data:", products);
 
   return (
     <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8 max-w-7xl">
@@ -218,38 +304,38 @@ export default function ArtistProducts() {
         </div>
       ) : viewMode === "grid" ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5 sm:gap-6">
-          {filteredProducts.map((product: ProductData) => (
+          {filteredProducts.map((product: ProductData, index) => (
             <div
-              key={product.id}
+              key={product.id || index}
               className="bg-white border border-stone-200 rounded-md shadow-sm overflow-hidden hover:shadow-md transition-shadow"
             >
               <div className="aspect-square relative">
                 <Image
-                  src={
-                    product.productImages[0]
-                      ? product.productImages[0]
-                      : "/Profile.jpg"
-                  }
-                  alt={product.productName}
+                  src={safeString(product.productImages?.[0] || "/Profile.jpg")}
+                  alt={safeString(product.productName || "Product")}
                   fill
                   className="object-cover"
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    target.src = "/Profile.jpg";
+                  }}
                 />
               </div>
               <div className="p-4 sm:p-5">
-                <Link href={`/Artist/Product/${product.id}`}>
+                <Link href={`/Artist/Product/${product.id || ""}`}>
                   <h3 className="font-medium text-stone-900 mb-1 truncate hover:text-terracotta-600 transition-colors cursor-pointer">
-                    {product.productName}
+                    {safeString(product.productName || "Unnamed Product")}
                   </h3>
                 </Link>
                 <p className="text-sm text-stone-500 mb-3">
-                  {product.category}
+                  {safeString(product.category || "No category")}
                 </p>
                 <div className="flex items-center justify-between">
                   <span className="text-lg font-bold text-terracotta-700">
-                    ₹{product.sellingPrice}
+                    ₹{safeNumber(product.sellingPrice).toFixed(2)}
                   </span>
                   <Link
-                    href={`/Artist/Product/${product.id}`}
+                    href={`/Artist/Product/${product.id || ""}`}
                     className="text-stone-400 hover:text-stone-600 transition-colors"
                     title="View"
                   >
@@ -280,44 +366,46 @@ export default function ArtistProducts() {
               </tr>
             </thead>
             <tbody>
-              {filteredProducts.map((product: ProductData) => (
+              {filteredProducts.map((product: ProductData, index) => (
                 <tr
-                  key={product.id}
+                  key={product.id || index}
                   className="border-b border-stone-100 hover:bg-stone-50 transition"
                 >
                   <td className="py-4 px-6 flex items-center gap-4">
                     <div className="relative w-12 h-12 flex-shrink-0">
                       <Image
-                        src={
-                          product.productImages[0]
-                            ? product.productImages[0]
-                            : "/Profile.jpg"
-                        }
-                        alt={product.productName}
+                        src={safeString(
+                          product.productImages?.[0] || "/Profile.jpg"
+                        )}
+                        alt={safeString(product.productName || "Product")}
                         fill
                         className="object-cover rounded"
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          target.src = "/Profile.jpg";
+                        }}
                       />
                     </div>
                     <div>
-                      <Link href={`/Artist/Product/${product.id}`}>
+                      <Link href={`/Artist/Product/${product.id || ""}`}>
                         <div className="font-medium text-sm text-stone-900 hover:text-terracotta-600 transition-colors cursor-pointer">
-                          {product.productName}
+                          {safeString(product.productName || "Unnamed Product")}
                         </div>
                       </Link>
                       <div className="text-xs text-stone-500">
-                        ID: {product.id}
+                        ID: {safeString(product.id || "N/A")}
                       </div>
                     </div>
                   </td>
                   <td className="py-4 px-6 text-sm text-stone-600">
-                    {product.category}
+                    {safeString(product.category || "No category")}
                   </td>
                   <td className="py-4 px-6 text-sm font-medium text-stone-900">
-                    ₹{product.sellingPrice}
+                    ₹{safeNumber(product.sellingPrice).toFixed(2)}
                   </td>
                   <td className="py-4 px-6 text-center hidden md:table-cell">
                     <Link
-                      href={`/Artist/Product/${product.id}`}
+                      href={`/Artist/Product/${product.id || ""}`}
                       title="View Product"
                       className="inline-flex items-center justify-center gap-2 px-3 py-1.5 bg-sage-100 rounded-md hover:bg-sage-500 transition"
                     >

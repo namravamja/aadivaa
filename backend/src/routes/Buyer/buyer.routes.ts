@@ -13,12 +13,15 @@ const router = express.Router();
 
 // Public routes
 router.post("/create", verifyToken, buyerController.createBuyer);
-router.get("/list", buyerController.getBuyers);
-router.get("/review/:productId", reviewController.getReviewsByProduct);
+router.get("/list", buyerController.getBuyers as any);
+router.get("/review/:productId", reviewController.getReviewsByProduct as any);
 
 router.post("/forgot-password", forgotController.forgotPassword as any);
 router.post("/reset-password", forgotController.resetPassword as any);
-router.get("/verify-reset-token/:token", forgotController.verifyResetToken);
+router.get(
+  "/verify-reset-token/:token",
+  forgotController.verifyResetToken as any
+);
 
 // Protected routes
 router.use(verifyToken);

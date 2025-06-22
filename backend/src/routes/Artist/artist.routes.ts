@@ -10,7 +10,7 @@ import { uploadArtistImages, uploadDocuments } from "../../middleware/multer";
 const router = express.Router();
 
 // Artist routes
-router.get("/list", artistController.getArtists);
+router.get("/list", artistController.getArtists as any);
 
 // forgot password
 router.post("/forgot-password", forgotmailController.forgotPassword as any);

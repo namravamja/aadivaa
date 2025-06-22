@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { Save, Check, FileText, MapPin, Settings, User } from "lucide-react";
 import {
   useGetartistQuery,
@@ -19,6 +19,12 @@ import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import { useAuthModal } from "@/app/(auth)/components/auth-modal-provider";
+
+// Define cache response interface
+interface CacheResponse<T> {
+  source: "cache" | "api";
+  data: T;
+}
 
 // Define the complete profile data structure
 interface ProfileData {
@@ -92,7 +98,7 @@ export default function MakeProfile() {
 
   // RTK Query hooks - add the individual mutation hooks
   const {
-    data: artistData,
+    data: rawArtistData,
     isLoading,
     error: fetchError,
     refetch,
@@ -106,6 +112,25 @@ export default function MakeProfile() {
     useUpdateDocumentsMutation();
   const [updateSocialLinks, { isLoading: isUpdatingSocialLinks }] =
     useUpdateSocialLinksMutation();
+
+  // Extract artist data from cache response
+  const artistData = useMemo(() => {
+    if (!rawArtistData) return null;
+
+    // Handle cache response format
+    if (
+      rawArtistData &&
+      typeof rawArtistData === "object" &&
+      "source" in rawArtistData &&
+      "data" in rawArtistData
+    ) {
+      const cacheResponse = rawArtistData as CacheResponse<any>;
+      return cacheResponse.data;
+    }
+
+    // Handle direct response
+    return rawArtistData;
+  }, [rawArtistData]);
 
   // Centralized profile data state (local only, no API calls on change)
   const [profileData, setProfileData] = useState<ProfileData>({

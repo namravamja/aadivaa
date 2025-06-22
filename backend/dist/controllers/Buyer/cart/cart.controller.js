@@ -35,6 +35,7 @@ var __importStar = (this && this.__importStar) || (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getCartByBuyerId = exports.clearCart = exports.removeFromCart = exports.updateCartItem = exports.addToCart = void 0;
 const cartService = __importStar(require("../../../services/Buyer/cart/cart.service"));
+const cache_1 = require("../../../helpers/cache");
 const addToCart = async (req, res) => {
     try {
         const userId = req.user?.id;
@@ -42,6 +43,8 @@ const addToCart = async (req, res) => {
             throw new Error("Unauthorized");
         const { productId, quantity } = req.body;
         const item = await cartService.addToCart(userId, productId, quantity);
+        // Clear cart cache after adding item
+        await (0, cache_1.deleteCache)(`cart:${userId}`);
         res.status(201).json(item);
     }
     catch (error) {
@@ -57,6 +60,8 @@ const updateCartItem = async (req, res) => {
         const { productId } = req.body;
         const { quantity } = req.body;
         const item = await cartService.updateCartItem(userId, productId, quantity);
+        // Clear cart cache after updating item
+        await (0, cache_1.deleteCache)(`cart:${userId}`);
         res.json(item);
     }
     catch (error) {
@@ -71,6 +76,8 @@ const removeFromCart = async (req, res) => {
             throw new Error("Unauthorized");
         const { productId } = req.body;
         await cartService.removeFromCart(userId, productId);
+        // Clear cart cache after removing item
+        await (0, cache_1.deleteCache)(`cart:${userId}`);
         res.status(204).send();
     }
     catch (error) {
@@ -84,6 +91,8 @@ const clearCart = async (req, res) => {
         if (!userId)
             throw new Error("Unauthorized");
         await cartService.clearCart(userId);
+        // Clear cart cache after clearing cart
+        await (0, cache_1.deleteCache)(`cart:${userId}`);
         res.status(204).send();
     }
     catch (error) {
@@ -96,8 +105,14 @@ const getCartByBuyerId = async (req, res) => {
         const userId = req.user?.id;
         if (!userId)
             throw new Error("Unauthorized");
+        const cacheKey = `cart:${userId}`;
+        const cachedCart = await (0, cache_1.getCache)(cacheKey);
+        if (cachedCart) {
+            return res.json({ source: "cache", data: cachedCart });
+        }
         const cart = await cartService.getCartByBuyerId(userId);
-        res.json(cart);
+        await (0, cache_1.setCache)(cacheKey, cart);
+        res.json({ source: "db", data: cart });
     }
     catch (error) {
         res.status(404).json({ error: error.message });

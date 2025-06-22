@@ -8,6 +8,22 @@ interface AccountInfoProps {
 }
 
 export default function AccountInfo({ user }: AccountInfoProps) {
+  // Safely format the date
+  const formatDate = (dateString: string) => {
+    if (!dateString) return "Unknown";
+
+    try {
+      return new Date(dateString).toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      });
+    } catch (error) {
+      console.error("Error formatting date:", error);
+      return "Unknown";
+    }
+  };
+
   return (
     <div className="bg-white border border-stone-200 shadow-sm">
       <div className="p-6 border-b border-stone-200">
@@ -23,20 +39,16 @@ export default function AccountInfo({ user }: AccountInfoProps) {
             <label className="block text-sm font-medium text-stone-500 mb-1">
               Member Since
             </label>
-            <p className="text-stone-900">
-              {new Date(user.createdAt).toLocaleDateString("en-US", {
-                year: "numeric",
-                month: "long",
-                day: "numeric",
-              })}
-            </p>
+            <p className="text-stone-900">{formatDate(user.createdAt)}</p>
           </div>
 
           <div>
             <label className="block text-sm font-medium text-stone-500 mb-1">
               Account ID
             </label>
-            <p className="text-stone-900 font-mono text-sm">{user.id}</p>
+            <p className="text-stone-900 font-mono text-sm">
+              {user.id || "Unknown"}
+            </p>
           </div>
 
           <div>
@@ -50,7 +62,7 @@ export default function AccountInfo({ user }: AccountInfoProps) {
             <label className="block text-sm font-medium text-stone-500 mb-1">
               Status
             </label>
-            <span className="inline-block bg-green-100 text-green-800 text-xs px-2 py-1">
+            <span className="inline-block bg-green-100 text-green-800 text-xs px-2 py-1 rounded">
               Active
             </span>
           </div>

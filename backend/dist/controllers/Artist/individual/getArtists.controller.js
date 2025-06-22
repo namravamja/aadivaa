@@ -35,10 +35,17 @@ var __importStar = (this && this.__importStar) || (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getArtists = void 0;
 const artistService = __importStar(require("../../../services/Artist/artist.service"));
+const cache_1 = require("../../../helpers/cache");
 const getArtists = async (_req, res) => {
     try {
+        const cacheKey = "artists:all";
+        const cachedArtists = await (0, cache_1.getCache)(cacheKey);
+        if (cachedArtists) {
+            return res.json({ source: "cache", data: cachedArtists });
+        }
         const artists = await artistService.listArtists();
-        res.json(artists);
+        await (0, cache_1.setCache)(cacheKey, artists);
+        res.json({ source: "db", data: artists });
     }
     catch (error) {
         res.status(500).json({ error: error.message });

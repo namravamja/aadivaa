@@ -6,6 +6,6 @@ interface AuthenticatedRequest extends Request {
     };
 }
 export declare const addToWishlist: (req: AuthenticatedRequest, res: Response) => Promise<void>;
-export declare const getWishlist: (req: AuthenticatedRequest, res: Response) => Promise<void>;
+export declare const getWishlist: (req: AuthenticatedRequest, res: Response) => Promise<Response<any, Record<string, any>> | undefined>;
 export declare const removeFromWishlist: (req: AuthenticatedRequest, res: Response) => Promise<void>;
 export {};

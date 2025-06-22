@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { use } from "react";
@@ -97,27 +98,64 @@ export default function ArtistDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = use(params);
+
   const {
-    data: products,
+    data: productsResponse,
     isLoading: productsLoading,
     error: productsError,
   } = useGetProductByArtistIdQuery(id, {
     refetchOnMountOrArgChange: true,
   });
-  console.log(products);
 
   const {
-    data: artists,
+    data: artistsResponse,
     isLoading: artistsLoading,
     error: artistsError,
   } = useGetartistsQuery(undefined, {
     refetchOnMountOrArgChange: true,
   });
 
+  // Extract products array from the response
+  const products = useMemo(() => {
+    if (!productsResponse) return [];
+
+    // Handle new Redis cache response format: {source: 'cache', data: [...]}
+    if (productsResponse.data && Array.isArray(productsResponse.data)) {
+      return productsResponse.data;
+    }
+
+    // Handle old direct array format: [...]
+    if (Array.isArray(productsResponse)) {
+      return productsResponse;
+    }
+
+    return [];
+  }, [productsResponse]);
+
+  // Extract artists array from the response
+  const artists = useMemo(() => {
+    if (!artistsResponse) return [];
+
+    // Handle new Redis cache response format: {source: 'cache', data: [...]}
+    if (artistsResponse.data && Array.isArray(artistsResponse.data)) {
+      return artistsResponse.data;
+    }
+
+    // Handle old direct array format: [...]
+    if (Array.isArray(artistsResponse)) {
+      return artistsResponse;
+    }
+
+    return [];
+  }, [artistsResponse]);
+
   // Find the specific artist
   const artist = artists?.find((a: ProfileData) => a.id === id);
 
-  console.log(artist);
+  console.log("Products Response:", productsResponse);
+  console.log("Extracted Products:", products);
+  console.log("Artists Response:", artistsResponse);
+  console.log("Found Artist:", artist);
 
   if (artistsLoading) {
     return (

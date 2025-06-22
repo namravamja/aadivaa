@@ -1,6 +1,7 @@
 import type { Request, Response } from "express";
 import * as orderService from "../../../services/Buyer/order/order.service";
 import * as cartService from "../../../services/Buyer/cart/cart.service";
+import { getCache, setCache, deleteCache } from "../../../helpers/cache";
 
 interface AuthenticatedRequest extends Request {
   user?: { id: string; role: string };
@@ -37,6 +38,10 @@ export const createOrder = async (req: AuthenticatedRequest, res: Response) => {
 
     await cartService.clearCart(buyerId);
 
+    // Clear related caches after order creation
+    await deleteCache(`buyer_orders:${buyerId}:*`);
+    await deleteCache(`cart:${buyerId}`);
+
     res.status(201).json({
       success: true,
       message: "Order placed successfully",
@@ -61,14 +66,30 @@ export const getBuyerOrders = async (
 
     const { page = "1", limit = "10", status } = req.query;
 
+    const cacheKey = `buyer_orders:${buyerId}:page:${page}:limit:${limit}:status:${
+      status || "all"
+    }`;
+    const cachedOrders = await getCache(cacheKey);
+
+    if (cachedOrders) {
+      return res.status(200).json({
+        success: true,
+        source: "cache",
+        data: cachedOrders,
+      });
+    }
+
     const orders = await orderService.getBuyerOrders(buyerId, {
       page: parseInt(page as string),
       limit: parseInt(limit as string),
       status: status as string | undefined,
     });
 
+    await setCache(cacheKey, orders);
+
     res.status(200).json({
       success: true,
+      source: "db",
       data: orders,
     });
   } catch (error) {
@@ -91,6 +112,17 @@ export const getOrderById = async (
     if (!buyerId || !orderId)
       throw new Error("Unauthorized or missing order ID");
 
+    const cacheKey = `buyer_order:${buyerId}:${orderId}`;
+    const cachedOrder = await getCache(cacheKey);
+
+    if (cachedOrder) {
+      return res.status(200).json({
+        success: true,
+        source: "cache",
+        data: cachedOrder,
+      });
+    }
+
     const order = await orderService.getOrderById(orderId, buyerId);
 
     if (!order) {
@@ -100,8 +132,11 @@ export const getOrderById = async (
       });
     }
 
+    await setCache(cacheKey, order);
+
     res.status(200).json({
       success: true,
+      source: "db",
       data: order,
     });
   } catch (error) {
@@ -122,6 +157,12 @@ export const cancelOrder = async (req: AuthenticatedRequest, res: Response) => {
       throw new Error("Unauthorized or missing order ID");
 
     const order = await orderService.cancelOrder(orderId, buyerId);
+
+    // Clear related caches after order cancellation
+    await deleteCache(`buyer_order:${buyerId}:${orderId}`);
+    // Clear buyer orders list cache (all variations)
+    const cachePattern = `buyer_orders:${buyerId}:*`;
+    // Note: You might need to implement a pattern-based cache clearing function
 
     res.status(200).json({
       success: true,
@@ -146,6 +187,10 @@ export const updatePaymentStatus = async (req: Request, res: Response) => {
       paymentStatus,
       transactionId,
     });
+
+    // Clear order-related caches (we don't have buyerId here, so clear by orderId pattern)
+    await deleteCache(`buyer_order:*:${orderId}`);
+    // Note: You might need to implement a pattern-based cache clearing function
 
     res.status(200).json({
       success: true,

@@ -35,9 +35,12 @@ var __importStar = (this && this.__importStar) || (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getBuyers = exports.deleteBuyer = exports.updateBuyer = exports.getBuyer = exports.createBuyer = void 0;
 const buyerService = __importStar(require("../../services/Buyer/buyer.service"));
+const cache_1 = require("../../helpers/cache");
 const createBuyer = async (req, res) => {
     try {
         const buyer = await buyerService.createBuyer(req.body);
+        // Clear buyers list cache after creating new buyer
+        await (0, cache_1.deleteCache)(`buyers:all`);
         res.status(201).json(buyer);
     }
     catch (error) {
@@ -50,8 +53,14 @@ const getBuyer = async (req, res) => {
         const userId = req.user?.id;
         if (!userId)
             throw new Error("Unauthorized controller");
+        const cacheKey = `buyer:${userId}`;
+        const cachedBuyer = await (0, cache_1.getCache)(cacheKey);
+        if (cachedBuyer) {
+            return res.json({ source: "cache", data: cachedBuyer });
+        }
         const buyer = await buyerService.getBuyerById(userId);
-        res.json(buyer);
+        await (0, cache_1.setCache)(cacheKey, buyer);
+        res.json({ source: "db", data: buyer });
     }
     catch (error) {
         res.status(404).json({ error: error.message });
@@ -70,6 +79,9 @@ const updateBuyer = async (req, res) => {
             updateData.avatar = req.file.path; // Cloudinary URL is stored in file.path
         }
         const buyer = await buyerService.updateBuyer(userId, updateData);
+        // Clear related caches after updating buyer
+        await (0, cache_1.deleteCache)(`buyer:${userId}`);
+        await (0, cache_1.deleteCache)(`buyers:all`);
         res.json(buyer);
     }
     catch (error) {
@@ -83,6 +95,9 @@ const deleteBuyer = async (req, res) => {
         if (!userId)
             throw new Error("Unauthorized");
         const result = await buyerService.deleteBuyer(userId);
+        // Clear related caches after deleting buyer
+        await (0, cache_1.deleteCache)(`buyer:${userId}`);
+        await (0, cache_1.deleteCache)(`buyers:all`);
         res.json(result);
     }
     catch (error) {
@@ -92,8 +107,14 @@ const deleteBuyer = async (req, res) => {
 exports.deleteBuyer = deleteBuyer;
 const getBuyers = async (_req, res) => {
     try {
+        const cacheKey = `buyers:all`;
+        const cachedBuyers = await (0, cache_1.getCache)(cacheKey);
+        if (cachedBuyers) {
+            return res.json({ source: "cache", data: cachedBuyers });
+        }
         const buyers = await buyerService.listBuyers();
-        res.json(buyers);
+        await (0, cache_1.setCache)(cacheKey, buyers);
+        res.json({ source: "db", data: buyers });
     }
     catch (error) {
         res.status(500).json({ error: error.message });

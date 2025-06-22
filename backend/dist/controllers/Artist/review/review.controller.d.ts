@@ -6,6 +6,6 @@ export interface AuthenticatedRequest extends Request {
     };
     body: any;
 }
-export declare const getReviewsByArtist: (req: AuthenticatedRequest, res: Response) => Promise<void>;
+export declare const getReviewsByArtist: (req: AuthenticatedRequest, res: Response) => Promise<Response<any, Record<string, any>> | undefined>;
 export declare const updateReviewVerificationStatus: (req: AuthenticatedRequest, res: Response) => Promise<void>;
 export declare const deleteReviewByArtist: (req: AuthenticatedRequest, res: Response) => Promise<void>;

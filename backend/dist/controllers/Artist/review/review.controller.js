@@ -2,6 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.deleteReviewByArtist = exports.updateReviewVerificationStatus = exports.getReviewsByArtist = void 0;
 const client_1 = require("@prisma/client");
+const cache_1 = require("../../../helpers/cache");
 const prisma = new client_1.PrismaClient();
 // Get all reviews written on products of the authenticated artist
 const getReviewsByArtist = async (req, res) => {
@@ -9,6 +10,11 @@ const getReviewsByArtist = async (req, res) => {
         const artistId = req.user?.id;
         if (!artistId)
             throw new Error("Unauthorized");
+        const cacheKey = `reviews:artist:${artistId}`;
+        const cachedReviews = await (0, cache_1.getCache)(cacheKey);
+        if (cachedReviews) {
+            return res.json({ source: "cache", data: cachedReviews });
+        }
         const reviews = await prisma.review.findMany({
             where: { artistId },
             include: {
@@ -31,7 +37,8 @@ const getReviewsByArtist = async (req, res) => {
                 date: "desc",
             },
         });
-        res.json(reviews);
+        await (0, cache_1.setCache)(cacheKey, reviews);
+        res.json({ source: "db", data: reviews });
     }
     catch (error) {
         res.status(400).json({ error: error.message });
@@ -54,6 +61,9 @@ const updateReviewVerificationStatus = async (req, res) => {
             where: { id: reviewId },
             data: { verified },
         });
+        // Clear related caches
+        await (0, cache_1.deleteCache)(`reviews:artist:${artistId}`);
+        await (0, cache_1.deleteCache)(`review:${reviewId}`);
         res.json(updated);
     }
     catch (error) {
@@ -75,6 +85,9 @@ const deleteReviewByArtist = async (req, res) => {
         await prisma.review.delete({
             where: { id: reviewId },
         });
+        // Clear related caches
+        await (0, cache_1.deleteCache)(`reviews:artist:${artistId}`);
+        await (0, cache_1.deleteCache)(`review:${reviewId}`);
         res.status(204).send();
     }
     catch (error) {

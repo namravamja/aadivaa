@@ -1,9 +1,10 @@
 "use client";
 
+import { useMemo } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
-import { useGetartistsQuery } from "@/services/api/artistApi"; // Adjust import path as needed
+import { useGetartistsQuery } from "@/services/api/artistApi";
 
 interface ArtistData {
   id: string;
@@ -33,12 +34,29 @@ interface ArtistData {
 
 export default function ArtistSpotlight() {
   const {
-    data: artists,
+    data: artistsResponse,
     isLoading,
     error,
   } = useGetartistsQuery(undefined, {
     refetchOnMountOrArgChange: true,
   });
+
+  // Extract artists array from the response, handling both old and new API response formats
+  const artists = useMemo(() => {
+    if (!artistsResponse) return [];
+
+    // Handle new Redis cache response format: {source: 'cache', data: [...]}
+    if (artistsResponse.data && Array.isArray(artistsResponse.data)) {
+      return artistsResponse.data;
+    }
+
+    // Handle old direct array format: [...]
+    if (Array.isArray(artistsResponse)) {
+      return artistsResponse;
+    }
+
+    return [];
+  }, [artistsResponse]);
 
   if (isLoading) {
     return (

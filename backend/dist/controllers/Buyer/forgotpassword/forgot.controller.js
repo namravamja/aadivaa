@@ -35,13 +35,24 @@ var __importStar = (this && this.__importStar) || (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.verifyResetToken = exports.resetPassword = exports.forgotPassword = void 0;
 const forgotService = __importStar(require("../../../services/Buyer/forgotpassword/forgot.service"));
+const cache_1 = require("../../../helpers/cache");
 const forgotPassword = async (req, res) => {
     try {
         const { email } = req.body;
         if (!email) {
             return res.status(400).json({ error: "Email is required" });
         }
+        // Check if email has recent forgot password request (rate limiting)
+        const rateLimitKey = `forgot_password_rate:${email}`;
+        const recentRequest = await (0, cache_1.getCache)(rateLimitKey);
+        if (recentRequest) {
+            return res.status(429).json({
+                error: "Please wait before requesting another password reset",
+            });
+        }
         const result = await forgotService.forgotPassword(email);
+        // Set rate limiting cache (5 minutes)
+        await (0, cache_1.setCache)(rateLimitKey, true, 300);
         res.status(200).json(result);
     }
     catch (error) {
@@ -61,6 +72,8 @@ const resetPassword = async (req, res) => {
                 .json({ error: "Password must be at least 6 characters" });
         }
         const result = await forgotService.resetPassword(token, password);
+        // Clear token verification cache after successful reset
+        await (0, cache_1.deleteCache)(`reset_token:${token}`);
         res.status(200).json(result);
     }
     catch (error) {
@@ -71,8 +84,15 @@ exports.resetPassword = resetPassword;
 const verifyResetToken = async (req, res) => {
     try {
         const { token } = req.params;
+        const cacheKey = `reset_token:${token}`;
+        const cachedResult = await (0, cache_1.getCache)(cacheKey);
+        if (cachedResult) {
+            return res.status(200).json({ source: "cache", data: cachedResult });
+        }
         const result = await forgotService.verifyResetToken(token);
-        res.status(200).json(result);
+        // Cache token verification result for 10 minutes
+        await (0, cache_1.setCache)(cacheKey, result, 600);
+        res.status(200).json({ source: "db", data: result });
     }
     catch (error) {
         res.status(400).json({ error: error.message });

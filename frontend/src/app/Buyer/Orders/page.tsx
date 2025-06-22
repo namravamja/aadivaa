@@ -61,9 +61,30 @@ export default function BuyerOrdersPage() {
     }
   );
 
-  // Extract orders and pagination from the response
-  const orders = ordersResponse?.data?.orders || [];
-  const pagination = ordersResponse?.data?.pagination;
+  // Extract orders and pagination from cache response
+  const extractedData = useMemo(() => {
+    if (!ordersResponse) return { orders: [], pagination: null };
+
+    // Handle new cache format: {source: 'cache'|'db', data: {orders: [...], pagination: {...}}}
+    if (
+      ordersResponse &&
+      typeof ordersResponse === "object" &&
+      "data" in ordersResponse
+    ) {
+      return {
+        orders: ordersResponse.data?.orders || [],
+        pagination: ordersResponse.data?.pagination || null,
+      };
+    }
+
+    // Handle old direct format: {orders: [...], pagination: {...}}
+    return {
+      orders: ordersResponse?.orders || [],
+      pagination: ordersResponse?.pagination || null,
+    };
+  }, [ordersResponse]);
+
+  const { orders, pagination } = extractedData;
 
   // Filter orders based on search term and date
   const filteredOrders = useMemo(() => {
@@ -74,10 +95,10 @@ export default function BuyerOrdersPage() {
       filtered = filtered.filter(
         (order: any) =>
           order.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          order.orderItems.some(
+          order.orderItems?.some(
             (item: any) =>
-              item.product.productName
-                .toLowerCase()
+              item.product?.productName
+                ?.toLowerCase()
                 .includes(searchTerm.toLowerCase()) ||
               (item.artist?.fullName &&
                 item.artist.fullName
@@ -367,7 +388,9 @@ export default function BuyerOrdersPage() {
                       >
                         <div className="relative w-16 h-16 flex-shrink-0">
                           <Image
-                            src={item.product?.productImages?.[0]}
+                            src={
+                              item.product?.productImages?.[0] || "/Profile.jpg"
+                            }
                             alt={item.product?.productName || "Product"}
                             fill
                             className="object-cover rounded"

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import {
   Search,
@@ -14,113 +14,102 @@ import {
   Loader2,
   User,
 } from "lucide-react";
-import { useGetArtistOrdersQuery } from "@/services/api/artistOrderApi"; // Update with your actual API slice import
+import { useGetArtistOrdersQuery } from "@/services/api/artistOrderApi";
 import { useAuth } from "@/hooks/useAuth";
 import { useAuthModal } from "@/app/(auth)/components/auth-modal-provider";
 
-// Updated interfaces to match API response
+// Safe data access utilities
+const safeArray = <T,>(value: T[] | undefined | null): T[] => {
+  return Array.isArray(value) ? value : [];
+};
+
+const safeString = (value: any): string => {
+  return value ? String(value) : "";
+};
+
+const safeNumber = (value: any): number => {
+  const num = Number(value);
+  return isNaN(num) ? 0 : num;
+};
+
+// Updated interfaces to match API response with optional properties
 export interface ApiOrderItem {
-  id: string;
-  orderId: string;
-  productId: string;
-  quantity: number;
-  priceAtPurchase: number;
-  artistId: string;
-  product: {
-    id: string;
-    productName: string;
-    category: string;
-    productImages: string[];
-    skuCode: string;
+  id?: string;
+  orderId?: string;
+  productId?: string;
+  quantity?: number;
+  priceAtPurchase?: number;
+  artistId?: string;
+  product?: {
+    id?: string;
+    productName?: string;
+    category?: string;
+    productImages?: string[];
+    skuCode?: string;
   };
+}
+
+export interface ApiBuyer {
+  id?: string;
+  email?: string;
+  firstName?: string;
+  lastName?: string;
+  phone?: string | null;
+}
+
+export interface ApiShippingAddress {
+  id?: number;
+  firstName?: string;
+  lastName?: string;
+  company?: string;
+  street?: string;
+  apartment?: string;
+  city?: string;
+  state?: string;
+  postalCode?: string;
+  country?: string;
+  phone?: string;
+  userId?: string;
+  isDefault?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface ApiOrder {
-  id: string;
-  buyerId: string;
-  totalAmount: number;
-  status: "pending" | "confirmed" | "shipped" | "delivered" | "cancelled";
-  shippingAddressId: number;
-  paymentMethod: string;
-  paymentStatus: "paid" | "unpaid" | "failed";
-  placedAt: string;
-  updatedAt: string;
-  buyer: {
-    id: string;
-    email: string;
-    firstName: string;
-    lastName: string;
-    phone: string | null;
-  };
-  orderItems: ApiOrderItem[];
-  shippingAddress: {
-    id: number;
-    firstName: string;
-    lastName: string;
-    company: string;
-    street: string;
-    apartment: string;
-    city: string;
-    state: string;
-    postalCode: string;
-    country: string;
-    phone: string;
-    userId: string;
-    isDefault: boolean;
-    createdAt: string;
-    updatedAt: string;
-  };
+  id?: string;
+  buyerId?: string;
+  totalAmount?: number;
+  status?: "pending" | "confirmed" | "shipped" | "delivered" | "cancelled";
+  shippingAddressId?: number;
+  paymentMethod?: string;
+  paymentStatus?: "paid" | "unpaid" | "failed";
+  placedAt?: string;
+  updatedAt?: string;
+  buyer?: ApiBuyer;
+  orderItems?: ApiOrderItem[];
+  shippingAddress?: ApiShippingAddress;
 }
 
-export interface ApiResponse {
-  success: boolean;
-  data: {
-    orders: ApiOrder[];
-    pagination: {
-      currentPage: number;
-      totalPages: number;
-      totalCount: number;
-      hasNextPage: boolean;
-      hasPreviousPage: boolean;
-    };
-  };
+export interface ApiPagination {
+  currentPage?: number;
+  totalPages?: number;
+  totalCount?: number;
+  hasNextPage?: boolean;
+  hasPreviousPage?: boolean;
 }
 
-// Transform API order to component order format
-const transformApiOrderToOrder = (apiOrder: ApiOrder): Order => {
-  return {
-    id: apiOrder.id,
-    orderNumber: `ORD-${apiOrder.id.slice(0, 8).toUpperCase()}`,
-    date: apiOrder.placedAt,
-    status: apiOrder.status,
-    total: apiOrder.totalAmount,
-    items: apiOrder.orderItems.map((item) => ({
-      id: item.id,
-      name: item.product.productName,
-      image: item.product.productImages[0] || "/Profile.jpg?height=80&width=80",
-      price: item.priceAtPurchase,
-      quantity: item.quantity,
-      sku: item.product.skuCode,
-    })),
-    shippingAddress: {
-      name: `${apiOrder.shippingAddress.firstName} ${apiOrder.shippingAddress.lastName}`,
-      street:
-        `${apiOrder.shippingAddress.street} ${apiOrder.shippingAddress.apartment}`.trim(),
-      city: apiOrder.shippingAddress.city,
-      state: apiOrder.shippingAddress.state,
-      pinCode: apiOrder.shippingAddress.postalCode,
-      phone: apiOrder.shippingAddress.phone,
-    },
-    paymentMethod:
-      apiOrder.paymentMethod === "card"
-        ? "Credit Card"
-        : apiOrder.paymentMethod.toUpperCase(),
-    trackingNumber: undefined, // Add if available in your API
-    estimatedDelivery: undefined, // Add if available in your API
-  };
-};
+export interface ApiOrdersData {
+  orders?: ApiOrder[];
+  pagination?: ApiPagination;
+}
 
-// Original Order interface for component compatibility
+export interface ApiOrdersResponse {
+  success?: boolean;
+  data?: ApiOrdersData;
+  source?: string;
+}
+
+// Component interfaces
 export interface OrderItem {
   id: string;
   name: string;
@@ -150,6 +139,47 @@ export interface Order {
   estimatedDelivery?: string;
 }
 
+// Transform API order to component order format
+const transformApiOrderToOrder = (apiOrder: ApiOrder): Order => {
+  const orderItems = safeArray(apiOrder.orderItems);
+
+  return {
+    id: safeString(apiOrder.id),
+    orderNumber: `ORD-${safeString(apiOrder.id).slice(0, 8).toUpperCase()}`,
+    date: safeString(apiOrder.placedAt),
+    status: (apiOrder.status as Order["status"]) || "pending",
+    total: safeNumber(apiOrder.totalAmount),
+    items: orderItems.map((item, index) => ({
+      id: safeString(item.id || `item-${index}`),
+      name: safeString(item.product?.productName || "Unknown Product"),
+      image: safeString(item.product?.productImages?.[0] || "/Profile.jpg"),
+      price: safeNumber(item.priceAtPurchase),
+      quantity: safeNumber(item.quantity || 1),
+      sku: safeString(item.product?.skuCode || "N/A"),
+    })),
+    shippingAddress: {
+      name:
+        `${safeString(apiOrder.shippingAddress?.firstName)} ${safeString(
+          apiOrder.shippingAddress?.lastName
+        )}`.trim() || "N/A",
+      street:
+        `${safeString(apiOrder.shippingAddress?.street)} ${safeString(
+          apiOrder.shippingAddress?.apartment
+        )}`.trim() || "N/A",
+      city: safeString(apiOrder.shippingAddress?.city || "N/A"),
+      state: safeString(apiOrder.shippingAddress?.state || "N/A"),
+      pinCode: safeString(apiOrder.shippingAddress?.postalCode || "N/A"),
+      phone: safeString(apiOrder.shippingAddress?.phone || "N/A"),
+    },
+    paymentMethod:
+      apiOrder.paymentMethod === "card"
+        ? "Credit Card"
+        : safeString(apiOrder.paymentMethod || "N/A").toUpperCase(),
+    trackingNumber: undefined,
+    estimatedDelivery: undefined,
+  };
+};
+
 export default function OrdersPage() {
   const router = useRouter();
   const [searchTerm, setSearchTerm] = useState("");
@@ -176,6 +206,38 @@ export default function OrdersPage() {
       skip: !isAuthenticated,
     }
   );
+
+  // Extract orders data from cache response format using useMemo
+  const ordersData = useMemo(() => {
+    if (!apiResponse) return null;
+
+    console.log("Raw orders response:", apiResponse);
+
+    // Handle cache response format: {source: 'cache', data: {...}}
+    if (apiResponse.source && apiResponse.data) {
+      return apiResponse.data as ApiOrdersData;
+    }
+
+    // Handle direct object format as fallback
+    if (
+      typeof apiResponse === "object" &&
+      !Array.isArray(apiResponse) &&
+      apiResponse.data
+    ) {
+      return apiResponse.data as ApiOrdersData;
+    }
+
+    // Handle direct data format
+    if (
+      typeof apiResponse === "object" &&
+      !Array.isArray(apiResponse) &&
+      apiResponse.orders
+    ) {
+      return apiResponse as ApiOrdersData;
+    }
+
+    return null;
+  }, [apiResponse]);
 
   const getStatusIcon = (status: Order["status"]) => {
     switch (status) {
@@ -212,7 +274,9 @@ export default function OrdersPage() {
   };
 
   const handleViewDetails = (orderId: string) => {
-    router.push(`/Artist/Orders/${orderId}`);
+    if (orderId) {
+      router.push(`/Artist/Orders/${orderId}`);
+    }
   };
 
   // Show login prompt if not authenticated
@@ -238,10 +302,63 @@ export default function OrdersPage() {
     );
   }
 
+  // Loading state
+  if (authLoading || isLoading) {
+    return (
+      <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8 max-w-6xl">
+        <div className="text-center py-12">
+          <Loader2 className="w-8 h-8 text-terracotta-600 mx-auto mb-4 animate-spin" />
+          <p className="text-stone-600">Loading your orders...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (isError) {
+    console.error("Orders loading error:", error);
+    return (
+      <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8 max-w-6xl">
+        <div className="text-center py-12">
+          <XCircle className="w-16 h-16 text-red-400 mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-stone-900 mb-2">
+            Error loading orders
+          </h3>
+          <p className="text-stone-600 mb-4">
+            {error && typeof error === "object" && "message" in error
+              ? String(error.message)
+              : "Something went wrong while fetching your orders"}
+          </p>
+          <button
+            onClick={() => window.location.reload()}
+            className="bg-terracotta-500 hover:bg-terracotta-600 text-white px-4 py-2 rounded transition-colors cursor-pointer"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // No data state
+  if (!ordersData) {
+    return (
+      <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8 max-w-6xl">
+        <div className="text-center py-12">
+          <Package className="w-16 h-16 text-stone-300 mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-stone-900 mb-2">
+            No data available
+          </h3>
+          <p className="text-stone-600">Unable to load orders data</p>
+        </div>
+      </div>
+    );
+  }
+
   // Transform API orders to component format
-  const orders: Order[] = apiResponse?.data?.orders
-    ? apiResponse.data.orders.map(transformApiOrderToOrder)
-    : [];
+  const orders: Order[] = safeArray(ordersData.orders).map(
+    transformApiOrderToOrder
+  );
 
   // Client-side filtering for search (since API doesn't support search)
   const filteredOrders = orders.filter((order) => {
@@ -254,34 +371,8 @@ export default function OrdersPage() {
     return matchesSearch;
   });
 
-  if (authLoading || isLoading) {
-    return (
-      <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8 max-w-6xl">
-        <div className="text-center py-12">
-          <Loader2 className="w-8 h-8 text-terracotta-600 mx-auto mb-4 animate-spin" />
-          <p className="text-stone-600">Loading your orders...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (isError) {
-    return (
-      <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8 max-w-6xl">
-        <div className="text-center py-12">
-          <XCircle className="w-16 h-16 text-red-400 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-stone-900 mb-2">
-            Error loading orders
-          </h3>
-          <p className="text-stone-600">
-            {error && "data" in error
-              ? JSON.stringify(error.data)
-              : "Something went wrong while fetching your orders"}
-          </p>
-        </div>
-      </div>
-    );
-  }
+  console.log("Final orders data:", ordersData);
+  console.log("Transformed orders:", orders);
 
   return (
     <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8 max-w-6xl">
@@ -315,7 +406,7 @@ export default function OrdersPage() {
               setStatusFilter(e.target.value);
               setCurrentPage(1); // Reset to first page when filter changes
             }}
-            className="pl-10 pr-8 py-2 border border-stone-300 rounded-md focus:border-terracotta-500 focus:outline-none focus:ring-1 focus:ring-terracotta-500 bg-white"
+            className="pl-10 pr-8 py-2 border border-stone-300 rounded-md focus:border-terracotta-500 focus:outline-none focus:ring-1 focus:ring-terracotta-500 bg-white cursor-pointer"
           >
             <option value="all">All Orders</option>
             <option value="pending">Pending</option>
@@ -338,7 +429,7 @@ export default function OrdersPage() {
             <p className="text-stone-600">
               {searchTerm || statusFilter !== "all"
                 ? "Try adjusting your search or filter criteria"
-                : "You haven't placed any orders yet"}
+                : "You haven't received any orders yet"}
             </p>
           </div>
         ) : (
@@ -367,10 +458,13 @@ export default function OrdersPage() {
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-sm text-stone-600 mb-4">
                     <div>
                       <span className="font-medium">Order Date:</span>{" "}
-                      {new Date(order.date).toLocaleDateString()}
+                      {order.date
+                        ? new Date(order.date).toLocaleDateString()
+                        : "N/A"}
                     </div>
                     <div>
-                      <span className="font-medium">Total:</span> ₹{order.total}
+                      <span className="font-medium">Total:</span> ₹
+                      {order.total.toFixed(2)}
                     </div>
                     <div>
                       <span className="font-medium">Items:</span>{" "}
@@ -383,15 +477,17 @@ export default function OrdersPage() {
                   <div className="flex flex-wrap gap-2">
                     {order.items.slice(0, 3).map((item, index) => (
                       <div
-                        key={item.id}
+                        key={item.id || index}
                         className="flex items-center bg-stone-50 rounded-md px-2 py-1"
                       >
                         <img
-                          src={
-                            item.image || "/Profile.jpg" || "/placeholder.svg"
-                          }
+                          src={item.image || "/Profile.jpg"}
                           alt={item.name}
                           className="w-6 h-6 object-cover rounded mr-2"
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement;
+                            target.src = "/Profile.jpg";
+                          }}
                         />
                         <span className="text-xs text-stone-700 truncate max-w-[120px]">
                           {item.name}
@@ -424,7 +520,7 @@ export default function OrdersPage() {
                   </button>
 
                   {order.trackingNumber && (
-                    <button className="px-4 py-2 border border-stone-300 text-stone-700 rounded-md hover:bg-stone-50 transition-colors flex items-center justify-center text-sm">
+                    <button className="px-4 py-2 border border-stone-300 text-stone-700 rounded-md hover:bg-stone-50 transition-colors flex items-center justify-center text-sm cursor-pointer">
                       <Truck className="w-4 h-4 mr-2" />
                       Track Order
                     </button>
@@ -437,26 +533,27 @@ export default function OrdersPage() {
       </div>
 
       {/* Pagination */}
-      {apiResponse?.data?.pagination &&
-        apiResponse.data.pagination.totalPages > 1 && (
+      {ordersData.pagination &&
+        ordersData.pagination.totalPages &&
+        ordersData.pagination.totalPages > 1 && (
           <div className="flex justify-center items-center gap-4 mt-8">
             <button
               onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
-              disabled={!apiResponse.data.pagination.hasPreviousPage}
-              className="px-4 py-2 border border-stone-300 text-stone-700 rounded-md hover:bg-stone-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={!ordersData.pagination.hasPreviousPage}
+              className="px-4 py-2 border border-stone-300 text-stone-700 rounded-md hover:bg-stone-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
             >
               Previous
             </button>
 
             <span className="text-sm text-stone-600">
-              Page {apiResponse.data.pagination.currentPage} of{" "}
-              {apiResponse.data.pagination.totalPages}
+              Page {ordersData.pagination.currentPage || 1} of{" "}
+              {ordersData.pagination.totalPages || 1}
             </span>
 
             <button
               onClick={() => setCurrentPage((prev) => prev + 1)}
-              disabled={!apiResponse.data.pagination.hasNextPage}
-              className="px-4 py-2 border border-stone-300 text-stone-700 rounded-md hover:bg-stone-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={!ordersData.pagination.hasNextPage}
+              className="px-4 py-2 border border-stone-300 text-stone-700 rounded-md hover:bg-stone-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
             >
               Next
             </button>

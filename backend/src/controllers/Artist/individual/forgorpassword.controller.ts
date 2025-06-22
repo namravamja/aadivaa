@@ -1,7 +1,6 @@
 import { Request, Response } from "express";
 import * as forgotmailService from "../../../services/Artist/artist.service";
-
-// Add these to your existing artist controller
+import { deleteCache } from "../../../helpers/cache";
 
 export const forgotPassword = async (req: Request, res: Response) => {
   try {
@@ -12,6 +11,10 @@ export const forgotPassword = async (req: Request, res: Response) => {
     }
 
     const result = await forgotmailService.forgotPassword(email);
+
+    // Optional: Invalidate token if already exists
+    await deleteCache(`resetToken:${email}`);
+
     res.status(200).json(result);
   } catch (error) {
     res.status(400).json({ error: (error as Error).message });
@@ -33,6 +36,10 @@ export const resetPassword = async (req: Request, res: Response) => {
     }
 
     const result = await forgotmailService.resetPassword(token, password);
+
+    // Optional: Delete the used token
+    await deleteCache(`resetToken:${token}`);
+
     res.status(200).json(result);
   } catch (error) {
     res.status(400).json({ error: (error as Error).message });
@@ -42,7 +49,9 @@ export const resetPassword = async (req: Request, res: Response) => {
 export const verifyResetToken = async (req: Request, res: Response) => {
   try {
     const { token } = req.params;
+
     const result = await forgotmailService.verifyResetToken(token);
+
     res.status(200).json(result);
   } catch (error) {
     res.status(400).json({ error: (error as Error).message });

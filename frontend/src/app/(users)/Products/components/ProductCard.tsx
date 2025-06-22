@@ -1,7 +1,7 @@
 "use client";
 
 import type React from "react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Heart, Plus, Check, ShoppingBag, Share2 } from "lucide-react";
@@ -37,14 +37,12 @@ export default function ProductCard({ product }: ProductCardProps) {
   const { isAuthenticated, isLoading: authLoading } = useSimpleAuth();
   const { openBuyerLogin } = useAuthModal();
 
-  const { data: wishlistData, refetch: refetchWishlist } = useGetWishlistQuery(
-    undefined,
-    {
+  const { data: wishlistResponse, refetch: refetchWishlist } =
+    useGetWishlistQuery(undefined, {
       skip: !isAuthenticated,
       refetchOnFocus: true,
       refetchOnReconnect: true,
-    }
-  );
+    });
 
   const { refetch: refetchCart } = useGetCartQuery(undefined, {
     skip: !isAuthenticated,
@@ -55,6 +53,23 @@ export default function ProductCard({ product }: ProductCardProps) {
   const [addToWishlist] = useAddToWishlistMutation();
   const [removeFromWishlist] = useRemoveFromWishlistMutation();
   const [addToCart, { isLoading: isAddingToCart }] = useAddToCartMutation();
+
+  // Extract wishlist data from cache response
+  const wishlistData = useMemo(() => {
+    if (!wishlistResponse) return [];
+
+    // Handle new cache format: {source: 'cache'|'db', data: [...]}
+    if (
+      wishlistResponse &&
+      typeof wishlistResponse === "object" &&
+      "data" in wishlistResponse
+    ) {
+      return Array.isArray(wishlistResponse.data) ? wishlistResponse.data : [];
+    }
+
+    // Handle old direct format
+    return Array.isArray(wishlistResponse) ? wishlistResponse : [];
+  }, [wishlistResponse]);
 
   useEffect(() => {
     if (wishlistData && isAuthenticated) {

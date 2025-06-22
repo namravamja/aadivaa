@@ -35,9 +35,12 @@ var __importStar = (this && this.__importStar) || (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.createArtist = void 0;
 const artistService = __importStar(require("../../../services/Artist/artist.service"));
+const cache_1 = require("../../../helpers/cache");
 const createArtist = async (req, res) => {
     try {
         const artist = await artistService.createArtist(req.body);
+        // Invalidate artist-related cache keys
+        await (0, cache_1.deleteCache)("artists:all");
         res.status(201).json(artist);
     }
     catch (error) {

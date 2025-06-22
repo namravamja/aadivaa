@@ -5,10 +5,10 @@ import { uploadProductImages } from "../../../middleware/multer";
 
 const router = express.Router();
 
-router.get("/list", productController.getAllProducts);
+router.get("/list", productController.getAllProducts as any);
 router.get(
   "/listByArtistId/:artistId",
-  productController.getProductsByArtistId
+  productController.getProductsByArtistId as any
 );
 
 // Product routes
@@ -35,7 +35,7 @@ router.delete(
   productController.deleteProduct as any
 );
 
-router.get("/:productId", productController.getProductById);
+router.get("/:productId", productController.getProductById as any);
 
 router.patch(
   "/updateStock",

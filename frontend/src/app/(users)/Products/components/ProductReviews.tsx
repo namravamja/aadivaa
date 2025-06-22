@@ -2,7 +2,7 @@
 
 import type React from "react";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import {
   useAddReviewMutation,
   useUpdateReviewMutation,
@@ -190,7 +190,7 @@ export default function ProductReviews({ productId }: ProductReviewsProps) {
 
   // RTK Query hooks
   const {
-    data: reviews = [],
+    data: reviewsResponse,
     isLoading,
     error,
     refetch,
@@ -200,6 +200,23 @@ export default function ProductReviews({ productId }: ProductReviewsProps) {
   const [addReview, { isLoading: isAdding }] = useAddReviewMutation();
   const [updateReview, { isLoading: isUpdating }] = useUpdateReviewMutation();
   const [deleteReview, { isLoading: isDeleting }] = useDeleteReviewMutation();
+
+  // Extract reviews array from the response, handling both old and new API response formats
+  const reviews = useMemo(() => {
+    if (!reviewsResponse) return [];
+
+    // Handle new Redis cache response format: {source: 'cache', data: [...]}
+    if (reviewsResponse.data && Array.isArray(reviewsResponse.data)) {
+      return reviewsResponse.data;
+    }
+
+    // Handle old direct array format: [...]
+    if (Array.isArray(reviewsResponse)) {
+      return reviewsResponse;
+    }
+
+    return [];
+  }, [reviewsResponse]);
 
   // Calculate average rating
   const averageRating =

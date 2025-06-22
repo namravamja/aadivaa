@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { ShoppingBag, Check } from "lucide-react";
 import toast from "react-hot-toast";
 import { useAddToCartMutation, useGetCartQuery } from "@/services/api/cartApi";
@@ -23,13 +23,33 @@ export default function AddToCartButton({
   const { isAuthenticated, isLoading: authLoading } = useSimpleAuth();
   const { openBuyerLogin } = useAuthModal();
 
-  const { refetch: refetchCart } = useGetCartQuery(undefined, {
-    skip: !isAuthenticated,
-    refetchOnFocus: true,
-    refetchOnReconnect: true,
-  });
+  const { data: cartResponse, refetch: refetchCart } = useGetCartQuery(
+    undefined,
+    {
+      skip: !isAuthenticated,
+      refetchOnFocus: true,
+      refetchOnReconnect: true,
+    }
+  );
 
   const [addToCart, { isLoading: isAdding }] = useAddToCartMutation();
+
+  // Extract cart data from cache response (for consistency, though not used in this component)
+  const cartData = useMemo(() => {
+    if (!cartResponse) return [];
+
+    // Handle new cache format: {source: 'cache'|'db', data: [...]}
+    if (
+      cartResponse &&
+      typeof cartResponse === "object" &&
+      "data" in cartResponse
+    ) {
+      return Array.isArray(cartResponse.data) ? cartResponse.data : [];
+    }
+
+    // Handle old direct format
+    return Array.isArray(cartResponse) ? cartResponse : [];
+  }, [cartResponse]);
 
   const decreaseQuantity = () => {
     if (quantity > 1) {

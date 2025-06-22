@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { X, ShoppingBag, Heart, ArrowLeft, User } from "lucide-react";
@@ -20,7 +20,7 @@ export default function BuyerWishlist() {
 
   // RTK Query hooks - only run if authenticated
   const {
-    data: wishlistData,
+    data: wishlistResponse,
     isLoading,
     error,
     refetch: refetchWishlist,
@@ -39,7 +39,22 @@ export default function BuyerWishlist() {
   const [removeFromWishlist] = useRemoveFromWishlistMutation();
   const [addToCart, { isLoading: isAddingToCart }] = useAddToCartMutation();
 
-  const wishlistItems = wishlistData || [];
+  // Extract wishlist items from cache response
+  const wishlistItems = useMemo(() => {
+    if (!wishlistResponse) return [];
+
+    // Handle new cache format: {source: 'cache'|'db', data: [...]}
+    if (
+      wishlistResponse &&
+      typeof wishlistResponse === "object" &&
+      "data" in wishlistResponse
+    ) {
+      return Array.isArray(wishlistResponse.data) ? wishlistResponse.data : [];
+    }
+
+    // Handle old direct format
+    return Array.isArray(wishlistResponse) ? wishlistResponse : [];
+  }, [wishlistResponse]);
 
   const handleRemoveFromWishlist = async (productId: string) => {
     try {
@@ -251,20 +266,20 @@ export default function BuyerWishlist() {
                   <div className="flex items-center">
                     <div className="relative w-16 h-16 mr-4">
                       <Image
-                        src={item.product.productImages?.[0] || "/Profile.jpg"}
-                        alt={item.product.productName}
+                        src={item.product?.productImages?.[0] || "/Profile.jpg"}
+                        alt={item.product?.productName || "Product"}
                         fill
                         className="object-cover"
                       />
                     </div>
                     <div>
-                      <Link href={`/products/${item.product.id}`}>
+                      <Link href={`/products/${item.product?.id || ""}`}>
                         <h3 className="font-medium text-stone-900 hover:text-terracotta-600 transition-colors">
-                          {item.product.productName}
+                          {item.product?.productName || "Unknown Product"}
                         </h3>
                       </Link>
                       <p className="text-stone-500 text-sm">
-                        By {item.product.artist?.fullName || "Unknown Artist"}
+                        By {item.product?.artist?.fullName || "Unknown Artist"}
                       </p>
                     </div>
                   </div>
@@ -273,31 +288,34 @@ export default function BuyerWishlist() {
                 {/* Price */}
                 <div className="col-span-1 md:col-span-2 text-left md:text-center">
                   <span className="text-stone-900">
-                    ₹{Number.parseFloat(item.product.sellingPrice).toFixed(2)}
+                    ₹
+                    {Number.parseFloat(
+                      item.product?.sellingPrice || "0"
+                    ).toFixed(2)}
                   </span>
                 </div>
 
                 {/* Actions */}
                 <div className="col-span-1 md:col-span-4 flex flex-col sm:flex-row gap-2 justify-end">
                   <button
-                    onClick={() => handleAddToCart(item.product.id)}
-                    disabled={isAddingToCart && addedToCart[item.product.id]}
+                    onClick={() => handleAddToCart(item.product?.id)}
+                    disabled={isAddingToCart && addedToCart[item.product?.id]}
                     className={`flex items-center justify-center px-4 py-2 cursor-pointer ${
-                      addedToCart[item.product.id]
+                      addedToCart[item.product?.id]
                         ? "bg-green-600 text-white"
                         : "bg-terracotta-600 text-white hover:bg-terracotta-700"
                     } transition-colors disabled:opacity-50 disabled:cursor-not-allowed`}
                   >
                     <ShoppingBag
                       className={`w-4 h-4 mr-2 ${
-                        isAddingToCart && addedToCart[item.product.id]
+                        isAddingToCart && addedToCart[item.product?.id]
                           ? "animate-pulse"
                           : ""
                       }`}
                     />
-                    {isAddingToCart && addedToCart[item.product.id]
+                    {isAddingToCart && addedToCart[item.product?.id]
                       ? "Adding..."
-                      : addedToCart[item.product.id]
+                      : addedToCart[item.product?.id]
                       ? "Added"
                       : "Add to Cart"}
                   </button>

@@ -35,7 +35,7 @@ var __importStar = (this && this.__importStar) || (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.verifyResetToken = exports.resetPassword = exports.forgotPassword = void 0;
 const forgotmailService = __importStar(require("../../../services/Artist/artist.service"));
-// Add these to your existing artist controller
+const cache_1 = require("../../../helpers/cache");
 const forgotPassword = async (req, res) => {
     try {
         const { email } = req.body;
@@ -43,6 +43,8 @@ const forgotPassword = async (req, res) => {
             return res.status(400).json({ error: "Email is required" });
         }
         const result = await forgotmailService.forgotPassword(email);
+        // Optional: Invalidate token if already exists
+        await (0, cache_1.deleteCache)(`resetToken:${email}`);
         res.status(200).json(result);
     }
     catch (error) {
@@ -62,6 +64,8 @@ const resetPassword = async (req, res) => {
                 .json({ error: "Password must be at least 6 characters" });
         }
         const result = await forgotmailService.resetPassword(token, password);
+        // Optional: Delete the used token
+        await (0, cache_1.deleteCache)(`resetToken:${token}`);
         res.status(200).json(result);
     }
     catch (error) {

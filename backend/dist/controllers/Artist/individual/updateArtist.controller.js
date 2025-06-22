@@ -35,6 +35,7 @@ var __importStar = (this && this.__importStar) || (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.updateArtist = void 0;
 const artistService = __importStar(require("../../../services/Artist/artist.service"));
+const cache_1 = require("../../../helpers/cache");
 const updateArtist = async (req, res) => {
     try {
         const userId = req.user?.id;
@@ -67,11 +68,13 @@ const updateArtist = async (req, res) => {
         if (files?.digitalSignature?.[0]) {
             updateData.digitalSignature = files.digitalSignature[0].path;
         }
-        // ✅ Add this block to support business logo
         if (files?.businessLogo?.[0]) {
             updateData.businessLogo = files.businessLogo[0].path;
         }
         const artist = await artistService.updateArtistMain(userId, updateData);
+        // ✅ Invalidate relevant Redis keys
+        await (0, cache_1.deleteCache)(`artist:${userId}`);
+        await (0, cache_1.deleteCache)("artists:all");
         res.json({
             success: true,
             message: "Artist updated successfully",

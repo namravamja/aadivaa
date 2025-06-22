@@ -3,9 +3,9 @@ interface ProfileProgressProps {
     firstName: string;
     lastName: string;
     email: string;
-    phone?: string;
-    dateOfBirth?: string;
-    gender?: string;
+    phone: string;
+    dateOfBirth: string;
+    gender: string;
     addresses: Array<{
       id: string;
       firstName: string;
@@ -15,7 +15,7 @@ interface ProfileProgressProps {
       state: string;
       postalCode: string;
       country: string;
-      phone?: string;
+      phone: string;
       isDefault: boolean;
     }>;
   };
@@ -26,30 +26,39 @@ export default function ProfileProgress({ user }: ProfileProgressProps) {
     let completed = 0;
     const total = 8; // Total required fields
 
-    // Account Details (4 fields)
-    if (user.firstName) completed++;
-    if (user.lastName) completed++;
-    if (user.email) completed++;
-    if (user.phone) completed++;
+    // Account Details (4 fields) - check for truthy values, not just existence
+    if (user.firstName && user.firstName.trim()) completed++;
+    if (user.lastName && user.lastName.trim()) completed++;
+    if (user.email && user.email.trim()) completed++;
+    if (user.phone && user.phone.trim()) completed++;
 
     // Personal Info (2 fields)
-    if (user.dateOfBirth) completed++;
-    if (user.gender) completed++;
+    if (user.dateOfBirth && user.dateOfBirth.trim()) completed++;
+    if (user.gender && user.gender.trim()) completed++;
 
     // Shipping Address (2 requirements)
     const hasCompleteAddress = user.addresses.some(
       (addr) =>
         addr.firstName &&
+        addr.firstName.trim() &&
         addr.lastName &&
+        addr.lastName.trim() &&
         addr.addressLine1 &&
+        addr.addressLine1.trim() &&
         addr.city &&
+        addr.city.trim() &&
         addr.state &&
+        addr.state.trim() &&
         addr.postalCode &&
-        addr.country
+        addr.postalCode.trim() &&
+        addr.country &&
+        addr.country.trim()
     );
     if (hasCompleteAddress) completed++;
 
-    const hasAddressPhone = user.addresses.some((addr) => addr.phone);
+    const hasAddressPhone = user.addresses.some(
+      (addr) => addr.phone && addr.phone.trim()
+    );
     if (hasAddressPhone) completed++;
 
     return Math.round((completed / total) * 100);
@@ -98,24 +107,41 @@ export default function ProfileProgress({ user }: ProfileProgressProps) {
           <div className="mt-4 text-sm text-stone-600">
             <p>Complete your profile to get the best shopping experience:</p>
             <ul className="mt-2 space-y-1">
-              {!user.firstName && <li>• Add your first name</li>}
-              {!user.lastName && <li>• Add your last name</li>}
-              {!user.phone && <li>• Add your phone number</li>}
-              {!user.dateOfBirth && <li>• Add your date of birth</li>}
-              {!user.gender && <li>• Add your gender</li>}
+              {(!user.firstName || !user.firstName.trim()) && (
+                <li>• Add your first name</li>
+              )}
+              {(!user.lastName || !user.lastName.trim()) && (
+                <li>• Add your last name</li>
+              )}
+              {(!user.phone || !user.phone.trim()) && (
+                <li>• Add your phone number</li>
+              )}
+              {(!user.dateOfBirth || !user.dateOfBirth.trim()) && (
+                <li>• Add your date of birth</li>
+              )}
+              {(!user.gender || !user.gender.trim()) && (
+                <li>• Add your gender</li>
+              )}
               {!user.addresses.some(
                 (addr) =>
                   addr.firstName &&
+                  addr.firstName.trim() &&
                   addr.lastName &&
+                  addr.lastName.trim() &&
                   addr.addressLine1 &&
+                  addr.addressLine1.trim() &&
                   addr.city &&
+                  addr.city.trim() &&
                   addr.state &&
+                  addr.state.trim() &&
                   addr.postalCode &&
-                  addr.country
+                  addr.postalCode.trim() &&
+                  addr.country &&
+                  addr.country.trim()
               ) && <li>• Add a complete shipping address</li>}
-              {!user.addresses.some((addr) => addr.phone) && (
-                <li>• Add phone number to shipping address</li>
-              )}
+              {!user.addresses.some(
+                (addr) => addr.phone && addr.phone.trim()
+              ) && <li>• Add phone number to shipping address</li>}
             </ul>
           </div>
         )}

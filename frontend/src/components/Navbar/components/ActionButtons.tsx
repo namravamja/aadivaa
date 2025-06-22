@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import Link from "next/link";
 import { Heart, ShoppingBag, RefreshCw } from "lucide-react";
 import { useGetCartQuery } from "@/services/api/cartApi";
@@ -19,7 +20,7 @@ export default function ActionButtons({
 
   // RTK Query hooks - only run if authenticated
   const {
-    data: cartData,
+    data: cartResponse,
     isLoading: cartLoading,
     error: cartError,
     refetch: refetchCart,
@@ -30,7 +31,7 @@ export default function ActionButtons({
   });
 
   const {
-    data: wishlistData,
+    data: wishlistResponse,
     isLoading: wishlistLoading,
     error: wishlistError,
     refetch: refetchWishlist,
@@ -40,14 +41,49 @@ export default function ActionButtons({
     refetchOnReconnect: true,
   });
 
-  // Calculate counts
-  const cartItems = cartData || [];
-  const wishlistItems = wishlistData || [];
+  // Extract cart items from the response, handling both old and new API response formats
+  const cartItems = useMemo(() => {
+    if (!cartResponse) return [];
 
-  const cartCount = cartItems.reduce(
-    (total: number, item: any) => total + item.quantity,
-    0
-  );
+    // Handle new Redis cache response format: {source: 'cache', data: [...]}
+    if (cartResponse.data && Array.isArray(cartResponse.data)) {
+      return cartResponse.data;
+    }
+
+    // Handle old direct array format: [...]
+    if (Array.isArray(cartResponse)) {
+      return cartResponse;
+    }
+
+    return [];
+  }, [cartResponse]);
+
+  // Extract wishlist items from the response, handling both old and new API response formats
+  const wishlistItems = useMemo(() => {
+    if (!wishlistResponse) return [];
+
+    // Handle new Redis cache response format: {source: 'cache', data: [...]}
+    if (wishlistResponse.data && Array.isArray(wishlistResponse.data)) {
+      return wishlistResponse.data;
+    }
+
+    // Handle old direct array format: [...]
+    if (Array.isArray(wishlistResponse)) {
+      return wishlistResponse;
+    }
+
+    return [];
+  }, [wishlistResponse]);
+
+  // Calculate counts safely
+  const cartCount = useMemo(() => {
+    if (!cartItems || cartItems.length === 0) return 0;
+
+    return cartItems.reduce((total: number, item: any) => {
+      return total + (item.quantity || 1);
+    }, 0);
+  }, [cartItems]);
+
   const wishlistCount = wishlistItems.length;
 
   return (

@@ -35,13 +35,20 @@ var __importStar = (this && this.__importStar) || (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getArtist = void 0;
 const artistService = __importStar(require("../../../services/Artist/artist.service"));
+const cache_1 = require("../../../helpers/cache");
 const getArtist = async (req, res) => {
     try {
         const userId = req.user?.id;
         if (!userId)
             throw new Error("Unauthorized controller");
+        const cacheKey = `artist:${userId}`;
+        const cachedArtist = await (0, cache_1.getCache)(cacheKey);
+        if (cachedArtist) {
+            return res.json({ source: "cache", data: cachedArtist });
+        }
         const artist = await artistService.getArtistById(userId);
-        res.json(artist);
+        await (0, cache_1.setCache)(cacheKey, artist); // optional: set expiry
+        res.json({ source: "db", data: artist });
     }
     catch (error) {
         res.status(404).json({ error: error.message });

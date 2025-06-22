@@ -53,21 +53,21 @@ const COUNTRY_OPTIONS = [
   { value: "MEX", label: "Mexico" },
 ] as const;
 
-// Helper function to convert legacy address format to new format
+// Helper function to convert address data to expected format
 const convertLegacyAddress = (address: any): Address => {
   return {
-    id: address.id,
-    firstName: address.firstName,
-    lastName: address.lastName,
-    company: address.company,
+    id: address.id?.toString() || "", // Ensure ID is string
+    firstName: address.firstName || "",
+    lastName: address.lastName || "",
+    company: address.company || "",
     street: address.street || address.addressLine1 || "",
-    apartment: address.apartment || address.addressLine2 || undefined,
-    city: address.city,
-    state: address.state,
-    postalCode: address.postalCode,
-    country: address.country,
-    phone: address.phone,
-    isDefault: address.isDefault,
+    apartment: address.apartment || address.addressLine2 || "",
+    city: address.city || "",
+    state: address.state || "",
+    postalCode: address.postalCode || "",
+    country: address.country || "USA",
+    phone: address.phone || "",
+    isDefault: Boolean(address.isDefault),
   };
 };
 
@@ -398,6 +398,14 @@ AddressForm.displayName = "AddressForm";
 
 // Main Component - Now with self-contained data operations
 export default function ShippingAddresses() {
+  // Utility function for safe ID conversion
+  const convertToNumericId = (id: string): number => {
+    const numericId = Number.parseInt(id, 10);
+    if (isNaN(numericId)) {
+      throw new Error(`Invalid ID format: ${id}`);
+    }
+    return numericId;
+  };
   // Get buyer data directly in this component
   const {
     data: buyerData,
@@ -409,6 +417,20 @@ export default function ShippingAddresses() {
     refetchOnFocus: true,
     refetchOnReconnect: true,
   });
+
+  // Extract data from cache response safely
+  const extractedBuyerData = useMemo(() => {
+    if (!buyerData) return null;
+
+    // Handle both direct data and cache wrapper format
+    if (buyerData.data) {
+      // Cache response format: { source: "cache", data: { addresses: [...] } }
+      return buyerData.data;
+    }
+
+    // Direct response format: { addresses: [...] }
+    return buyerData;
+  }, [buyerData]);
 
   const [updateBuyer, { isLoading: isUpdating }] = useUpdateBuyerMutation();
 
@@ -442,10 +464,20 @@ export default function ShippingAddresses() {
 
   // Update local state when API data changes
   useEffect(() => {
-    if (buyerData?.addresses) {
-      setAddresses(buyerData.addresses.map(convertLegacyAddress));
+    if (
+      extractedBuyerData?.addresses &&
+      Array.isArray(extractedBuyerData.addresses)
+    ) {
+      console.log("Processing addresses:", extractedBuyerData.addresses);
+      const processedAddresses =
+        extractedBuyerData.addresses.map(convertLegacyAddress);
+      console.log("Processed addresses:", processedAddresses);
+      setAddresses(processedAddresses);
+    } else {
+      console.log("No addresses found or invalid format:", extractedBuyerData);
+      setAddresses([]);
     }
-  }, [buyerData]);
+  }, [extractedBuyerData]);
 
   // Optimized field update handlers
   const handleEditFieldChange = useCallback((update: FieldUpdate) => {
@@ -467,6 +499,13 @@ export default function ShippingAddresses() {
   const handleSaveEdit = useCallback(async () => {
     if (editFormData && editingAddress) {
       try {
+        // Convert string ID to number for Prisma
+        const numericId = Number.parseInt(editingAddress, 10);
+        if (isNaN(numericId)) {
+          toast.error("Invalid address ID");
+          return;
+        }
+
         const { id, ...addressDataWithoutId } = editFormData;
 
         // Optimistic update
@@ -474,11 +513,11 @@ export default function ShippingAddresses() {
           prev.map((addr) => (addr.id === editingAddress ? editFormData : addr))
         );
 
-        // API call - use Prisma's nested update syntax with correct field names
+        // API call - use numeric ID for Prisma update
         await updateBuyer({
           addresses: {
             update: {
-              where: { id: editingAddress },
+              where: { id: numericId }, // Convert to number
               data: {
                 firstName: addressDataWithoutId.firstName,
                 lastName: addressDataWithoutId.lastName,
@@ -525,6 +564,8 @@ export default function ShippingAddresses() {
 
   const handleCreateAddress = useCallback(async () => {
     try {
+      console.log("Creating address with data:", newAddressData);
+
       // Create temporary address with ID for optimistic update
       const tempId = `temp_${Date.now()}`;
       const createdAddress: Address = {
@@ -536,23 +577,25 @@ export default function ShippingAddresses() {
       setAddresses((prev) => [...prev, createdAddress]);
 
       // API call - use Prisma's nested create syntax with correct field names
-      await updateBuyer({
+      const result = await updateBuyer({
         addresses: {
           create: {
             firstName: newAddressData.firstName,
             lastName: newAddressData.lastName,
-            company: newAddressData.company,
+            company: newAddressData.company || null,
             street: newAddressData.street,
-            apartment: newAddressData.apartment,
+            apartment: newAddressData.apartment || null,
             city: newAddressData.city,
             state: newAddressData.state,
             postalCode: newAddressData.postalCode,
             country: newAddressData.country,
-            phone: newAddressData.phone,
+            phone: newAddressData.phone || null,
             isDefault: newAddressData.isDefault,
           },
         },
       }).unwrap();
+
+      console.log("Address creation result:", result);
 
       setShowNewForm(false);
       setNewAddressData(INITIAL_ADDRESS);
@@ -587,14 +630,21 @@ export default function ShippingAddresses() {
   const handleDelete = useCallback(
     async (addressId: string) => {
       try {
+        // Convert string ID to number for Prisma
+        const numericId = Number.parseInt(addressId, 10);
+        if (isNaN(numericId)) {
+          toast.error("Invalid address ID");
+          return;
+        }
+
         // Optimistic update
         setAddresses((prev) => prev.filter((addr) => addr.id !== addressId));
 
-        // API call - use Prisma's nested delete syntax
+        // API call - use numeric ID for Prisma delete
         await updateBuyer({
           addresses: {
             delete: {
-              id: addressId,
+              id: numericId, // Convert to number
             },
           },
         }).unwrap();
@@ -622,6 +672,13 @@ export default function ShippingAddresses() {
   const handleSetDefault = useCallback(
     async (addressId: string) => {
       try {
+        // Convert string ID to number for Prisma
+        const numericId = Number.parseInt(addressId, 10);
+        if (isNaN(numericId)) {
+          toast.error("Invalid address ID");
+          return;
+        }
+
         // Optimistic update
         setAddresses((prev) =>
           prev.map((addr) => ({
@@ -631,11 +688,16 @@ export default function ShippingAddresses() {
         );
 
         // For setting default, we need to update multiple addresses
-        // First, set all addresses to non-default, then set the selected one as default
+        // Convert all address IDs to numbers for Prisma operations
         const updateOperations = addresses.map((addr) => {
+          const numericAddrId = Number.parseInt(addr.id, 10);
+          if (isNaN(numericAddrId)) {
+            throw new Error(`Invalid address ID: ${addr.id}`);
+          }
+
           const { id, ...addressData } = addr;
           return {
-            where: { id: addr.id },
+            where: { id: numericAddrId }, // Convert to number
             data: {
               firstName: addressData.firstName,
               lastName: addressData.lastName,
@@ -652,7 +714,7 @@ export default function ShippingAddresses() {
           };
         });
 
-        // API call - use Prisma's nested updateMany syntax
+        // API call - use Prisma's nested updateMany syntax with numeric IDs
         await updateBuyer({
           addresses: {
             updateMany: updateOperations,
@@ -685,10 +747,16 @@ export default function ShippingAddresses() {
 
   // Memoize address list to prevent unnecessary re-renders
   const addressList = useMemo(() => {
+    console.log("Rendering addresses:", addresses);
+
+    if (!addresses || addresses.length === 0) {
+      return [];
+    }
+
     return addresses.map((address) => (
       <div
         key={address.id}
-        className="border border-stone-200 p-4 hover:shadow-md hover:border-sage-300 transition-all duration-200 rounded-lg cursor-pointer"
+        className="border border-stone-200 p-4 hover:shadow-md hover:border-sage-300 transition-all duration-200 rounded-lg"
       >
         {editingAddress === address.id && editFormData ? (
           <AddressForm
@@ -706,23 +774,27 @@ export default function ShippingAddresses() {
                   {address.firstName} {address.lastName}
                 </h4>
                 {address.isDefault && (
-                  <span className="inline-flex items-center px-2 py-1 text-xs font-medium bg-terracotta-100 text-terracotta-800">
+                  <span className="inline-flex items-center px-2 py-1 text-xs font-medium bg-terracotta-100 text-terracotta-800 rounded">
                     Default
                   </span>
                 )}
               </div>
 
               <div className="text-sm text-stone-600 space-y-1">
-                {address.company && (
+                {address.company && address.company.trim() && (
                   <p className="font-medium">{address.company}</p>
                 )}
                 <p>{address.street}</p>
-                {address.apartment && <p>{address.apartment}</p>}
+                {address.apartment && address.apartment.trim() && (
+                  <p>{address.apartment}</p>
+                )}
                 <p>
                   {address.city}, {address.state} {address.postalCode}
                 </p>
                 <p>{address.country}</p>
-                {address.phone && <p>{address.phone}</p>}
+                {address.phone && address.phone.trim() && (
+                  <p>{address.phone}</p>
+                )}
               </div>
             </div>
 
@@ -784,7 +856,7 @@ export default function ShippingAddresses() {
   ]);
 
   // Error state
-  if (fetchError && !buyerData) {
+  if (fetchError && !extractedBuyerData) {
     return (
       <div className="bg-white border border-stone-200 shadow-sm">
         <div className="p-6 border-b border-stone-200">
@@ -824,7 +896,7 @@ export default function ShippingAddresses() {
   }
 
   // Loading state
-  if (isFetching && addresses.length === 0) {
+  if (isFetching && !extractedBuyerData && addresses.length === 0) {
     return (
       <div className="bg-white border border-stone-200 shadow-sm">
         <div className="p-6 border-b border-stone-200">

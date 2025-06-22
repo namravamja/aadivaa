@@ -35,6 +35,7 @@ var __importStar = (this && this.__importStar) || (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.updateBusinessAddress = void 0;
 const artistService = __importStar(require("../../../services/Artist/artist.service"));
+const cache_1 = require("../../../helpers/cache"); // adjust this path if needed
 const updateBusinessAddress = async (req, res) => {
     try {
         const userId = req.user?.id;
@@ -42,6 +43,9 @@ const updateBusinessAddress = async (req, res) => {
             throw new Error("Unauthorized");
         const addressData = req.body;
         const updatedAddress = await artistService.updateBusinessAddress(userId, addressData);
+        // Invalidate cache using helper
+        await (0, cache_1.deleteCache)(`artist:${userId}`);
+        await (0, cache_1.deleteCache)("artists:all");
         res.json({
             success: true,
             message: "Business address updated successfully",

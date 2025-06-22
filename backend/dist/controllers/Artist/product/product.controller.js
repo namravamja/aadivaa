@@ -35,6 +35,7 @@ var __importStar = (this && this.__importStar) || (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.updateStockOnly = exports.deleteProduct = exports.getProductsByArtistId = exports.getProductsByArtist = exports.getProductById = exports.getAllProducts = exports.updateProduct = exports.createProduct = void 0;
 const productService = __importStar(require("../../../services/Artist/artist.service"));
+const cache_1 = require("../../../helpers/cache");
 // Create product
 const createProduct = async (req, res) => {
     try {
@@ -48,6 +49,9 @@ const createProduct = async (req, res) => {
             productImages: imageUrls,
         };
         const product = await productService.createProduct(artistId, productData);
+        // Clear related caches
+        await (0, cache_1.deleteCache)(`products:all`);
+        await (0, cache_1.deleteCache)(`products:artist:${artistId}`);
         res.status(201).json({
             message: "Product created successfully",
             product,
@@ -85,6 +89,10 @@ const updateProduct = async (req, res) => {
         }
         // 3. Update product with updatedData
         const updatedProduct = await productService.updateProduct(productId, artistId, updatedData);
+        // Clear related caches
+        await (0, cache_1.deleteCache)(`product:${productId}`);
+        await (0, cache_1.deleteCache)(`products:all`);
+        await (0, cache_1.deleteCache)(`products:artist:${artistId}`);
         res.status(200).json({
             message: "Product updated successfully",
             product: updatedProduct,
@@ -99,8 +107,14 @@ exports.updateProduct = updateProduct;
 // Get all products
 const getAllProducts = async (req, res) => {
     try {
+        const cacheKey = `products:all`;
+        const cachedProducts = await (0, cache_1.getCache)(cacheKey);
+        if (cachedProducts) {
+            return res.status(200).json({ source: "cache", data: cachedProducts });
+        }
         const products = await productService.getAllProducts();
-        res.status(200).json(products);
+        await (0, cache_1.setCache)(cacheKey, products);
+        res.status(200).json({ source: "db", data: products });
     }
     catch (error) {
         res.status(500).json({ error: error.message });
@@ -111,8 +125,14 @@ exports.getAllProducts = getAllProducts;
 const getProductById = async (req, res) => {
     try {
         const { productId } = req.params;
+        const cacheKey = `product:${productId}`;
+        const cachedProduct = await (0, cache_1.getCache)(cacheKey);
+        if (cachedProduct) {
+            return res.status(200).json({ source: "cache", data: cachedProduct });
+        }
         const product = await productService.getProductById(productId);
-        res.status(200).json(product);
+        await (0, cache_1.setCache)(cacheKey, product);
+        res.status(200).json({ source: "db", data: product });
     }
     catch (error) {
         res.status(404).json({ error: error.message });
@@ -125,8 +145,14 @@ const getProductsByArtist = async (req, res) => {
         const artistId = req.user?.id;
         if (!artistId)
             throw new Error("Unauthorized");
+        const cacheKey = `products:artist:${artistId}`;
+        const cachedProducts = await (0, cache_1.getCache)(cacheKey);
+        if (cachedProducts) {
+            return res.status(200).json({ source: "cache", data: cachedProducts });
+        }
         const products = await productService.getProductsByArtist(artistId);
-        res.status(200).json(products);
+        await (0, cache_1.setCache)(cacheKey, products);
+        res.status(200).json({ source: "db", data: products });
     }
     catch (error) {
         res.status(400).json({ error: error.message });
@@ -138,8 +164,14 @@ const getProductsByArtistId = async (req, res) => {
         const { artistId } = req.params;
         if (!artistId)
             throw new Error("Unauthorized");
+        const cacheKey = `products:artist:${artistId}`;
+        const cachedProducts = await (0, cache_1.getCache)(cacheKey);
+        if (cachedProducts) {
+            return res.status(200).json({ source: "cache", data: cachedProducts });
+        }
         const products = await productService.getProductsByArtist(artistId);
-        res.status(200).json(products);
+        await (0, cache_1.setCache)(cacheKey, products);
+        res.status(200).json({ source: "db", data: products });
     }
     catch (error) {
         res.status(400).json({ error: error.message });
@@ -159,6 +191,10 @@ const deleteProduct = async (req, res) => {
         if (existingProduct.artistId !== artistId)
             throw new Error("Not authorized to delete this product");
         await productService.deleteProduct(productId, artistId);
+        // Clear related caches
+        await (0, cache_1.deleteCache)(`product:${productId}`);
+        await (0, cache_1.deleteCache)(`products:all`);
+        await (0, cache_1.deleteCache)(`products:artist:${artistId}`);
         res.status(200).json({ message: "Product deleted successfully" });
     }
     catch (error) {
@@ -176,6 +212,10 @@ const updateStockOnly = async (req, res) => {
             throw new Error("productId and availableStock are required");
         }
         const updatedProduct = await productService.updateProductStockOnly(productId, artistId, availableStock);
+        // Clear related caches
+        await (0, cache_1.deleteCache)(`product:${productId}`);
+        await (0, cache_1.deleteCache)(`products:all`);
+        await (0, cache_1.deleteCache)(`products:artist:${artistId}`);
         res.status(200).json(updatedProduct);
     }
     catch (error) {

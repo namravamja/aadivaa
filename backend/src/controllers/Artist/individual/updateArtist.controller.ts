@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import * as artistService from "../../../services/Artist/artist.service";
+import { deleteCache } from "../../../helpers/cache";
 
 export interface AuthenticatedRequest extends Request {
   user?: { id: string; role: string };
@@ -47,12 +48,16 @@ export const updateArtist = async (
       updateData.digitalSignature = files.digitalSignature[0].path;
     }
 
-    // ✅ Add this block to support business logo
     if (files?.businessLogo?.[0]) {
       updateData.businessLogo = files.businessLogo[0].path;
     }
 
     const artist = await artistService.updateArtistMain(userId, updateData);
+
+    // ✅ Invalidate relevant Redis keys
+    await deleteCache(`artist:${userId}`);
+    await deleteCache("artists:all");
+
     res.json({
       success: true,
       message: "Artist updated successfully",

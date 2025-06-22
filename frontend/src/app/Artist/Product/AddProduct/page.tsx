@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import {
   Save,
   Check,
@@ -19,6 +19,16 @@ import { useRouter } from "next/navigation";
 import { useGetartistQuery } from "@/services/api/artistApi";
 import { useAuth } from "@/hooks/useAuth";
 import { useAuthModal } from "@/app/(auth)/components/auth-modal-provider";
+
+// Safe data access utilities
+const safeString = (value: any): string => {
+  return value ? String(value) : "";
+};
+
+const safeNumber = (value: any): number => {
+  const num = Number(value);
+  return isNaN(num) ? 0 : num;
+};
 
 export interface ProductData {
   id: string;
@@ -40,6 +50,15 @@ export interface ProductData {
   updatedAt: string;
 }
 
+interface ArtistResponse {
+  source?: string;
+  data?: {
+    profileProgress?: number;
+    isAuthenticated?: boolean;
+    [key: string]: any;
+  };
+}
+
 export default function AddProduct() {
   const [step, setStep] = useState(1);
   const [createProduct, { isLoading }] = useCreateProductMutation();
@@ -51,13 +70,45 @@ export default function AddProduct() {
   const { openArtistLogin } = useAuthModal();
 
   const {
-    data: artistData,
+    data: artistResponse,
     isLoading: isArtistLoading,
     refetch,
   } = useGetartistQuery(undefined, {
     skip: !isAuthenticated,
     refetchOnMountOrArgChange: true,
   });
+
+  // Extract artist data from cache response format using useMemo
+  const artistData = useMemo(() => {
+    if (!artistResponse) return null;
+
+    console.log("Raw artist response:", artistResponse);
+
+    // Handle cache response format: {source: 'cache', data: {...}}
+    if (artistResponse.source && artistResponse.data) {
+      return artistResponse.data;
+    }
+
+    // Handle direct object format as fallback
+    if (
+      typeof artistResponse === "object" &&
+      !Array.isArray(artistResponse) &&
+      artistResponse.data
+    ) {
+      return artistResponse.data;
+    }
+
+    // Handle direct data format
+    if (
+      typeof artistResponse === "object" &&
+      !Array.isArray(artistResponse) &&
+      artistResponse.profileProgress
+    ) {
+      return artistResponse;
+    }
+
+    return null;
+  }, [artistResponse]);
 
   // Check profile progress on component mount and artist data change
   useEffect(() => {
@@ -67,7 +118,7 @@ export default function AddProduct() {
       !hasRedirected.current &&
       isAuthenticated
     ) {
-      const profileProgress = artistData.profileProgress || 0;
+      const profileProgress = safeNumber(artistData.profileProgress);
       const isArtistAuthenticated = artistData.isAuthenticated || false;
 
       if (isArtistAuthenticated) {
@@ -173,7 +224,7 @@ export default function AddProduct() {
 
   const handleSubmit = async () => {
     // Double-check profile progress before submitting
-    if (artistData && artistData.profileProgress < 92) {
+    if (artistData && safeNumber(artistData.profileProgress) < 92) {
       toast.error(
         "Please complete your profile to add products. Profile must be at least 90% complete."
       );
@@ -311,6 +362,8 @@ export default function AddProduct() {
       </div>
     );
   }
+
+  console.log("Final artist data:", artistData);
 
   return (
     <div ref={formRef} className="container mx-auto px-4 sm:px-6 py-6 sm:py-8">

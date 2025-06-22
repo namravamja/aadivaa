@@ -3,6 +3,7 @@
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
+import { useMemo } from "react";
 import {
   ArrowLeft,
   Package,
@@ -225,7 +226,18 @@ export default function TrackOrderByIdPage() {
     skip: !isAuthenticated, // Skip the query if not authenticated
   });
 
-  const order = response?.data as OrderDetails;
+  // Extract order data from cache response
+  const order = useMemo(() => {
+    if (!response) return null;
+
+    // Handle new cache format: {source: 'cache'|'db', data: {...}}
+    if (response && typeof response === "object" && "data" in response) {
+      return response.data as OrderDetails;
+    }
+
+    // Handle old direct format: {...}
+    return response as OrderDetails;
+  }, [response]);
 
   // Show loading while checking authentication
   if (authLoading) {

@@ -11,6 +11,7 @@ import { useGetartistQuery } from "@/services/api/artistApi";
 import ProfileProgress from "../MakeProfile/components/ProfileProgress";
 import { useAuth } from "@/hooks/useAuth";
 import { useAuthModal } from "@/app/(auth)/components/auth-modal-provider";
+import { useMemo } from "react";
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -19,12 +20,31 @@ export default function ProfilePage() {
 
   // Use the actual RTK Query hook - only run if authenticated
   const {
-    data: artistData,
+    data: artistResponse,
     isLoading,
     error,
   } = useGetartistQuery(undefined, {
     skip: !isAuthenticated,
   });
+
+  // Extract the actual artist data from the cache response format
+  const artistData = useMemo(() => {
+    if (!artistResponse) return null;
+
+    console.log("Raw artist response:", artistResponse);
+
+    // Handle cache response format: {source: 'cache', data: {...}}
+    if (artistResponse.source && artistResponse.data) {
+      return artistResponse.data;
+    }
+
+    // Handle direct object format as fallback
+    if (typeof artistResponse === "object" && !Array.isArray(artistResponse)) {
+      return artistResponse;
+    }
+
+    return null;
+  }, [artistResponse]);
 
   const handleEditProfile = () => {
     router.push("/Artist/MakeProfile");
@@ -71,6 +91,7 @@ export default function ProfilePage() {
 
   // Handle error state
   if (error) {
+    console.error("Profile loading error:", error);
     return (
       <div className="container mx-auto px-4 py-8">
         <div className="flex items-center justify-center min-h-[400px]">
@@ -106,6 +127,8 @@ export default function ProfilePage() {
       </div>
     );
   }
+
+  console.log("Final artist data:", artistData);
 
   return (
     <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8 max-w-6xl">

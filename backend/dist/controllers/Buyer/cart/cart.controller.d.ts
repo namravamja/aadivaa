@@ -9,5 +9,5 @@ export declare const addToCart: (req: AuthenticatedRequest, res: Response) => Pr
 export declare const updateCartItem: (req: AuthenticatedRequest, res: Response) => Promise<void>;
 export declare const removeFromCart: (req: AuthenticatedRequest, res: Response) => Promise<void>;
 export declare const clearCart: (req: AuthenticatedRequest, res: Response) => Promise<void>;
-export declare const getCartByBuyerId: (req: AuthenticatedRequest, res: Response) => Promise<void>;
+export declare const getCartByBuyerId: (req: AuthenticatedRequest, res: Response) => Promise<Response<any, Record<string, any>> | undefined>;
 export {};

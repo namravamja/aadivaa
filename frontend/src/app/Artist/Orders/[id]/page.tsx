@@ -30,71 +30,104 @@ import {
 import { useAuth } from "@/hooks/useAuth";
 import { useAuthModal } from "@/app/(auth)/components/auth-modal-provider";
 
+// Safe data access utilities
+const safeArray = <T,>(value: T[] | undefined | null): T[] => {
+  return Array.isArray(value) ? value : [];
+};
+
+const safeString = (value: any): string => {
+  return value ? String(value) : "";
+};
+
+const safeNumber = (value: any): number => {
+  const num = Number(value);
+  return isNaN(num) ? 0 : num;
+};
+
 export interface ProductData {
-  id: string;
-  availableStock: string;
+  id?: string;
+  availableStock?: string;
   productName?: string;
   skuCode?: string;
 }
 
-// Updated interface to match the actual API response
+// Updated interface to match the actual API response with optional properties
+interface OrderProduct {
+  id?: string;
+  productName?: string;
+  category?: string;
+  shortDescription?: string;
+  productImages?: string[];
+  skuCode?: string;
+  weight?: string;
+  length?: string;
+  width?: string;
+  height?: string;
+  availableStock?: number;
+}
+
+interface OrderItem {
+  id?: string;
+  orderId?: string;
+  productId?: string;
+  quantity?: number;
+  priceAtPurchase?: number;
+  artistId?: string;
+  product?: OrderProduct;
+}
+
+interface OrderBuyer {
+  id?: string;
+  email?: string;
+  firstName?: string;
+  lastName?: string;
+  phone?: string | null;
+}
+
+interface OrderShippingAddress {
+  id?: number;
+  firstName?: string;
+  lastName?: string;
+  company?: string;
+  street?: string;
+  apartment?: string;
+  city?: string;
+  state?: string;
+  postalCode?: string;
+  country?: string;
+  phone?: string;
+  userId?: string;
+  isDefault?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
 interface OrderData {
-  id: string;
-  buyerId: string;
-  totalAmount: number;
-  status: "pending" | "confirmed" | "shipped" | "delivered" | "cancelled";
-  shippingAddressId: number;
-  paymentMethod: string;
-  paymentStatus: "paid" | "unpaid" | "failed";
-  placedAt: string;
-  updatedAt: string;
+  id?: string;
+  buyerId?: string;
+  totalAmount?: number;
+  status?: "pending" | "confirmed" | "shipped" | "delivered" | "cancelled";
+  shippingAddressId?: number;
+  paymentMethod?: string;
+  paymentStatus?: "paid" | "unpaid" | "failed";
+  placedAt?: string;
+  updatedAt?: string;
   trackingNumber?: string;
   estimatedDelivery?: string;
-  buyer: {
-    id: string;
-    email: string;
-    firstName: string;
-    lastName: string;
-    phone?: string | null;
-  };
-  orderItems: Array<{
-    id: string;
-    orderId: string;
-    productId: string;
-    quantity: number;
-    priceAtPurchase: number;
-    artistId: string;
-    product: {
-      id: string;
-      productName: string;
-      category: string;
-      shortDescription: string;
-      productImages: string[];
-      skuCode: string;
-      weight?: string;
-      length?: string;
-      width?: string;
-      height?: string;
-      availableStock?: number;
-    };
-  }>;
-  shippingAddress: {
-    id: number;
-    firstName: string;
-    lastName: string;
-    company?: string;
-    street: string;
-    apartment?: string;
-    city: string;
-    state: string;
-    postalCode: string;
-    country: string;
-    phone: string;
-    userId: string;
-    isDefault: boolean;
-    createdAt: string;
-    updatedAt: string;
-  };
+  buyer?: OrderBuyer;
+  orderItems?: OrderItem[];
+  shippingAddress?: OrderShippingAddress;
+}
+
+interface OrderResponse {
+  success?: boolean;
+  data?: OrderData;
+  source?: string;
+}
+
+interface ProductsResponse {
+  source?: string;
+  data?: ProductData[];
 }
 
 interface StockValidationResult {
@@ -111,7 +144,7 @@ interface StockValidationResult {
 export default function OrderDetailsPage() {
   const params = useParams();
   const router = useRouter();
-  const orderId = params.id as string;
+  const orderId = safeString(params.id);
 
   const { isAuthenticated, isLoading: authLoading } = useAuth("artist");
   const { openArtistLogin } = useAuthModal();
@@ -135,12 +168,12 @@ export default function OrderDetailsPage() {
 
   // RTK Query hooks
   const {
-    data: response,
+    data: orderResponse,
     isLoading,
     error,
     refetch,
   } = useGetArtistOrderByIdQuery(orderId, {
-    skip: !isAuthenticated,
+    skip: !isAuthenticated || !orderId,
   });
   const [updateOrderStatus, { isLoading: isUpdatingStatus }] =
     useUpdateOrderStatusMutation();
@@ -149,7 +182,7 @@ export default function OrderDetailsPage() {
   const [updateStock, { isLoading: isUpdatingStock }] =
     useUpdateStockMutation();
   const {
-    data: productData,
+    data: productResponse,
     isLoading: isLoadingProducts,
     refetch: refetchProducts,
   } = useGetProductByArtistQuery(undefined, {
@@ -157,15 +190,73 @@ export default function OrderDetailsPage() {
     refetchOnMountOrArgChange: true,
   });
 
-  // Extract order data from response
-  const order = response?.data;
-  const products: ProductData[] = (productData ?? []) as ProductData[];
+  // Extract order data from response using useMemo (handle cache format)
+  const order = useMemo(() => {
+    if (!orderResponse) return null;
+
+    console.log("Raw order response:", orderResponse);
+
+    // Handle cache response format: {source: 'cache', data: {...}}
+    if (orderResponse.source && orderResponse.data) {
+      return orderResponse.data as OrderData;
+    }
+
+    // Handle direct object format as fallback
+    if (
+      typeof orderResponse === "object" &&
+      !Array.isArray(orderResponse) &&
+      orderResponse.data
+    ) {
+      return orderResponse.data as OrderData;
+    }
+
+    // Handle direct data format
+    if (
+      typeof orderResponse === "object" &&
+      !Array.isArray(orderResponse) &&
+      orderResponse.id
+    ) {
+      return orderResponse as OrderData;
+    }
+
+    return null;
+  }, [orderResponse]);
+
+  // Extract products data from response using useMemo (handle cache format)
+  const products: ProductData[] = useMemo(() => {
+    if (!productResponse) return [];
+
+    console.log("Raw products response:", productResponse);
+
+    // Handle cache response format: {source: 'cache', data: [...]}
+    if (productResponse.source && productResponse.data) {
+      return safeArray(productResponse.data);
+    }
+
+    // Handle direct array format as fallback
+    if (Array.isArray(productResponse)) {
+      return productResponse;
+    }
+
+    // Handle object with data property
+    if (
+      typeof productResponse === "object" &&
+      !Array.isArray(productResponse) &&
+      productResponse.data
+    ) {
+      return safeArray(productResponse.data);
+    }
+
+    return [];
+  }, [productResponse]);
 
   // Create a product lookup map for efficient access
   const productMap = useMemo(() => {
     const map = new Map<string, ProductData>();
     products.forEach((product) => {
-      map.set(product.id, product);
+      if (product.id) {
+        map.set(product.id, product);
+      }
     });
     return map;
   }, [products]);
@@ -173,12 +264,12 @@ export default function OrderDetailsPage() {
   // Function to get current stock for a product
   const getCurrentStock = (productId: string): number => {
     const product = productMap.get(productId);
-    return product ? Number(product.availableStock) || 0 : 0;
+    return product ? safeNumber(product.availableStock) : 0;
   };
 
   // Function to validate stock before updating using real product data
   const validateStockAvailability = async (
-    orderItems: OrderData["orderItems"],
+    orderItems: OrderItem[] | undefined,
     shouldDecrease: boolean
   ): Promise<StockValidationResult> => {
     if (!shouldDecrease) {
@@ -187,16 +278,22 @@ export default function OrderDetailsPage() {
     }
 
     const insufficientItems: StockValidationResult["insufficientItems"] = [];
+    const safeOrderItems = safeArray(orderItems);
 
-    for (const item of orderItems) {
+    for (const item of safeOrderItems) {
+      const productId = safeString(item.productId);
+      if (!productId) continue;
+
       // Get current stock from products API data
-      const currentStock = getCurrentStock(item.productId);
-      const requiredQuantity = Number(item.quantity) || 0;
+      const currentStock = getCurrentStock(productId);
+      const requiredQuantity = safeNumber(item.quantity);
 
       if (currentStock < requiredQuantity) {
         insufficientItems.push({
-          productId: item.productId,
-          productName: item.product.productName,
+          productId,
+          productName: safeString(
+            item.product?.productName || "Unknown Product"
+          ),
           requiredQuantity,
           availableStock: currentStock,
           shortfall: requiredQuantity - currentStock,
@@ -231,20 +328,14 @@ export default function OrderDetailsPage() {
     // Define statuses that affect stock
     const stockAffectingStatuses = ["confirmed", "shipped", "delivered"];
 
-    // Check if stock should be decreased (order is now in a stock-affecting status and paid)
-    const wasStockDecreased =
-      stockAffectingStatuses.includes(prevStatus) &&
-      prevPaymentStatus === "paid";
-    const shouldStockBeDecreased =
-      stockAffectingStatuses.includes(currentStatus) &&
-      currentPaymentStatus === "paid";
-
     // Handle stock updates for each order item
     const updateStockForItems = async (shouldDecrease: boolean) => {
       try {
+        const orderItems = safeArray(order.orderItems);
+
         // Validate stock availability before decreasing using real product data
         const validation = await validateStockAvailability(
-          order.orderItems,
+          orderItems,
           shouldDecrease
         );
 
@@ -266,36 +357,37 @@ export default function OrderDetailsPage() {
         }
 
         // Process each item individually with proper error handling
-        const stockUpdatePromises = order.orderItems.map(
-          async (item: OrderData["orderItems"][number]) => {
-            // Ensure quantity is a proper number
-            const quantity = Number(item.quantity);
-            if (isNaN(quantity) || quantity <= 0) {
-              throw new Error(
-                `Invalid quantity for product ${item.productId}: ${item.quantity}`
-              );
-            }
+        const stockUpdatePromises = orderItems.map(async (item) => {
+          const productId = safeString(item.productId);
+          if (!productId) return;
 
-            // Get current stock for this product
-            const currentStock = getCurrentStock(item.productId);
-
-            // Calculate new absolute stock value
-            const newStock = shouldDecrease
-              ? currentStock - quantity
-              : currentStock + quantity;
-
-            // Ensure stock doesn't go below 0
-            const finalStock = Math.max(0, newStock);
-
-            // Create the payload with absolute stock value as STRING
-            const payload = {
-              productId: String(item.productId),
-              availableStock: String(finalStock), // Convert to string since Prisma expects String
-            };
-
-            return updateStock(payload).unwrap();
+          // Ensure quantity is a proper number
+          const quantity = safeNumber(item.quantity);
+          if (quantity <= 0) {
+            throw new Error(
+              `Invalid quantity for product ${productId}: ${item.quantity}`
+            );
           }
-        );
+
+          // Get current stock for this product
+          const currentStock = getCurrentStock(productId);
+
+          // Calculate new absolute stock value
+          const newStock = shouldDecrease
+            ? currentStock - quantity
+            : currentStock + quantity;
+
+          // Ensure stock doesn't go below 0
+          const finalStock = Math.max(0, newStock);
+
+          // Create the payload with absolute stock value as STRING
+          const payload = {
+            productId: productId,
+            availableStock: String(finalStock), // Convert to string since Prisma expects String
+          };
+
+          return updateStock(payload).unwrap();
+        });
 
         await Promise.all(stockUpdatePromises);
 
@@ -305,7 +397,7 @@ export default function OrderDetailsPage() {
         toast.success(
           `Stock ${
             shouldDecrease ? "decreased" : "restored"
-          } successfully for ${order.orderItems.length} product(s)`
+          } successfully for ${orderItems.length} product(s)`
         );
       } catch (error) {
         console.error("Failed to update stock:", error);
@@ -343,10 +435,10 @@ export default function OrderDetailsPage() {
 
     // Determine if stock needs to be updated
     const wasStockDecreasedCheck =
-      stockAffectingStatuses.includes(prevStatus) &&
+      stockAffectingStatuses.includes(prevStatus || "") &&
       prevPaymentStatus === "paid";
     const shouldStockBeDecreasedCheck =
-      stockAffectingStatuses.includes(currentStatus) &&
+      stockAffectingStatuses.includes(currentStatus || "") &&
       currentPaymentStatus === "paid";
 
     if (!wasStockDecreasedCheck && shouldStockBeDecreasedCheck) {
@@ -374,7 +466,7 @@ export default function OrderDetailsPage() {
 
   const getOrderProgress = (status: OrderData["status"]) => {
     const steps = ["pending", "confirmed", "shipped", "delivered"];
-    const currentIndex = steps.indexOf(status);
+    const currentIndex = steps.indexOf(status || "pending");
     return status === "cancelled" ? -1 : currentIndex;
   };
 
@@ -427,7 +519,7 @@ export default function OrderDetailsPage() {
 
   // Generate order number from ID (first 8 characters)
   const getOrderNumber = (id: string) => {
-    return id.substring(0, 8).toUpperCase();
+    return safeString(id).substring(0, 8).toUpperCase();
   };
 
   // Handle back navigation
@@ -437,16 +529,18 @@ export default function OrderDetailsPage() {
 
   // Handle status update with stock validation using real product data
   const handleStatusUpdate = async () => {
+    if (!order || !orderId) return;
+
     try {
       // Define statuses that require stock validation
       const stockRequiredStatuses = ["confirmed", "shipped", "delivered"];
 
       // If changing to a status that requires stock validation
-      if (stockRequiredStatuses.includes(selectedStatus)) {
+      if (stockRequiredStatuses.includes(selectedStatus || "")) {
         // For delivered status, also check if payment is paid
         const shouldValidateStock =
           selectedStatus === "delivered"
-            ? order?.paymentStatus === "paid"
+            ? order.paymentStatus === "paid"
             : true;
 
         if (shouldValidateStock) {
@@ -488,6 +582,8 @@ export default function OrderDetailsPage() {
 
   // Handle payment status update with stock validation using real product data
   const handlePaymentStatusUpdate = async () => {
+    if (!order || !orderId) return;
+
     try {
       // Define statuses that when combined with "paid" require stock validation
       const stockRequiredStatuses = ["confirmed", "shipped", "delivered"];
@@ -495,7 +591,7 @@ export default function OrderDetailsPage() {
       // If changing to paid and order status requires stock validation
       if (
         selectedPaymentStatus === "paid" &&
-        order?.status &&
+        order.status &&
         stockRequiredStatuses.includes(order.status)
       ) {
         const validation = await validateStockAvailability(
@@ -572,13 +668,19 @@ export default function OrderDetailsPage() {
 
   // Error state
   if (error) {
+    console.error("Order loading error:", error);
     return (
       <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8 max-w-4xl">
         <div className="text-center py-8">
-          <p className="text-red-600">Failed to load order details</p>
+          <p className="text-red-600 mb-4">Failed to load order details</p>
+          <p className="text-stone-500 text-sm mb-4">
+            {error && typeof error === "object" && "message" in error
+              ? String(error.message)
+              : "Unknown error occurred"}
+          </p>
           <button
             onClick={() => refetch()}
-            className="mt-4 px-4 py-2 bg-terracotta-600 text-white rounded-md hover:bg-terracotta-700"
+            className="mt-4 px-4 py-2 bg-terracotta-600 text-white rounded-md hover:bg-terracotta-700 cursor-pointer"
           >
             Retry
           </button>
@@ -592,10 +694,10 @@ export default function OrderDetailsPage() {
     return (
       <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8 max-w-4xl">
         <div className="text-center py-8">
-          <p className="text-red-600">No order data found</p>
+          <p className="text-red-600 mb-4">No order data found</p>
           <button
             onClick={() => refetch()}
-            className="mt-4 px-4 py-2 bg-terracotta-600 text-white rounded-md hover:bg-terracotta-700"
+            className="mt-4 px-4 py-2 bg-terracotta-600 text-white rounded-md hover:bg-terracotta-700 cursor-pointer"
           >
             Retry
           </button>
@@ -605,6 +707,10 @@ export default function OrderDetailsPage() {
   }
 
   const progressIndex = getOrderProgress(order.status);
+  const orderItems = safeArray(order.orderItems);
+
+  console.log("Final order data:", order);
+  console.log("Final products data:", products);
 
   return (
     <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8 max-w-4xl">
@@ -635,14 +741,17 @@ export default function OrderDetailsPage() {
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
               <h1 className="text-xl sm:text-2xl font-medium text-stone-900 mb-2">
-                Order #{getOrderNumber(order.id)}
+                Order #{getOrderNumber(safeString(order.id))}
               </h1>
               <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-sm text-stone-600">
                 <span>
-                  Placed on {new Date(order.placedAt).toLocaleDateString()}
+                  Placed on{" "}
+                  {order.placedAt
+                    ? new Date(order.placedAt).toLocaleDateString()
+                    : "N/A"}
                 </span>
                 <span className="hidden sm:inline">•</span>
-                <span>Total: ₹{order.totalAmount.toFixed(2)}</span>
+                <span>Total: ₹{safeNumber(order.totalAmount).toFixed(2)}</span>
               </div>
             </div>
             <div className="flex flex-col gap-2">
@@ -655,7 +764,7 @@ export default function OrderDetailsPage() {
                       onChange={(e) =>
                         setSelectedStatus(e.target.value as OrderData["status"])
                       }
-                      className="px-3 py-1 border border-stone-300 rounded text-sm"
+                      className="px-3 py-1 border border-stone-300 rounded text-sm cursor-pointer"
                     >
                       <option value="pending">Pending</option>
                       <option value="confirmed">Confirmed</option>
@@ -689,7 +798,9 @@ export default function OrderDetailsPage() {
                       )}`}
                     >
                       {getStatusIcon(order.status)}
-                      <span className="ml-2 capitalize">{order.status}</span>
+                      <span className="ml-2 capitalize">
+                        {order.status || "pending"}
+                      </span>
                     </div>
                     <button
                       onClick={() => {
@@ -715,7 +826,7 @@ export default function OrderDetailsPage() {
                           e.target.value as OrderData["paymentStatus"]
                         )
                       }
-                      className="px-3 py-1 border border-stone-300 rounded text-sm"
+                      className="px-3 py-1 border border-stone-300 rounded text-sm cursor-pointer"
                     >
                       <option value="unpaid">Unpaid</option>
                       <option value="paid">Paid</option>
@@ -747,7 +858,9 @@ export default function OrderDetailsPage() {
                       )}`}
                     >
                       <CreditCard className="w-3 h-3 mr-1" />
-                      <span className="capitalize">{order.paymentStatus}</span>
+                      <span className="capitalize">
+                        {order.paymentStatus || "unpaid"}
+                      </span>
                     </div>
                     <button
                       onClick={() => {
@@ -817,41 +930,46 @@ export default function OrderDetailsPage() {
             Order Items
           </h2>
           <div className="space-y-4">
-            {order.orderItems.map((item: OrderData["orderItems"][number]) => {
+            {orderItems.map((item, index) => {
+              const productId = safeString(item.productId);
               // Get current stock from products API
-              const currentStock = getCurrentStock(item.productId);
-              const requiredQuantity = Number(item.quantity);
+              const currentStock = getCurrentStock(productId);
+              const requiredQuantity = safeNumber(item.quantity);
 
               return (
                 <div
-                  key={item.id}
+                  key={item.id || index}
                   className="flex items-center gap-4 p-4 bg-stone-50 rounded-md"
                 >
                   <div className="w-16 h-16 sm:w-20 sm:h-20 flex-shrink-0">
                     <Image
-                      src={
-                        item.product.productImages?.[0] ||
-                        "/Profile.jpg" ||
-                        "/placeholder.svg"
-                      }
-                      alt={item.product.productName}
+                      src={safeString(
+                        item.product?.productImages?.[0] || "/Profile.jpg"
+                      )}
+                      alt={safeString(item.product?.productName || "Product")}
                       width={80}
                       height={80}
                       className="w-full h-full object-cover rounded-md"
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.src = "/Profile.jpg";
+                      }}
                     />
                   </div>
                   <div className="flex-1 min-w-0">
                     <h3 className="text-sm sm:text-base font-medium text-stone-900 truncate">
-                      {item.product.productName}
+                      {safeString(
+                        item.product?.productName || "Unknown Product"
+                      )}
                     </h3>
                     <p className="text-sm text-stone-600">
-                      SKU: {item.product.skuCode}
+                      SKU: {safeString(item.product?.skuCode || "N/A")}
                     </p>
                     <p className="text-sm text-stone-600">
-                      Category: {item.product.category}
+                      Category: {safeString(item.product?.category || "N/A")}
                     </p>
                     <p className="text-sm text-stone-600">
-                      Quantity: {item.quantity}
+                      Quantity: {requiredQuantity}
                     </p>
 
                     {/* Display current stock from products API */}
@@ -871,7 +989,7 @@ export default function OrderDetailsPage() {
                       )}
                     </p>
 
-                    {item.product.weight && (
+                    {item.product?.weight && (
                       <p className="text-sm text-stone-600">
                         Weight: {item.product.weight}kg
                       </p>
@@ -879,11 +997,14 @@ export default function OrderDetailsPage() {
                   </div>
                   <div className="text-right">
                     <p className="text-sm sm:text-base font-medium text-stone-900">
-                      ₹{item.priceAtPurchase.toFixed(2)}
+                      ₹{safeNumber(item.priceAtPurchase).toFixed(2)}
                     </p>
                     {requiredQuantity > 1 && (
                       <p className="text-xs text-stone-600">
-                        ₹{(item.priceAtPurchase / requiredQuantity).toFixed(2)}{" "}
+                        ₹
+                        {(
+                          safeNumber(item.priceAtPurchase) / requiredQuantity
+                        ).toFixed(2)}{" "}
                         each
                       </p>
                     )}
@@ -900,7 +1021,7 @@ export default function OrderDetailsPage() {
                 Total Amount
               </span>
               <span className="text-lg font-bold text-terracotta-700">
-                ₹{order.totalAmount.toFixed(2)}
+                ₹{safeNumber(order.totalAmount).toFixed(2)}
               </span>
             </div>
           </div>
@@ -917,16 +1038,17 @@ export default function OrderDetailsPage() {
               </h3>
               <div className="bg-stone-50 p-4 rounded-md">
                 <p className="font-medium text-stone-900">
-                  {order.buyer.firstName} {order.buyer.lastName}
+                  {safeString(order.buyer?.firstName)}{" "}
+                  {safeString(order.buyer?.lastName)}
                 </p>
                 <p className="text-sm text-stone-600 mt-1">
-                  {order.buyer.email}
+                  {safeString(order.buyer?.email || "N/A")}
                 </p>
-                {order.buyer.phone && (
+                {order.buyer?.phone && (
                   <p className="text-sm text-stone-600">{order.buyer.phone}</p>
                 )}
                 <p className="text-sm text-stone-600 mt-2">
-                  Payment: {order.paymentMethod}
+                  Payment: {safeString(order.paymentMethod || "N/A")}
                 </p>
               </div>
             </div>
@@ -939,32 +1061,33 @@ export default function OrderDetailsPage() {
               </h3>
               <div className="bg-stone-50 p-4 rounded-md">
                 <p className="font-medium text-stone-900">
-                  {order.shippingAddress.firstName}{" "}
-                  {order.shippingAddress.lastName}
+                  {safeString(order.shippingAddress?.firstName)}{" "}
+                  {safeString(order.shippingAddress?.lastName)}
                 </p>
-                {order.shippingAddress.company && (
+                {order.shippingAddress?.company && (
                   <p className="text-sm text-stone-600">
                     {order.shippingAddress.company}
                   </p>
                 )}
                 <p className="text-sm text-stone-600 mt-1">
-                  {order.shippingAddress.street}
+                  {safeString(order.shippingAddress?.street || "N/A")}
                 </p>
-                {order.shippingAddress.apartment && (
+                {order.shippingAddress?.apartment && (
                   <p className="text-sm text-stone-600">
                     {order.shippingAddress.apartment}
                   </p>
                 )}
                 <p className="text-sm text-stone-600">
-                  {order.shippingAddress.city}, {order.shippingAddress.state}{" "}
-                  {order.shippingAddress.postalCode}
+                  {safeString(order.shippingAddress?.city || "N/A")},{" "}
+                  {safeString(order.shippingAddress?.state || "N/A")}{" "}
+                  {safeString(order.shippingAddress?.postalCode || "N/A")}
                 </p>
                 <p className="text-sm text-stone-600">
-                  {order.shippingAddress.country}
+                  {safeString(order.shippingAddress?.country || "N/A")}
                 </p>
                 <p className="text-sm text-stone-600 mt-2 flex items-center">
                   <Phone className="w-4 h-4 mr-1" />
-                  {order.shippingAddress.phone}
+                  {safeString(order.shippingAddress?.phone || "N/A")}
                 </p>
               </div>
             </div>
@@ -1003,13 +1126,17 @@ export default function OrderDetailsPage() {
               <div className="flex justify-between items-center mb-2">
                 <span className="text-sm text-stone-600">Order Placed:</span>
                 <span className="text-sm font-medium text-stone-900">
-                  {new Date(order.placedAt).toLocaleString()}
+                  {order.placedAt
+                    ? new Date(order.placedAt).toLocaleString()
+                    : "N/A"}
                 </span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-sm text-stone-600">Last Updated:</span>
                 <span className="text-sm font-medium text-stone-900">
-                  {new Date(order.updatedAt).toLocaleString()}
+                  {order.updatedAt
+                    ? new Date(order.updatedAt).toLocaleString()
+                    : "N/A"}
                 </span>
               </div>
             </div>

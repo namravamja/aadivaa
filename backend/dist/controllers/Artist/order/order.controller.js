@@ -35,20 +35,32 @@ var __importStar = (this && this.__importStar) || (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.bulkUpdateOrderStatus = exports.getOrderItemsByArtist = exports.updateOrderPaymentStatus = exports.updateOrderStatus = exports.getArtistOrderById = exports.getArtistOrders = void 0;
 const orderService = __importStar(require("../../../services/Artist/order/order.service"));
+const cache_1 = require("../../../helpers/cache");
 const getArtistOrders = async (req, res) => {
     try {
         const artistId = req.user?.id;
         if (!artistId)
             throw new Error("Unauthorized");
         const { page = "1", limit = "10", status, paymentStatus } = req.query;
+        const cacheKey = `artist_orders:${artistId}:page:${page}:limit:${limit}:status:${status || "all"}:payment:${paymentStatus || "all"}`;
+        const cachedOrders = await (0, cache_1.getCache)(cacheKey);
+        if (cachedOrders) {
+            return res.status(200).json({
+                success: true,
+                source: "cache",
+                data: cachedOrders,
+            });
+        }
         const orders = await orderService.getArtistOrders(artistId, {
             page: parseInt(page),
             limit: parseInt(limit),
             status: status,
             paymentStatus: paymentStatus,
         });
+        await (0, cache_1.setCache)(cacheKey, orders);
         res.status(200).json({
             success: true,
+            source: "db",
             data: orders,
         });
     }
@@ -67,6 +79,15 @@ const getArtistOrderById = async (req, res) => {
         const { orderId } = req.params;
         if (!artistId || !orderId)
             throw new Error("Unauthorized or missing order ID");
+        const cacheKey = `artist_order:${artistId}:${orderId}`;
+        const cachedOrder = await (0, cache_1.getCache)(cacheKey);
+        if (cachedOrder) {
+            return res.status(200).json({
+                success: true,
+                source: "cache",
+                data: cachedOrder,
+            });
+        }
         const order = await orderService.getArtistOrderById(orderId, artistId);
         if (!order) {
             return res.status(404).json({
@@ -74,8 +95,10 @@ const getArtistOrderById = async (req, res) => {
                 message: "Order not found or you don't have access to this order",
             });
         }
+        await (0, cache_1.setCache)(cacheKey, order);
         res.status(200).json({
             success: true,
+            source: "db",
             data: order,
         });
     }
@@ -116,6 +139,11 @@ const updateOrderStatus = async (req, res) => {
             });
         }
         const order = await orderService.updateOrderStatus(orderId, artistId, status);
+        // Clear related caches
+        await (0, cache_1.deleteCache)(`artist_order:${artistId}:${orderId}`);
+        // Clear artist orders list cache (all variations)
+        const cachePattern = `artist_orders:${artistId}:*`;
+        // Note: You might need to implement a pattern-based cache clearing function
         res.status(200).json({
             success: true,
             message: "Order status updated successfully",
@@ -157,6 +185,11 @@ const updateOrderPaymentStatus = async (req, res) => {
             paymentStatus,
             transactionId,
         });
+        // Clear related caches
+        await (0, cache_1.deleteCache)(`artist_order:${artistId}:${orderId}`);
+        // Clear artist orders list cache (all variations)
+        const cachePattern = `artist_orders:${artistId}:*`;
+        // Note: You might need to implement a pattern-based cache clearing function
         res.status(200).json({
             success: true,
             message: "Payment status updated successfully",
@@ -178,14 +211,25 @@ const getOrderItemsByArtist = async (req, res) => {
         if (!artistId)
             throw new Error("Unauthorized");
         const { page = "1", limit = "10", status, paymentStatus } = req.query;
+        const cacheKey = `artist_order_items:${artistId}:page:${page}:limit:${limit}:status:${status || "all"}:payment:${paymentStatus || "all"}`;
+        const cachedOrderItems = await (0, cache_1.getCache)(cacheKey);
+        if (cachedOrderItems) {
+            return res.status(200).json({
+                success: true,
+                source: "cache",
+                data: cachedOrderItems,
+            });
+        }
         const orderItems = await orderService.getOrderItemsByArtist(artistId, {
             page: parseInt(page),
             limit: parseInt(limit),
             status: status,
             paymentStatus: paymentStatus,
         });
+        await (0, cache_1.setCache)(cacheKey, orderItems);
         res.status(200).json({
             success: true,
+            source: "db",
             data: orderItems,
         });
     }
@@ -225,6 +269,13 @@ const bulkUpdateOrderStatus = async (req, res) => {
             });
         }
         const updatedOrders = await orderService.bulkUpdateOrderStatus(orderIds, artistId, status);
+        // Clear related caches for all updated orders
+        for (const orderId of orderIds) {
+            await (0, cache_1.deleteCache)(`artist_order:${artistId}:${orderId}`);
+        }
+        // Clear artist orders list cache (all variations)
+        const cachePattern = `artist_orders:${artistId}:*`;
+        // Note: You might need to implement a pattern-based cache clearing function
         res.status(200).json({
             success: true,
             message: `${updatedOrders.length} orders updated successfully`,

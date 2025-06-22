@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, use } from "react";
+import { Suspense, use, useMemo } from "react";
 import ProductsGrid from "./components/ProductsGrid";
 import ProductFilters from "./components/ProductFilters";
 import ProductsLoading from "./loading";
@@ -23,30 +23,52 @@ export default function Products({
 
   // Fetch products data
   const {
-    data: productsData,
+    data: productsResponse,
     isLoading,
     error,
   } = useGetAllProductsQuery(undefined, {
     refetchOnMountOrArgChange: true,
   });
 
-  console.log(productsData);
+  // Extract products array from the response, handling both old and new API response formats
+  const productsData = useMemo(() => {
+    if (!productsResponse) return [];
+
+    // Handle new Redis cache response format: {source: 'cache', data: [...]}
+    if (productsResponse.data && Array.isArray(productsResponse.data)) {
+      return productsResponse.data;
+    }
+
+    // Handle old direct array format: [...]
+    if (Array.isArray(productsResponse)) {
+      return productsResponse;
+    }
+
+    return [];
+  }, [productsResponse]);
+
+  console.log("Products Response:", productsResponse);
+  console.log("Extracted Products Data:", productsData);
 
   // Generate dynamic filter options from API data
-  const categories = productsData
-    ? [
-        { id: "all", name: "All Products" },
-        ...Array.from(
-          new Set(productsData.map((product: any) => product.category))
-        ).map((cat) => {
-          const catStr = typeof cat === "string" ? cat : String(cat);
-          return {
-            id: catStr.toLowerCase().replace(/\s+/g, "-"),
-            name: catStr,
-          };
-        }),
-      ]
-    : [{ id: "all", name: "All Products" }];
+  const categories = useMemo(() => {
+    if (!productsData || productsData.length === 0) {
+      return [{ id: "all", name: "All Products" }];
+    }
+
+    return [
+      { id: "all", name: "All Products" },
+      ...Array.from(
+        new Set(productsData.map((product: any) => product.category))
+      ).map((cat) => {
+        const catStr = typeof cat === "string" ? cat : String(cat);
+        return {
+          id: catStr.toLowerCase().replace(/\s+/g, "-"),
+          name: catStr,
+        };
+      }),
+    ];
+  }, [productsData]);
 
   // Generate price ranges based on actual product prices
   const priceRanges = [
@@ -105,7 +127,7 @@ export default function Products({
           <div className="flex-1">
             <Suspense fallback={<ProductsLoading />}>
               <ProductsGrid
-                products={productsData || []}
+                products={productsData}
                 category={category}
                 priceRange={priceRange}
                 sort={sort}

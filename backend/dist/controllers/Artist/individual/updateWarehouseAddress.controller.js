@@ -35,6 +35,7 @@ var __importStar = (this && this.__importStar) || (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.updateWarehouseAddress = void 0;
 const artistService = __importStar(require("../../../services/Artist/artist.service"));
+const cache_1 = require("../../../helpers/cache");
 const updateWarehouseAddress = async (req, res) => {
     try {
         const userId = req.user?.id;
@@ -42,6 +43,7 @@ const updateWarehouseAddress = async (req, res) => {
             throw new Error("Unauthorized");
         const addressData = req.body;
         const updatedAddress = await artistService.updateWarehouseAddress(userId, addressData);
+        await (0, cache_1.deleteCache)("artists:all");
         res.json({
             success: true,
             message: "Warehouse address updated successfully",

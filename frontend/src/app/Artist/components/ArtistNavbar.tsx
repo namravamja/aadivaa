@@ -1,11 +1,13 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import type React from "react";
+
+import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { Menu, X, LogOut } from "lucide-react";
 import toast from "react-hot-toast";
-import { useGetartistQuery } from "@/services/api/artistApi"; // Adjust import path as needed
+import { useGetartistQuery } from "@/services/api/artistApi";
 import { useLogoutMutation } from "@/services/api/authApi";
 
 const navigation = [
@@ -22,6 +24,11 @@ interface ArtistData {
   storeName?: string;
   businessLogo?: string;
   [key: string]: any;
+}
+
+interface CacheResponse {
+  source: string;
+  data: ArtistData;
 }
 
 interface ApiError {
@@ -41,7 +48,7 @@ export default function ArtistNavbar() {
 
   // Fetch artist data
   const {
-    data: artistData,
+    data: rawArtistData,
     isLoading,
     isError,
     error,
@@ -50,6 +57,23 @@ export default function ArtistNavbar() {
 
   // Handle logout mutation
   const [logout] = useLogoutMutation();
+
+  // Extract artist data from cache response
+  const artistData = useMemo(() => {
+    if (!rawArtistData) return null;
+
+    // Handle cache response format
+    if (
+      rawArtistData &&
+      typeof rawArtistData === "object" &&
+      "data" in rawArtistData
+    ) {
+      return (rawArtistData as CacheResponse).data;
+    }
+
+    // Handle direct response format
+    return rawArtistData as ArtistData;
+  }, [rawArtistData]);
 
   // Track when we've tried authentication
   useEffect(() => {
@@ -63,14 +87,15 @@ export default function ArtistNavbar() {
   const apiError = error as ApiError | undefined;
 
   // Extract artist data
-  const artist =
-    isAuthenticated && artistData
-      ? {
-          name: (artistData as ArtistData).fullName || "Artist",
-          storeName: (artistData as ArtistData).storeName || "",
-          image: (artistData as ArtistData).businessLogo || "/Profile.jpg",
-        }
-      : null;
+  const artist = useMemo(() => {
+    if (!isAuthenticated || !artistData) return null;
+
+    return {
+      name: artistData.fullName || "Artist",
+      storeName: artistData.storeName || "",
+      image: artistData.businessLogo || "/Profile.jpg",
+    };
+  }, [isAuthenticated, artistData]);
 
   // Handle menu opening and closing with animation
   useEffect(() => {
@@ -185,7 +210,7 @@ export default function ArtistNavbar() {
                     </span>
                     {artist.image ? (
                       <img
-                        src={artist.image}
+                        src={artist.image || "/placeholder.svg"}
                         alt={artist.name}
                         className="w-7 h-7 lg:w-8 lg:h-8 rounded-full object-cover border-2 border-stone-200 group-hover:border-terracotta-600 transition-colors duration-300"
                         onError={handleImageError}
@@ -278,7 +303,7 @@ export default function ArtistNavbar() {
                     <div className="flex items-center gap-3 p-3 bg-white rounded-lg">
                       {artist.image ? (
                         <img
-                          src={artist.image}
+                          src={artist.image || "/placeholder.svg"}
                           alt={artist.name}
                           className="w-8 h-8 sm:w-9 sm:h-9 md:w-10 md:h-10 rounded-full object-cover border-2 border-stone-200 flex-shrink-0"
                           onError={handleImageError}

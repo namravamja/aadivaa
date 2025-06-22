@@ -35,6 +35,7 @@ var __importStar = (this && this.__importStar) || (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.updateDocuments = void 0;
 const artistService = __importStar(require("../../../services/Artist/artist.service"));
+const cache_1 = require("../../../helpers/cache");
 const updateDocuments = async (req, res) => {
     try {
         const userId = req.user?.id;
@@ -61,6 +62,7 @@ const updateDocuments = async (req, res) => {
         // console.log("Documents data:", documentsData);
         // console.log("Files received:", files);
         const updatedDocuments = await artistService.updateDocuments(userId, documentsData);
+        await (0, cache_1.deleteCache)("artists:all");
         res.json({
             success: true,
             message: "Documents updated successfully",

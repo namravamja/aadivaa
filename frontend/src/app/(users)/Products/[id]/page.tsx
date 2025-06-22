@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useState } from "react";
+import { use, useState, useMemo } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowLeft, Star, Share2 } from "lucide-react";
@@ -22,7 +22,7 @@ export default function ProductDetailPage({
 
   // Fetch specific product data by ID
   const {
-    data: apiProduct,
+    data: productResponse,
     isLoading,
     error,
   } = useGetProductByIdQuery(id, {
@@ -30,10 +30,44 @@ export default function ProductDetailPage({
   });
 
   // Fetch review statistics
-  const { data: reviews = [], isLoading: reviewsLoading } =
+  const { data: reviewsResponse, isLoading: reviewsLoading } =
     useGetReviewsByProductQuery(id, {
       refetchOnMountOrArgChange: true,
     });
+
+  // Extract product data from the response
+  const apiProduct = useMemo(() => {
+    if (!productResponse) return null;
+
+    // Handle new Redis cache response format: {source: 'cache', data: {...}}
+    if (productResponse.data && typeof productResponse.data === "object") {
+      return productResponse.data;
+    }
+
+    // Handle old direct object format: {...}
+    if (productResponse.id) {
+      return productResponse;
+    }
+
+    return null;
+  }, [productResponse]);
+
+  // Extract reviews data from the response
+  const reviews = useMemo(() => {
+    if (!reviewsResponse) return [];
+
+    // Handle new Redis cache response format: {source: 'cache', data: [...]}
+    if (reviewsResponse.data && Array.isArray(reviewsResponse.data)) {
+      return reviewsResponse.data;
+    }
+
+    // Handle old direct array format: [...]
+    if (Array.isArray(reviewsResponse)) {
+      return reviewsResponse;
+    }
+
+    return [];
+  }, [reviewsResponse]);
 
   // Calculate review statistics
   const reviewStats = {

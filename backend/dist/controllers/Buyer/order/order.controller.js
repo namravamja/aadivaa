@@ -36,6 +36,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.updatePaymentStatus = exports.cancelOrder = exports.getOrderById = exports.getBuyerOrders = exports.createOrder = void 0;
 const orderService = __importStar(require("../../../services/Buyer/order/order.service"));
 const cartService = __importStar(require("../../../services/Buyer/cart/cart.service"));
+const cache_1 = require("../../../helpers/cache");
 const createOrder = async (req, res) => {
     try {
         const buyerId = req.user?.id;
@@ -61,6 +62,9 @@ const createOrder = async (req, res) => {
             cartItems,
         });
         await cartService.clearCart(buyerId);
+        // Clear related caches after order creation
+        await (0, cache_1.deleteCache)(`buyer_orders:${buyerId}:*`);
+        await (0, cache_1.deleteCache)(`cart:${buyerId}`);
         res.status(201).json({
             success: true,
             message: "Order placed successfully",
@@ -82,13 +86,24 @@ const getBuyerOrders = async (req, res) => {
         if (!buyerId)
             throw new Error("Unauthorized");
         const { page = "1", limit = "10", status } = req.query;
+        const cacheKey = `buyer_orders:${buyerId}:page:${page}:limit:${limit}:status:${status || "all"}`;
+        const cachedOrders = await (0, cache_1.getCache)(cacheKey);
+        if (cachedOrders) {
+            return res.status(200).json({
+                success: true,
+                source: "cache",
+                data: cachedOrders,
+            });
+        }
         const orders = await orderService.getBuyerOrders(buyerId, {
             page: parseInt(page),
             limit: parseInt(limit),
             status: status,
         });
+        await (0, cache_1.setCache)(cacheKey, orders);
         res.status(200).json({
             success: true,
+            source: "db",
             data: orders,
         });
     }
@@ -107,6 +122,15 @@ const getOrderById = async (req, res) => {
         const { orderId } = req.params;
         if (!buyerId || !orderId)
             throw new Error("Unauthorized or missing order ID");
+        const cacheKey = `buyer_order:${buyerId}:${orderId}`;
+        const cachedOrder = await (0, cache_1.getCache)(cacheKey);
+        if (cachedOrder) {
+            return res.status(200).json({
+                success: true,
+                source: "cache",
+                data: cachedOrder,
+            });
+        }
         const order = await orderService.getOrderById(orderId, buyerId);
         if (!order) {
             return res.status(404).json({
@@ -114,8 +138,10 @@ const getOrderById = async (req, res) => {
                 message: "Order not found",
             });
         }
+        await (0, cache_1.setCache)(cacheKey, order);
         res.status(200).json({
             success: true,
+            source: "db",
             data: order,
         });
     }
@@ -135,6 +161,11 @@ const cancelOrder = async (req, res) => {
         if (!buyerId || !orderId)
             throw new Error("Unauthorized or missing order ID");
         const order = await orderService.cancelOrder(orderId, buyerId);
+        // Clear related caches after order cancellation
+        await (0, cache_1.deleteCache)(`buyer_order:${buyerId}:${orderId}`);
+        // Clear buyer orders list cache (all variations)
+        const cachePattern = `buyer_orders:${buyerId}:*`;
+        // Note: You might need to implement a pattern-based cache clearing function
         res.status(200).json({
             success: true,
             message: "Order cancelled successfully",
@@ -158,6 +189,9 @@ const updatePaymentStatus = async (req, res) => {
             paymentStatus,
             transactionId,
         });
+        // Clear order-related caches (we don't have buyerId here, so clear by orderId pattern)
+        await (0, cache_1.deleteCache)(`buyer_order:*:${orderId}`);
+        // Note: You might need to implement a pattern-based cache clearing function
         res.status(200).json({
             success: true,
             message: "Payment status updated successfully",

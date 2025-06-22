@@ -35,6 +35,7 @@ var __importStar = (this && this.__importStar) || (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.removeFromWishlist = exports.getWishlist = exports.addToWishlist = void 0;
 const wishlistService = __importStar(require("../../../services/Buyer/wishlist/wishlist.service"));
+const cache_1 = require("../../../helpers/cache");
 const addToWishlist = async (req, res) => {
     try {
         const userId = req.user?.id;
@@ -42,6 +43,8 @@ const addToWishlist = async (req, res) => {
             throw new Error("Unauthorized");
         const { productId } = req.body;
         const item = await wishlistService.addToWishlist(userId, productId);
+        // Clear wishlist cache after adding item
+        await (0, cache_1.deleteCache)(`wishlist:${userId}`);
         res.status(201).json(item);
     }
     catch (error) {
@@ -54,8 +57,14 @@ const getWishlist = async (req, res) => {
         const userId = req.user?.id;
         if (!userId)
             throw new Error("Unauthorized");
+        const cacheKey = `wishlist:${userId}`;
+        const cachedWishlist = await (0, cache_1.getCache)(cacheKey);
+        if (cachedWishlist) {
+            return res.json({ source: "cache", data: cachedWishlist });
+        }
         const items = await wishlistService.getWishlistByBuyer(userId);
-        res.json(items);
+        await (0, cache_1.setCache)(cacheKey, items);
+        res.json({ source: "db", data: items });
     }
     catch (error) {
         res.status(404).json({ error: error.message });
@@ -69,6 +78,8 @@ const removeFromWishlist = async (req, res) => {
             throw new Error("Unauthorized");
         const { productId } = req.body;
         await wishlistService.removeFromWishlist(userId, productId);
+        // Clear wishlist cache after removing item
+        await (0, cache_1.deleteCache)(`wishlist:${userId}`);
         res.status(204).send();
     }
     catch (error) {

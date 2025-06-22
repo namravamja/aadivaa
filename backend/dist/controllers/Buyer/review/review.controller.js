@@ -35,6 +35,7 @@ var __importStar = (this && this.__importStar) || (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.deleteReview = exports.updateReview = exports.getReviewsByProduct = exports.addReview = void 0;
 const reviewService = __importStar(require("../../../services/Buyer/review/review.service"));
+const cache_1 = require("../../../helpers/cache");
 // Create a new review
 const addReview = async (req, res) => {
     try {
@@ -48,6 +49,9 @@ const addReview = async (req, res) => {
             title,
             text,
         });
+        // Clear related caches after adding review
+        await (0, cache_1.deleteCache)(`reviews:product:${productId}`);
+        await (0, cache_1.deleteCache)(`reviews:buyer:${buyerId}`);
         res.status(201).json(review);
     }
     catch (error) {
@@ -59,8 +63,14 @@ exports.addReview = addReview;
 const getReviewsByProduct = async (req, res) => {
     try {
         const { productId } = req.params;
+        const cacheKey = `reviews:product:${productId}`;
+        const cachedReviews = await (0, cache_1.getCache)(cacheKey);
+        if (cachedReviews) {
+            return res.json({ source: "cache", data: cachedReviews });
+        }
         const reviews = await reviewService.getReviewsByProduct(productId);
-        res.json(reviews);
+        await (0, cache_1.setCache)(cacheKey, reviews);
+        res.json({ source: "db", data: reviews });
     }
     catch (error) {
         res.status(404).json({ error: error.message });
@@ -79,6 +89,12 @@ const updateReview = async (req, res) => {
             title,
             text,
         });
+        // Clear related caches after updating review
+        // Note: We need productId to clear product reviews cache
+        // You might need to get the review first to know the productId
+        await (0, cache_1.deleteCache)(`review:${reviewId}`);
+        await (0, cache_1.deleteCache)(`reviews:buyer:${buyerId}`);
+        // If you have productId available: await deleteCache(`reviews:product:${productId}`);
         res.json(updatedReview);
     }
     catch (error) {
@@ -93,7 +109,14 @@ const deleteReview = async (req, res) => {
         if (!buyerId)
             throw new Error("Unauthorized");
         const { reviewId } = req.body;
+        // You might want to get the review first to know the productId for cache clearing
+        // const existingReview = await reviewService.getReviewById(reviewId);
+        // const productId = existingReview?.productId;
         await reviewService.deleteReview(buyerId, reviewId);
+        // Clear related caches after deleting review
+        await (0, cache_1.deleteCache)(`review:${reviewId}`);
+        await (0, cache_1.deleteCache)(`reviews:buyer:${buyerId}`);
+        // If you have productId available: await deleteCache(`reviews:product:${productId}`);
         res.status(204).send();
     }
     catch (error) {

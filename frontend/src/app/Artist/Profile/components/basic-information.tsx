@@ -10,7 +10,7 @@ interface ArtistData {
   mobile: string;
   businessType: string;
   businessRegistrationNumber: string;
-  productCategories: string[];
+  productCategories?: string[]; // Make this optional
   businessLogo?: string | null;
 }
 
@@ -21,6 +21,8 @@ interface BasicInformationProps {
 export default function BasicInformation({
   artistData,
 }: BasicInformationProps) {
+  // Safely extract categories with fallback
+
   return (
     <div className="bg-white border border-stone-200 shadow-sm">
       <div className="p-6 border-b border-stone-200">
@@ -98,20 +100,26 @@ export default function BasicInformation({
           </div>
         </div>
 
-        {/* Product Categories */}
+        {/* Product Categories - Safe Implementation */}
         <div className="pt-6 border-t border-stone-200">
           <label className="block text-sm font-medium text-stone-700 mb-3">
             Product Categories
           </label>
           <div className="flex flex-wrap gap-2">
-            {artistData.productCategories.map((category, index) => (
-              <span
-                key={index}
-                className="bg-terracotta-100 text-terracotta-700 px-3 py-1 rounded-full text-sm"
-              >
-                {category || "not provided"}
+            {(artistData.productCategories || []).length > 0 ? (
+              (artistData.productCategories || []).map((category, index) => (
+                <span
+                  key={index}
+                  className="bg-terracotta-100 text-terracotta-700 px-3 py-1 rounded-full text-sm"
+                >
+                  {category || "not provided"}
+                </span>
+              ))
+            ) : (
+              <span className="text-stone-500 italic">
+                No categories specified
               </span>
-            ))}
+            )}
           </div>
         </div>
       </div>

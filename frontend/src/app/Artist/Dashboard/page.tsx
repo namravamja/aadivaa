@@ -44,7 +44,6 @@ const CustomTooltip = ({
       <div className="bg-white p-3 border border-stone-200 shadow-md rounded-md">
         <p className="text-sm font-medium text-stone-900">{label}</p>
         <p className="text-sm text-terracotta-600">
-          {" "}
           {payload[0].name === "revenue" ? "₹" : ""}
           {payload[0].value?.toLocaleString()}
           {payload[0].name === "visitors" ? " visitors" : ""}
@@ -56,6 +55,20 @@ const CustomTooltip = ({
   return null;
 };
 
+// Safe data access utilities
+const safeArray = <T,>(value: T[] | undefined | null): T[] => {
+  return Array.isArray(value) ? value : [];
+};
+
+const safeNumber = (value: any): number => {
+  const num = Number(value);
+  return isNaN(num) ? 0 : num;
+};
+
+const safeString = (value: any): string => {
+  return value ? String(value) : "";
+};
+
 export default function ArtistDashboard() {
   const [timeRange, setTimeRange] = useState("30d");
   const [selectedTimeframe, setSelectedTimeframe] = useState("weekly");
@@ -65,16 +78,36 @@ export default function ArtistDashboard() {
 
   // Fetch artist data using RTK Query
   const {
-    data: artistData,
+    data: artistResponse,
     isLoading,
     error,
   } = useGetartistQuery(undefined, {
     skip: !isAuthenticated,
   });
 
+  // Extract artist data from cache response format
+  const artistData = useMemo(() => {
+    if (!artistResponse) return null;
+
+    console.log("Raw artist response:", artistResponse);
+
+    // Handle cache response format: {source: 'cache', data: {...}}
+    if (artistResponse.source && artistResponse.data) {
+      return artistResponse.data;
+    }
+
+    // Handle direct object format as fallback
+    if (typeof artistResponse === "object" && !Array.isArray(artistResponse)) {
+      return artistResponse;
+    }
+
+    return null;
+  }, [artistResponse]);
+
   // Helper function to group order items by orderId and filter by time range
   const getOrdersFromOrderItems = (orderItems: any[], range: string) => {
-    if (!orderItems || orderItems.length === 0) return [];
+    const safeOrderItems = safeArray(orderItems);
+    if (safeOrderItems.length === 0) return [];
 
     const now = new Date();
     const rangeDate = new Date();
@@ -98,8 +131,10 @@ export default function ArtistDashboard() {
 
     // Group order items by orderId
     const orderGroups: { [key: string]: any } = {};
-    orderItems.forEach((orderItem) => {
-      const orderId = orderItem.orderId;
+    safeOrderItems.forEach((orderItem) => {
+      const orderId = safeString(orderItem?.orderId);
+      if (!orderId) return;
+
       if (!orderGroups[orderId]) {
         orderGroups[orderId] = {
           orderId,
@@ -107,15 +142,16 @@ export default function ArtistDashboard() {
           totalAmount: 0,
           totalItems: 0,
           date:
-            orderItem.createdAt ||
-            orderItem.updatedAt ||
+            orderItem?.createdAt ||
+            orderItem?.updatedAt ||
             new Date().toISOString(),
         };
       }
       orderGroups[orderId].items.push(orderItem);
       orderGroups[orderId].totalAmount +=
-        (orderItem.priceAtPurchase || 0) * (orderItem.quantity || 1);
-      orderGroups[orderId].totalItems += orderItem.quantity || 1;
+        safeNumber(orderItem?.priceAtPurchase) *
+        safeNumber(orderItem?.quantity || 1);
+      orderGroups[orderId].totalItems += safeNumber(orderItem?.quantity || 1);
     });
 
     // Convert to array and filter by date range
@@ -129,31 +165,23 @@ export default function ArtistDashboard() {
 
   // Generate revenue data based on grouped orders
   const revenueData = useMemo(() => {
-    if (!artistData?.orderItems || artistData.orderItems.length === 0) {
-      return [
-        { date: "Week 1", revenue: 0 },
-        { date: "Week 2", revenue: 0 },
-        { date: "Week 3", revenue: 0 },
-        { date: "Week 4", revenue: 0 },
-      ];
-    }
+    const defaultData = [
+      { date: "Week 1", revenue: 0 },
+      { date: "Week 2", revenue: 0 },
+      { date: "Week 3", revenue: 0 },
+      { date: "Week 4", revenue: 0 },
+    ];
+
+    if (!artistData?.orderItems) return defaultData;
 
     const orders = getOrdersFromOrderItems(artistData.orderItems, timeRange);
-
-    if (orders.length === 0) {
-      return [
-        { date: "Week 1", revenue: 0 },
-        { date: "Week 2", revenue: 0 },
-        { date: "Week 3", revenue: 0 },
-        { date: "Week 4", revenue: 0 },
-      ];
-    }
+    if (orders.length === 0) return defaultData;
 
     const revenueByPeriod: { [key: string]: number } = {};
 
     orders.forEach((order: any) => {
       const orderDate = new Date(order.date);
-      const revenue = order.totalAmount;
+      const revenue = safeNumber(order.totalAmount);
 
       let periodKey;
       if (selectedTimeframe === "weekly") {
@@ -187,55 +215,57 @@ export default function ArtistDashboard() {
 
   // Calculate stats from real data with time filtering
   const stats = useMemo(() => {
-    if (!artistData) {
-      return [
-        {
-          title: "Total Products",
-          value: "0",
-          change: "0%",
-          trend: "up" as const,
-          icon: Package,
-          color: "terracotta",
-        },
-        {
-          title: "Orders",
-          value: "0",
-          change: "0%",
-          trend: "up" as const,
-          icon: ShoppingBag,
-          color: "clay",
-        },
-        {
-          title: "Reviews",
-          value: "0",
-          change: "0",
-          trend: "up" as const,
-          icon: Star,
-          color: "terracotta",
-        },
-        {
-          title: "Total Revenue",
-          value: "$0",
-          change: "0%",
-          trend: "up" as const,
-          icon: DollarSign,
-          color: "sage",
-        },
-      ];
-    }
+    const defaultStats = [
+      {
+        title: "Total Products",
+        value: "0",
+        change: "0%",
+        trend: "up" as const,
+        icon: Package,
+        color: "terracotta",
+      },
+      {
+        title: "Orders",
+        value: "0",
+        change: "0%",
+        trend: "up" as const,
+        icon: ShoppingBag,
+        color: "clay",
+      },
+      {
+        title: "Reviews",
+        value: "0",
+        change: "0",
+        trend: "up" as const,
+        icon: Star,
+        color: "terracotta",
+      },
+      {
+        title: "Total Revenue",
+        value: "₹0",
+        change: "0%",
+        trend: "up" as const,
+        icon: DollarSign,
+        color: "sage",
+      },
+    ];
 
-    const totalProducts = artistData.products?.length || 0;
+    if (!artistData) return defaultStats;
+
+    const totalProducts = safeArray(artistData.products).length;
     const orders = getOrdersFromOrderItems(
-      artistData.orderItems || [],
+      safeArray(artistData.orderItems),
       timeRange
     );
     const totalOrders = orders.length;
-    const totalReviews = artistData.Review?.length || 0;
+    const reviews = safeArray(artistData.Review);
+    const totalReviews = reviews.length;
+
     const averageRating =
       totalReviews > 0
         ? (
-            artistData.Review.reduce(
-              (sum: number, review: any) => sum + (review.rating || 0),
+            reviews.reduce(
+              (sum: number, review: any) => sum + safeNumber(review?.rating),
               0
             ) / totalReviews
           ).toFixed(1)
@@ -243,7 +273,7 @@ export default function ArtistDashboard() {
 
     // Calculate total revenue from orders
     const totalRevenue = orders.reduce(
-      (sum: number, order: any) => sum + order.totalAmount,
+      (sum: number, order: any) => sum + safeNumber(order.totalAmount),
       0
     );
 
@@ -285,26 +315,27 @@ export default function ArtistDashboard() {
 
   // Calculate sales by category from order items
   const salesByCategory = useMemo(() => {
-    if (!artistData?.orderItems || artistData.orderItems.length === 0) {
-      return [];
-    }
+    if (!artistData?.orderItems) return [];
 
-    const orders = getOrdersFromOrderItems(artistData.orderItems, timeRange);
-
-    if (orders.length === 0) {
-      return [];
-    }
+    const orders = getOrdersFromOrderItems(
+      safeArray(artistData.orderItems),
+      timeRange
+    );
+    if (orders.length === 0) return [];
 
     const categoryRevenue: { [key: string]: number } = {};
     let totalRevenue = 0;
 
     // Get all order items from filtered orders
-    const allOrderItems = orders.flatMap((order: any) => order.items);
+    const allOrderItems = orders.flatMap((order: any) =>
+      safeArray(order.items)
+    );
 
     allOrderItems.forEach((orderItem: any) => {
-      const category = orderItem.product?.category || "Other";
+      const category = safeString(orderItem?.product?.category || "Other");
       const revenue =
-        (orderItem.priceAtPurchase || 0) * (orderItem.quantity || 1);
+        safeNumber(orderItem?.priceAtPurchase) *
+        safeNumber(orderItem?.quantity || 1);
       categoryRevenue[category] = (categoryRevenue[category] || 0) + revenue;
       totalRevenue += revenue;
     });
@@ -317,10 +348,12 @@ export default function ArtistDashboard() {
 
   // Get recent orders (properly grouped)
   const recentOrders = useMemo(() => {
-    if (!artistData?.orderItems || artistData.orderItems.length === 0)
-      return [];
+    if (!artistData?.orderItems) return [];
 
-    const orders = getOrdersFromOrderItems(artistData.orderItems, timeRange);
+    const orders = getOrdersFromOrderItems(
+      safeArray(artistData.orderItems),
+      timeRange
+    );
 
     return orders
       .sort((a: any, b: any) => {
@@ -329,17 +362,18 @@ export default function ArtistDashboard() {
         return dateB.getTime() - dateA.getTime();
       })
       .slice(0, 4)
-      .map((order: any, index: number) => {
+      .map((order: any) => {
         const orderDate = new Date(order.date);
-        const shortOrderId = order.orderId.split("-")[0].toUpperCase();
+        const shortOrderId =
+          safeString(order.orderId).split("-")[0]?.toUpperCase() || "UNKNOWN";
 
         return {
           id: `ORD-${shortOrderId}`,
           customer: "Customer",
           date: order.date,
-          amount: order.totalAmount,
-          status: order.items[0]?.status || "processing",
-          items: order.totalItems,
+          amount: safeNumber(order.totalAmount),
+          status: safeString(order.items?.[0]?.status || "processing"),
+          items: safeNumber(order.totalItems),
           image: "/Profile.jpg",
         };
       });
@@ -349,18 +383,25 @@ export default function ArtistDashboard() {
   const topProducts = useMemo(() => {
     if (!artistData?.products || !artistData?.orderItems) return [];
 
-    const orders = getOrdersFromOrderItems(artistData.orderItems, timeRange);
-    const allOrderItems = orders.flatMap((order: any) => order.items);
+    const orders = getOrdersFromOrderItems(
+      safeArray(artistData.orderItems),
+      timeRange
+    );
+    const allOrderItems = orders.flatMap((order: any) =>
+      safeArray(order.items)
+    );
 
     const productSales: { [key: string]: { sales: number; revenue: number } } =
       {};
 
     // Calculate sales for each product from order items
     allOrderItems.forEach((orderItem: any) => {
-      const productId = orderItem.product?.id || orderItem.productId;
+      const productId = safeString(
+        orderItem?.product?.id || orderItem?.productId
+      );
       if (productId) {
-        const quantity = orderItem.quantity || 0;
-        const revenue = (orderItem.priceAtPurchase || 0) * quantity;
+        const quantity = safeNumber(orderItem?.quantity);
+        const revenue = safeNumber(orderItem?.priceAtPurchase) * quantity;
 
         if (!productSales[productId]) {
           productSales[productId] = { sales: 0, revenue: 0 };
@@ -370,23 +411,27 @@ export default function ArtistDashboard() {
       }
     });
 
-    return artistData.products
+    return safeArray(artistData.products)
       .map((product: any) => {
-        const sales = productSales[product.id]?.sales || 0;
-        const revenue = productSales[product.id]?.revenue || 0;
+        const sales = productSales[product?.id]?.sales || 0;
+        const revenue = productSales[product?.id]?.revenue || 0;
 
         return {
-          id: product.id,
-          name:
-            product.productName ||
-            product.name ||
-            product.title ||
-            "Unnamed Product",
+          id: safeString(product?.id),
+          name: safeString(
+            product?.productName ||
+              product?.name ||
+              product?.title ||
+              "Unnamed Product"
+          ),
           sales: sales,
           revenue: revenue,
-          stock: Number.parseInt(product.availableStock) || 0,
-          image:
-            product.productImages?.[0] || product.images?.[0] || "/Profile.jpg",
+          stock: safeNumber(product?.availableStock),
+          image: safeString(
+            product?.productImages?.[0] ||
+              product?.images?.[0] ||
+              "/Profile.jpg"
+          ),
         };
       })
       .sort((a: { sales: number }, b: { sales: number }) => b.sales - a.sales)
@@ -447,6 +492,7 @@ export default function ArtistDashboard() {
 
   // Error state
   if (error) {
+    console.error("Dashboard loading error:", error);
     return (
       <div className="container mx-auto px-4 py-8">
         <div className="flex items-center justify-center min-h-[400px]">
@@ -454,7 +500,7 @@ export default function ArtistDashboard() {
             <p className="text-red-600 mb-4">Error loading dashboard data</p>
             <button
               onClick={() => window.location.reload()}
-              className="bg-terracotta-500 hover:bg-terracotta-600 text-white px-4 py-2 rounded transition-colors"
+              className="bg-terracotta-500 hover:bg-terracotta-600 text-white px-4 py-2 rounded transition-colors cursor-pointer"
             >
               Retry
             </button>
@@ -464,14 +510,35 @@ export default function ArtistDashboard() {
     );
   }
 
+  // No data state
+  if (!artistData) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="text-center">
+            <p className="text-stone-600 mb-4">No dashboard data available</p>
+            <button
+              onClick={() => window.location.reload()}
+              className="bg-terracotta-500 hover:bg-terracotta-600 text-white px-4 py-2 rounded transition-colors cursor-pointer"
+            >
+              Refresh
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  console.log("Final artist data for dashboard:", artistData);
+
   return (
     <div className="container mx-auto px-4 py-8">
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-3xl font-light text-stone-900 mb-2">Dashboard</h1>
         <p className="text-stone-600">
-          Welcome back, {artistData?.fullName || "Artist"}! Here's what's
-          happening with your store.
+          Welcome back, {safeString(artistData?.fullName) || "Artist"}! Here's
+          what's happening with your store.
         </p>
       </div>
 
@@ -654,7 +721,6 @@ export default function ArtistDashboard() {
 
       {/* Recent Orders and Top Products */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6 sm:mb-8">
-        {" "}
         {/* Recent Orders */}
         <div className="bg-white shadow-sm border border-stone-200 hover:shadow-md transition-shadow">
           <div className="flex items-center justify-between p-5 border-b border-stone-100">
@@ -741,6 +807,7 @@ export default function ArtistDashboard() {
             )}
           </div>
         </div>
+
         {/* Top Products */}
         <div className="bg-white shadow-sm border border-stone-200 hover:shadow-md transition-shadow">
           <div className="flex items-center justify-between p-5 border-b border-stone-100">
@@ -776,58 +843,53 @@ export default function ArtistDashboard() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-stone-100">
-                  {topProducts.map(
-                    (product: {
-                      id: string;
-                      name: string;
-                      sales: number;
-                      revenue: number;
-                      stock: number;
-                      image: string;
-                    }) => (
-                      <tr
-                        key={product.id}
-                        className="hover:bg-stone-50 transition-colors"
-                      >
-                        <td className="px-5 py-4 whitespace-nowrap">
-                          <div className="flex items-center">
-                            <div className="relative w-8 h-8 mr-3 rounded overflow-hidden">
-                              <Image
-                                src={product.image || "/Profile.jpg"}
-                                alt={product.name}
-                                fill
-                                className="object-cover"
-                              />
-                            </div>
-                            <span className="text-sm font-medium text-stone-900">
-                              {product.name}
-                            </span>
+                  {topProducts.map((product) => (
+                    <tr
+                      key={product.id}
+                      className="hover:bg-stone-50 transition-colors"
+                    >
+                      <td className="px-5 py-4 whitespace-nowrap">
+                        <div className="flex items-center">
+                          <div className="relative w-8 h-8 mr-3 rounded overflow-hidden">
+                            <Image
+                              src={product.image || "/Profile.jpg"}
+                              alt={product.name}
+                              fill
+                              className="object-cover"
+                              onError={(e) => {
+                                const target = e.target as HTMLImageElement;
+                                target.src = "/Profile.jpg";
+                              }}
+                            />
                           </div>
-                        </td>
-                        <td className="px-5 py-4 whitespace-nowrap">
-                          <span className="text-sm text-stone-600">
-                            {product.sales} units
-                          </span>
-                        </td>
-                        <td className="px-5 py-4 whitespace-nowrap">
                           <span className="text-sm font-medium text-stone-900">
-                            ₹{product.revenue.toFixed(2)}
+                            {product.name}
                           </span>
-                        </td>
-                        <td className="px-5 py-4 whitespace-nowrap">
-                          <span
-                            className={`text-sm ${
-                              product.stock < 10
-                                ? "text-red-600"
-                                : "text-stone-600"
-                            }`}
-                          >
-                            {product.stock} in stock
-                          </span>
-                        </td>
-                      </tr>
-                    )
-                  )}
+                        </div>
+                      </td>
+                      <td className="px-5 py-4 whitespace-nowrap">
+                        <span className="text-sm text-stone-600">
+                          {product.sales} units
+                        </span>
+                      </td>
+                      <td className="px-5 py-4 whitespace-nowrap">
+                        <span className="text-sm font-medium text-stone-900">
+                          ₹{product.revenue.toFixed(2)}
+                        </span>
+                      </td>
+                      <td className="px-5 py-4 whitespace-nowrap">
+                        <span
+                          className={`text-sm ${
+                            product.stock < 10
+                              ? "text-red-600"
+                              : "text-stone-600"
+                          }`}
+                        >
+                          {product.stock} in stock
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
                 </tbody>
               </table>
             ) : (
@@ -841,6 +903,7 @@ export default function ArtistDashboard() {
           </div>
         </div>
       </div>
+
       {/* Quick Actions */}
       <div className="mt-8">
         <h2 className="text-xl font-medium text-stone-900 mb-4">

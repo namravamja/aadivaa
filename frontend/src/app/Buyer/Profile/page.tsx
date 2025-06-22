@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useGetBuyerQuery } from "@/services/api/buyerApi";
 import { useAuth } from "@/hooks/useAuth";
 import ProfileProgress from "./components/ProfileProgress";
@@ -14,12 +14,12 @@ import { LoadingSkeleton } from "./components/loading-skeleton";
 interface UserProfile {
   id: string;
   email: string;
-  firstName?: string;
-  lastName?: string;
-  phone?: string;
-  avatar?: string;
-  dateOfBirth?: string;
-  gender?: string;
+  firstName: string;
+  lastName: string;
+  phone: string;
+  avatar: string;
+  dateOfBirth: string;
+  gender: string;
   addresses: any[];
   createdAt: string;
   updatedAt: string;
@@ -44,7 +44,7 @@ export default function BuyerProfilePage() {
 
   // Get buyer data for the profile progress component only
   const {
-    data: buyerData,
+    data: buyerResponse,
     isLoading: isFetching,
     isError,
     error,
@@ -56,25 +56,42 @@ export default function BuyerProfilePage() {
     refetchOnReconnect: true,
   });
 
+  // Extract buyer data from cache response
+  const buyerData = useMemo(() => {
+    if (!buyerResponse) return null;
+
+    // Handle new cache format: {source: 'cache'|'db', data: {...}}
+    if (
+      buyerResponse &&
+      typeof buyerResponse === "object" &&
+      "data" in buyerResponse
+    ) {
+      return buyerResponse.data;
+    }
+
+    // Handle old direct format
+    return buyerResponse;
+  }, [buyerResponse]);
+
   // Local state for user profile (only used for ProfileProgress and AccountInfo)
   const [user, setUser] = useState<UserProfile | null>(null);
 
-  // Update local state when API data changes
+  // Update local state when API data changes - ensure all fields have default values
   useEffect(() => {
     if (buyerData) {
-      // Ensure all required fields are present with defaults
+      // Ensure all required fields are present with proper defaults (never undefined)
       const processedData: UserProfile = {
-        id: buyerData.id,
-        email: buyerData.email,
-        firstName: buyerData.firstName || undefined,
-        lastName: buyerData.lastName || undefined,
-        phone: buyerData.phone || undefined,
-        avatar: buyerData.avatar || undefined,
-        dateOfBirth: buyerData.dateOfBirth || undefined,
-        gender: buyerData.gender || undefined,
+        id: buyerData.id || "",
+        email: buyerData.email || "",
+        firstName: buyerData.firstName || "",
+        lastName: buyerData.lastName || "",
+        phone: buyerData.phone || "",
+        avatar: buyerData.avatar || "",
+        dateOfBirth: buyerData.dateOfBirth || "",
+        gender: buyerData.gender || "",
         addresses: buyerData.addresses || [],
-        createdAt: buyerData.createdAt,
-        updatedAt: buyerData.updatedAt || buyerData.createdAt,
+        createdAt: buyerData.createdAt || "",
+        updatedAt: buyerData.updatedAt || buyerData.createdAt || "",
       };
       setUser(processedData);
     }
@@ -192,7 +209,7 @@ export default function BuyerProfilePage() {
             </div>
             <button
               onClick={handleRetry}
-              className="bg-terracotta-600 hover:bg-terracotta-700 text-white px-6 py-3 font-medium transition-colors"
+              className="bg-terracotta-600 hover:bg-terracotta-700 text-white px-6 py-3 font-medium transition-colors cursor-pointer"
             >
               Try Again
             </button>
@@ -293,7 +310,7 @@ export default function BuyerProfilePage() {
               </p>
               <button
                 onClick={handleRetry}
-                className="mt-4 bg-terracotta-600 hover:bg-terracotta-700 text-white px-4 py-2 font-medium transition-colors"
+                className="mt-4 bg-terracotta-600 hover:bg-terracotta-700 text-white px-4 py-2 font-medium transition-colors cursor-pointer"
               >
                 Reload Profile
               </button>
@@ -321,23 +338,23 @@ export default function BuyerProfilePage() {
           <ProfileProgress
             user={{
               ...user,
-              firstName: user.firstName ?? "",
-              lastName: user.lastName ?? "",
+              firstName: user.firstName || "",
+              lastName: user.lastName || "",
               dateOfBirth: user.dateOfBirth
                 ? formatDateForDisplay(user.dateOfBirth)
                 : "",
               // Map addresses to expected shape for ProfileProgress
               addresses: user.addresses.map((addr) => ({
-                id: addr.id,
-                firstName: addr.firstName,
-                lastName: addr.lastName,
-                addressLine1: addr.street || addr.addressLine1,
-                city: addr.city,
-                state: addr.state,
-                postalCode: addr.postalCode,
-                country: addr.country,
-                phone: addr.phone,
-                isDefault: addr.isDefault,
+                id: addr.id || "",
+                firstName: addr.firstName || "",
+                lastName: addr.lastName || "",
+                addressLine1: addr.street || addr.addressLine1 || "",
+                city: addr.city || "",
+                state: addr.state || "",
+                postalCode: addr.postalCode || "",
+                country: addr.country || "",
+                phone: addr.phone || "",
+                isDefault: addr.isDefault || false,
               })),
             }}
           />

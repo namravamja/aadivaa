@@ -1,7 +1,7 @@
 "use client";
 
 import type React from "react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -31,7 +31,7 @@ export default function CheckoutPage() {
   const { openBuyerLogin } = useAuthModal();
 
   const {
-    data: buyerData,
+    data: buyerResponse,
     isLoading: isBuyerLoading,
     error: buyerError,
     refetch: refetchBuyer,
@@ -41,7 +41,7 @@ export default function CheckoutPage() {
   });
 
   const {
-    data: cartData,
+    data: cartResponse,
     isLoading: isLoadingCart,
     error: cartError,
     refetch: refetchCart,
@@ -52,9 +52,42 @@ export default function CheckoutPage() {
 
   const [createOrder] = useCreateOrderMutation();
 
-  const cartItems = cartData || [];
-  const addresses = buyerData?.addresses || [];
-  console.log(addresses);
+  // Extract data from cache responses
+  const buyerData = useMemo(() => {
+    if (!buyerResponse) return null;
+
+    // Handle new cache format: {source: 'cache'|'db', data: {...}}
+    if (
+      buyerResponse &&
+      typeof buyerResponse === "object" &&
+      "data" in buyerResponse
+    ) {
+      return buyerResponse.data;
+    }
+
+    // Handle old direct format
+    return buyerResponse;
+  }, [buyerResponse]);
+
+  const cartItems = useMemo(() => {
+    if (!cartResponse) return [];
+
+    // Handle new cache format: {source: 'cache'|'db', data: [...]}
+    if (
+      cartResponse &&
+      typeof cartResponse === "object" &&
+      "data" in cartResponse
+    ) {
+      return Array.isArray(cartResponse.data) ? cartResponse.data : [];
+    }
+
+    // Handle old direct format
+    return Array.isArray(cartResponse) ? cartResponse : [];
+  }, [cartResponse]);
+
+  const addresses = useMemo(() => {
+    return buyerData?.addresses || [];
+  }, [buyerData]);
 
   // Effect to set default address when addresses are loaded
   useEffect(() => {
@@ -70,11 +103,17 @@ export default function CheckoutPage() {
 
   const addressIds = addresses.map((address: any) => address.id);
 
-  const subtotal = cartItems.reduce(
-    (sum: number, item: any) =>
-      sum + Number.parseFloat(item.product.sellingPrice) * item.quantity,
-    0
-  );
+  // Safe calculation with proper null checks
+  const subtotal = useMemo(() => {
+    return cartItems.reduce((sum: number, item: any) => {
+      const price = item?.product?.sellingPrice
+        ? Number.parseFloat(item.product.sellingPrice)
+        : 0;
+      const quantity = item?.quantity || 0;
+      return sum + price * quantity;
+    }, 0);
+  }, [cartItems]);
+
   const shipping = subtotal >= 100 ? 0 : 15;
   const tax = subtotal * 0.08;
   const total = subtotal + shipping + tax;
@@ -418,26 +457,26 @@ export default function CheckoutPage() {
                       <div className="relative w-12 h-12 flex-shrink-0">
                         <Image
                           src={
-                            item.product.productImages?.[0] || "/Profile.jpg"
+                            item.product?.productImages?.[0] || "/Profile.jpg"
                           }
-                          alt={item.product.productName}
+                          alt={item.product?.productName || "Product"}
                           fill
                           className="object-cover rounded"
                         />
                       </div>
                       <div className="flex-1 min-w-0">
                         <h3 className="text-sm font-medium text-stone-900 truncate">
-                          {item.product.productName}
+                          {item.product?.productName || "Unknown Product"}
                         </h3>
                         <p className="text-xs text-stone-500">
-                          Qty: {item.quantity}
+                          Qty: {item.quantity || 0}
                         </p>
                       </div>
                       <span className="text-sm font-medium text-stone-900">
                         ₹
                         {(
-                          Number.parseFloat(item.product.sellingPrice) *
-                          item.quantity
+                          Number.parseFloat(item.product?.sellingPrice || "0") *
+                          (item.quantity || 0)
                         ).toFixed(2)}
                       </span>
                     </div>

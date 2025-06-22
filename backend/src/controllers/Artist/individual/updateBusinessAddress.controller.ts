@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import * as artistService from "../../../services/Artist/artist.service";
+import { deleteCache } from "../../../helpers/cache"; // adjust this path if needed
 
 export interface AuthenticatedRequest extends Request {
   user?: { id: string; role: string };
@@ -18,6 +19,10 @@ export const updateBusinessAddress = async (
       userId,
       addressData
     );
+
+    // Invalidate cache using helper
+    await deleteCache(`artist:${userId}`);
+    await deleteCache("artists:all");
 
     res.json({
       success: true,

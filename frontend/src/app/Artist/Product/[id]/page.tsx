@@ -1,6 +1,6 @@
 "use client";
 
-import React, { use, useState, useEffect, useRef } from "react";
+import React, { use, useState, useEffect, useRef, useMemo } from "react";
 import toast from "react-hot-toast";
 import { ProductData } from "./components/types";
 import ProductHeader from "./components/ProductHeader";
@@ -20,10 +20,29 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import { useAuthModal } from "@/app/(auth)/components/auth-modal-provider";
 
+// Safe data access utilities
+const safeArray = <T,>(value: T[] | undefined | null): T[] => {
+  return Array.isArray(value) ? value : [];
+};
+
+const safeString = (value: any): string => {
+  return value ? String(value) : "";
+};
+
+const safeNumber = (value: any): number => {
+  const num = Number(value);
+  return isNaN(num) ? 0 : num;
+};
+
 interface Params {
   params: Promise<{
     id: string;
   }>;
+}
+
+interface ProductResponse {
+  source?: string;
+  data?: ProductData;
 }
 
 function isObjectURL(url: string): boolean {
@@ -36,7 +55,7 @@ function ProductPreview({ params }: Params) {
   const { openArtistLogin } = useAuthModal();
 
   const {
-    data: product,
+    data: productResponse,
     isLoading,
     error,
     refetch,
@@ -60,16 +79,49 @@ function ProductPreview({ params }: Params) {
 
   const formRef = useRef<HTMLDivElement>(null);
 
+  // Extract product data from cache response format using useMemo
+  const product = useMemo(() => {
+    if (!productResponse) return null;
+
+    console.log("Raw product response:", productResponse);
+
+    // Handle cache response format: {source: 'cache', data: {...}}
+    if (productResponse.source && productResponse.data) {
+      return productResponse.data as ProductData;
+    }
+
+    // Handle direct object format as fallback
+    if (
+      typeof productResponse === "object" &&
+      !Array.isArray(productResponse) &&
+      productResponse.data
+    ) {
+      return productResponse.data as ProductData;
+    }
+
+    // Handle direct data format
+    if (
+      typeof productResponse === "object" &&
+      !Array.isArray(productResponse) &&
+      productResponse.id
+    ) {
+      return productResponse as ProductData;
+    }
+
+    return null;
+  }, [productResponse]);
+
   useEffect(() => {
     if (product) {
       setEditedProduct(product);
-      setPreviewImages(product.productImages || []);
+      setPreviewImages(safeArray(product.productImages));
       setNewFiles([]);
     }
   }, [product]);
 
   useEffect(() => {
     if (error) {
+      console.error("Product loading error:", error);
       toast.error("Failed to load product data");
     }
   }, [error]);
@@ -309,6 +361,39 @@ function ProductPreview({ params }: Params) {
     );
   }
 
+  // Error state
+  if (error) {
+    console.error("Product loading error:", error);
+    return (
+      <div className="min-h-screen bg-gray-100">
+        <div className="container mx-auto px-4 py-6 max-w-7xl text-center">
+          <Package className="w-16 h-16 text-red-400 mx-auto mb-4" />
+          <h2 className="text-xl font-medium text-gray-900 mb-2">
+            Error loading product
+          </h2>
+          <p className="text-gray-600 mb-6">
+            {error && typeof error === "object" && "message" in error
+              ? String(error.message)
+              : "Failed to load product data"}
+          </p>
+          <button
+            onClick={() => refetch()}
+            className="inline-flex cursor-pointer items-center px-6 py-3 bg-terracotta-600 text-white hover:bg-terracotta-700 transition-colors mr-4"
+          >
+            Retry
+          </button>
+          <button
+            onClick={() => router.push("/Artist/Product")}
+            className="inline-flex cursor-pointer items-center px-6 py-3 bg-stone-600 text-white hover:bg-stone-700 transition-colors"
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Back to Products
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   if (!product || !editedProduct) {
     return (
       <div className="min-h-screen bg-gray-100">
@@ -331,6 +416,8 @@ function ProductPreview({ params }: Params) {
       </div>
     );
   }
+
+  console.log("Final product data:", product);
 
   return (
     <div ref={formRef} className="min-h-screen bg-gray-100">

@@ -1,7 +1,7 @@
 "use client";
 
 import type React from "react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
@@ -42,12 +42,15 @@ interface ActionMenuItem extends MenuItem {
 
 interface BuyerData {
   firstName?: string;
+  lastName?: string;
   avatar?: string;
   fullName?: string;
+  email?: string;
+  phone?: string;
   [key: string]: any;
 }
 
-interface User {
+interface UserProfile {
   name: string;
   image: string;
   fullName?: string;
@@ -65,8 +68,29 @@ const mobileActionItems: ActionMenuItem[] = [
 ];
 
 export function ProfilePhoto({ className = "w-8 h-8" }: ProfilePhotoProps) {
-  const { data: buyerData, isLoading, isError } = useGetBuyerQuery(undefined);
+  const {
+    data: buyerResponse,
+    isLoading,
+    isError,
+  } = useGetBuyerQuery(undefined);
   const [hasTriedAuth, setHasTriedAuth] = useState(false);
+
+  // Extract buyer data from the response, handling both old and new API response formats
+  const buyerData = useMemo(() => {
+    if (!buyerResponse) return null;
+
+    // Handle new Redis cache response format: {source: 'cache', data: {...}}
+    if (buyerResponse.data && typeof buyerResponse.data === "object") {
+      return buyerResponse.data;
+    }
+
+    // Handle old direct object format: {...}
+    if (buyerResponse.firstName || buyerResponse.email) {
+      return buyerResponse;
+    }
+
+    return null;
+  }, [buyerResponse]);
 
   useEffect(() => {
     if (isError || buyerData) setHasTriedAuth(true);
@@ -92,7 +116,7 @@ export function ProfilePhoto({ className = "w-8 h-8" }: ProfilePhotoProps) {
 
   return user?.image ? (
     <img
-      src={user.image}
+      src={user.image || "/placeholder.svg"}
       alt={user.name}
       className={`${className} rounded-full object-cover border-2 border-stone-200 cursor-pointer`}
       onError={handleImageError}
@@ -114,15 +138,32 @@ export default function UserMenu({ isMobile = false, onClose }: UserMenuProps) {
   const { openBuyerLogin } = useAuthModal();
 
   const {
-    data: buyerData,
+    data: buyerResponse,
     isLoading,
     isError,
     refetch,
   } = useGetBuyerQuery(undefined);
 
+  // Extract buyer data from the response, handling both old and new API response formats
+  const buyerData = useMemo(() => {
+    if (!buyerResponse) return null;
+
+    // Handle new Redis cache response format: {source: 'cache', data: {...}}
+    if (buyerResponse.data && typeof buyerResponse.data === "object") {
+      return buyerResponse.data;
+    }
+
+    // Handle old direct object format: {...}
+    if (buyerResponse.firstName || buyerResponse.email) {
+      return buyerResponse;
+    }
+
+    return null;
+  }, [buyerResponse]);
+
   const isAuthenticated = !isError && !!buyerData && hasTriedAuth;
 
-  const { data: cartData, isLoading: cartLoading } = useGetCartQuery(
+  const { data: cartResponse, isLoading: cartLoading } = useGetCartQuery(
     undefined,
     {
       skip: !isAuthenticated,
@@ -131,7 +172,7 @@ export default function UserMenu({ isMobile = false, onClose }: UserMenuProps) {
     }
   );
 
-  const { data: wishlistData, isLoading: wishlistLoading } =
+  const { data: wishlistResponse, isLoading: wishlistLoading } =
     useGetWishlistQuery(undefined, {
       skip: !isAuthenticated,
       refetchOnFocus: true,
@@ -144,22 +185,61 @@ export default function UserMenu({ isMobile = false, onClose }: UserMenuProps) {
     if (isError || buyerData) setHasTriedAuth(true);
   }, [isError, buyerData]);
 
-  const user: User | null =
+  // Extract cart items from the response, handling both old and new API response formats
+  const cartItems = useMemo(() => {
+    if (!cartResponse) return [];
+
+    // Handle new Redis cache response format: {source: 'cache', data: [...]}
+    if (cartResponse.data && Array.isArray(cartResponse.data)) {
+      return cartResponse.data;
+    }
+
+    // Handle old direct array format: [...]
+    if (Array.isArray(cartResponse)) {
+      return cartResponse;
+    }
+
+    return [];
+  }, [cartResponse]);
+
+  // Extract wishlist items from the response, handling both old and new API response formats
+  const wishlistItems = useMemo(() => {
+    if (!wishlistResponse) return [];
+
+    // Handle new Redis cache response format: {source: 'cache', data: [...]}
+    if (wishlistResponse.data && Array.isArray(wishlistResponse.data)) {
+      return wishlistResponse.data;
+    }
+
+    // Handle old direct array format: [...]
+    if (Array.isArray(wishlistResponse)) {
+      return wishlistResponse;
+    }
+
+    return [];
+  }, [wishlistResponse]);
+
+  const user: UserProfile | null =
     isAuthenticated && buyerData
       ? {
           name: buyerData.firstName || "User",
           image: buyerData.avatar || "/Profile.jpg",
-          fullName: buyerData.fullName || buyerData.firstName,
+          fullName:
+            buyerData.fullName ||
+            `${buyerData.firstName || ""} ${buyerData.lastName || ""}`.trim() ||
+            buyerData.firstName,
         }
       : null;
 
-  const cartItems = cartData || [];
-  const wishlistItems = wishlistData || [];
+  // Calculate counts safely
+  const actualCartCount = useMemo(() => {
+    if (!cartItems || cartItems.length === 0) return 0;
 
-  const actualCartCount = cartItems.reduce(
-    (total: number, item: any) => total + item.quantity,
-    0
-  );
+    return cartItems.reduce((total: number, item: any) => {
+      return total + (item.quantity || 1);
+    }, 0);
+  }, [cartItems]);
+
   const actualWishlistCount = wishlistItems.length;
 
   const handleBuyerLogin = () => {
@@ -323,7 +403,7 @@ export default function UserMenu({ isMobile = false, onClose }: UserMenuProps) {
         </span>
         {user?.image ? (
           <img
-            src={user.image}
+            src={user.image || "/placeholder.svg"}
             alt={user.name}
             className="w-8 h-8 rounded-full object-cover border-2 border-stone-200 group-hover:border-terracotta-600 transition cursor-pointer"
             onError={handleImageError}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -28,7 +28,7 @@ export default function BuyerCartPage() {
 
   // RTK Query hooks - only run if authenticated
   const {
-    data: cartData,
+    data: cartResponse,
     isLoading: isLoadingCart,
     error,
     refetch: refetchCart,
@@ -41,7 +41,22 @@ export default function BuyerCartPage() {
   const [updateCartItem] = useUpdateCartItemMutation();
   const [removeFromCart] = useRemoveFromCartMutation();
 
-  const cartItems = cartData || [];
+  // Extract cart items from the response, handling both old and new API response formats
+  const cartItems = useMemo(() => {
+    if (!cartResponse) return [];
+
+    // Handle new Redis cache response format: {source: 'cache', data: [...]}
+    if (cartResponse.data && Array.isArray(cartResponse.data)) {
+      return cartResponse.data;
+    }
+
+    // Handle old direct array format: [...]
+    if (Array.isArray(cartResponse)) {
+      return cartResponse;
+    }
+
+    return [];
+  }, [cartResponse]);
 
   const updateQuantity = async (
     productId: string,
@@ -127,12 +142,17 @@ export default function BuyerCartPage() {
     }
   };
 
-  // Calculate totals
-  const subtotal = cartItems.reduce(
-    (sum: number, item: any) =>
-      sum + Number.parseFloat(item.product.sellingPrice) * item.quantity,
-    0
-  );
+  // Calculate totals safely
+  const subtotal = useMemo(() => {
+    if (!cartItems || cartItems.length === 0) return 0;
+
+    return cartItems.reduce((sum: number, item: any) => {
+      const price = Number.parseFloat(item.product?.sellingPrice || 0);
+      const quantity = item.quantity || 1;
+      return sum + price * quantity;
+    }, 0);
+  }, [cartItems]);
+
   const shipping = subtotal >= 100 ? 0 : 15;
   const tax = subtotal * 0.08;
   const total = subtotal + shipping + tax;
@@ -284,7 +304,7 @@ export default function BuyerCartPage() {
           <div className="lg:col-span-2 space-y-4">
             {cartItems.map((item: any) => {
               const availableStock = Number.parseInt(
-                item.product.availableStock
+                item.product?.availableStock || "0"
               );
               const isQuantityAtMax = item.quantity >= availableStock;
               const isOutOfStock = availableStock === 0;
@@ -296,9 +316,9 @@ export default function BuyerCartPage() {
                       <div className="relative w-20 h-20 flex-shrink-0">
                         <Image
                           src={
-                            item.product.productImages?.[0] || "/Profile.jpg"
+                            item.product?.productImages?.[0] || "/Profile.jpg"
                           }
-                          alt={item.product.productName}
+                          alt={item.product?.productName || "Product"}
                           fill
                           className="object-cover"
                         />
@@ -307,18 +327,18 @@ export default function BuyerCartPage() {
                       <div className="flex-1 min-w-0">
                         <div className="flex justify-between items-start mb-2">
                           <div>
-                            <Link href={`/Products/${item.product.id}`}>
+                            <Link href={`/Products/${item.product?.id || ""}`}>
                               <h3 className="font-medium text-stone-900 hover:text-terracotta-600 transition-colors">
-                                {item.product.productName}
+                                {item.product?.productName || "Unknown Product"}
                               </h3>
                             </Link>
                             <p className="text-sm text-stone-500">
                               By{" "}
-                              {item.product.artist?.fullName ||
+                              {item.product?.artist?.fullName ||
                                 "Unknown Artist"}
                             </p>
                             <span className="inline-block bg-stone-100 text-stone-800 text-xs px-2 py-1 mt-1">
-                              {item.product.category}
+                              {item.product?.category || "Uncategorized"}
                             </span>
                           </div>
                           <button
@@ -396,14 +416,15 @@ export default function BuyerCartPage() {
                             <p className="font-medium text-stone-900">
                               ₹
                               {(
-                                Number.parseFloat(item.product.sellingPrice) *
-                                item.quantity
+                                Number.parseFloat(
+                                  item.product?.sellingPrice || "0"
+                                ) * item.quantity
                               ).toFixed(2)}
                             </p>
                             <p className="text-sm text-stone-500">
                               ₹
                               {Number.parseFloat(
-                                item.product.sellingPrice
+                                item.product?.sellingPrice || "0"
                               ).toFixed(2)}{" "}
                               each
                             </p>

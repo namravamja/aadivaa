@@ -1,5 +1,7 @@
 "use client";
 
+import type React from "react";
+
 import { useState, useEffect, useMemo } from "react";
 import Image from "next/image";
 import Link from "next/link";
@@ -48,19 +50,17 @@ export default function BestSellingProducts() {
   const { openBuyerLogin } = useAuthModal();
 
   const {
-    data: products = [],
+    data: productsResponse,
     isLoading,
     error,
   } = useGetAllProductsQuery(undefined);
 
-  const { data: wishlistData, refetch: refetchWishlist } = useGetWishlistQuery(
-    undefined,
-    {
+  const { data: wishlistResponse, refetch: refetchWishlist } =
+    useGetWishlistQuery(undefined, {
       skip: !isAuthenticated,
       refetchOnFocus: true,
       refetchOnReconnect: true,
-    }
-  );
+    });
 
   const { refetch: refetchCart } = useGetCartQuery(undefined, {
     skip: !isAuthenticated,
@@ -71,6 +71,40 @@ export default function BestSellingProducts() {
   const [addToWishlist] = useAddToWishlistMutation();
   const [removeFromWishlist] = useRemoveFromWishlistMutation();
   const [addToCart] = useAddToCartMutation();
+
+  // Extract products array from the response, handling both old and new API response formats
+  const products = useMemo(() => {
+    if (!productsResponse) return [];
+
+    // Handle new Redis cache response format: {source: 'cache', data: [...]}
+    if (productsResponse.data && Array.isArray(productsResponse.data)) {
+      return productsResponse.data;
+    }
+
+    // Handle old direct array format: [...]
+    if (Array.isArray(productsResponse)) {
+      return productsResponse;
+    }
+
+    return [];
+  }, [productsResponse]);
+
+  // Extract wishlist data, handling both old and new API response formats
+  const wishlistData = useMemo(() => {
+    if (!wishlistResponse) return [];
+
+    // Handle new Redis cache response format: {source: 'cache', data: [...]}
+    if (wishlistResponse.data && Array.isArray(wishlistResponse.data)) {
+      return wishlistResponse.data;
+    }
+
+    // Handle old direct array format: [...]
+    if (Array.isArray(wishlistResponse)) {
+      return wishlistResponse;
+    }
+
+    return [];
+  }, [wishlistResponse]);
 
   const featuredProducts = useMemo(() => products.slice(0, 4), [products]);
 
@@ -234,7 +268,7 @@ export default function BestSellingProducts() {
               isWishlisted: false,
               isAddedToCart: false,
             };
-            const isOutOfStock = parseInt(product.availableStock) === 0;
+            const isOutOfStock = Number.parseInt(product.availableStock) === 0;
 
             return (
               <div key={product.id} className="group">
@@ -308,11 +342,11 @@ export default function BestSellingProducts() {
                   </p>
                   <div className="flex items-center gap-2">
                     <span className="text-stone-900 font-medium">
-                      ₹{parseFloat(product.sellingPrice).toFixed(2)}
+                      ₹{Number.parseFloat(product.sellingPrice).toFixed(2)}
                     </span>
                     {product.mrp !== product.sellingPrice && (
                       <span className="text-stone-400 text-sm line-through">
-                        ₹{parseFloat(product.mrp).toFixed(2)}
+                        ₹{Number.parseFloat(product.mrp).toFixed(2)}
                       </span>
                     )}
                   </div>

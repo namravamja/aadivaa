@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Heart } from "lucide-react";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
@@ -23,7 +23,7 @@ export default function WishlistButton({ productId }: WishlistButtonProps) {
   const { openBuyerLogin } = useAuthModal();
 
   const {
-    data: wishlistData,
+    data: wishlistResponse,
     isLoading: isLoadingWishlist,
     refetch: refetchWishlist,
   } = useGetWishlistQuery(undefined, {
@@ -35,6 +35,23 @@ export default function WishlistButton({ productId }: WishlistButtonProps) {
   const [addToWishlist, { isLoading: isAdding }] = useAddToWishlistMutation();
   const [removeFromWishlist, { isLoading: isRemoving }] =
     useRemoveFromWishlistMutation();
+
+  // Extract wishlist data from cache response
+  const wishlistData = useMemo(() => {
+    if (!wishlistResponse) return [];
+
+    // Handle new cache format: {source: 'cache'|'db', data: [...]}
+    if (
+      wishlistResponse &&
+      typeof wishlistResponse === "object" &&
+      "data" in wishlistResponse
+    ) {
+      return Array.isArray(wishlistResponse.data) ? wishlistResponse.data : [];
+    }
+
+    // Handle old direct format
+    return Array.isArray(wishlistResponse) ? wishlistResponse : [];
+  }, [wishlistResponse]);
 
   useEffect(() => {
     if (wishlistData && isAuthenticated) {
