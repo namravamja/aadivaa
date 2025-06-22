@@ -194,8 +194,6 @@ export default function OrderDetailsPage() {
   const order = useMemo(() => {
     if (!orderResponse) return null;
 
-    console.log("Raw order response:", orderResponse);
-
     // Handle cache response format: {source: 'cache', data: {...}}
     if (orderResponse.source && orderResponse.data) {
       return orderResponse.data as OrderData;
@@ -225,8 +223,6 @@ export default function OrderDetailsPage() {
   // Extract products data from response using useMemo (handle cache format)
   const products: ProductData[] = useMemo(() => {
     if (!productResponse) return [];
-
-    console.log("Raw products response:", productResponse);
 
     // Handle cache response format: {source: 'cache', data: [...]}
     if (productResponse.source && productResponse.data) {
@@ -708,9 +704,6 @@ export default function OrderDetailsPage() {
 
   const progressIndex = getOrderProgress(order.status);
   const orderItems = safeArray(order.orderItems);
-
-  console.log("Final order data:", order);
-  console.log("Final products data:", products);
 
   return (
     <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8 max-w-4xl">

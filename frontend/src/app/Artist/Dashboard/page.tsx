@@ -89,8 +89,6 @@ export default function ArtistDashboard() {
   const artistData = useMemo(() => {
     if (!artistResponse) return null;
 
-    console.log("Raw artist response:", artistResponse);
-
     // Handle cache response format: {source: 'cache', data: {...}}
     if (artistResponse.source && artistResponse.data) {
       return artistResponse.data;
@@ -528,8 +526,6 @@ export default function ArtistDashboard() {
       </div>
     );
   }
-
-  console.log("Final artist data for dashboard:", artistData);
 
   return (
     <div className="container mx-auto px-4 py-8">

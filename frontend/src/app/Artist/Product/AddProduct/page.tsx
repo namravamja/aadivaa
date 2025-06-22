@@ -82,8 +82,6 @@ export default function AddProduct() {
   const artistData = useMemo(() => {
     if (!artistResponse) return null;
 
-    console.log("Raw artist response:", artistResponse);
-
     // Handle cache response format: {source: 'cache', data: {...}}
     if (artistResponse.source && artistResponse.data) {
       return artistResponse.data;
@@ -362,8 +360,6 @@ export default function AddProduct() {
       </div>
     );
   }
-
-  console.log("Final artist data:", artistData);
 
   return (
     <div ref={formRef} className="container mx-auto px-4 sm:px-6 py-6 sm:py-8">

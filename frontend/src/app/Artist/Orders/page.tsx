@@ -211,8 +211,6 @@ export default function OrdersPage() {
   const ordersData = useMemo(() => {
     if (!apiResponse) return null;
 
-    console.log("Raw orders response:", apiResponse);
-
     // Handle cache response format: {source: 'cache', data: {...}}
     if (apiResponse.source && apiResponse.data) {
       return apiResponse.data as ApiOrdersData;
@@ -370,9 +368,6 @@ export default function OrdersPage() {
 
     return matchesSearch;
   });
-
-  console.log("Final orders data:", ordersData);
-  console.log("Transformed orders:", orders);
 
   return (
     <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8 max-w-6xl">

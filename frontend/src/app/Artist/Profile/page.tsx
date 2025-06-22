@@ -31,8 +31,6 @@ export default function ProfilePage() {
   const artistData = useMemo(() => {
     if (!artistResponse) return null;
 
-    console.log("Raw artist response:", artistResponse);
-
     // Handle cache response format: {source: 'cache', data: {...}}
     if (artistResponse.source && artistResponse.data) {
       return artistResponse.data;
@@ -127,8 +125,6 @@ export default function ProfilePage() {
       </div>
     );
   }
-
-  console.log("Final artist data:", artistData);
 
   return (
     <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8 max-w-6xl">

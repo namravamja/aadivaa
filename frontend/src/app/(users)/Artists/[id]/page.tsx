@@ -152,11 +152,6 @@ export default function ArtistDetailPage({
   // Find the specific artist
   const artist = artists?.find((a: ProfileData) => a.id === id);
 
-  console.log("Products Response:", productsResponse);
-  console.log("Extracted Products:", products);
-  console.log("Artists Response:", artistsResponse);
-  console.log("Found Artist:", artist);
-
   if (artistsLoading) {
     return (
       <main className="pt-24 pb-16">

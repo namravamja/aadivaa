@@ -83,8 +83,6 @@ function ProductPreview({ params }: Params) {
   const product = useMemo(() => {
     if (!productResponse) return null;
 
-    console.log("Raw product response:", productResponse);
-
     // Handle cache response format: {source: 'cache', data: {...}}
     if (productResponse.source && productResponse.data) {
       return productResponse.data as ProductData;
@@ -416,8 +414,6 @@ function ProductPreview({ params }: Params) {
       </div>
     );
   }
-
-  console.log("Final product data:", product);
 
   return (
     <div ref={formRef} className="min-h-screen bg-gray-100">

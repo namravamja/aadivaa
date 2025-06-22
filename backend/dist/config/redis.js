@@ -6,7 +6,11 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const ioredis_1 = __importDefault(require("ioredis"));
 let redis;
 if (process.env.REDIS_URL) {
-    redis = new ioredis_1.default(process.env.REDIS_URL);
+    redis = new ioredis_1.default(process.env.REDIS_URL, {
+        tls: {}, // Required for rediss:// to enable SSL
+        maxRetriesPerRequest: 5, // Optional: avoid infinite retry loop
+        connectTimeout: 10000, // Optional: give Redis 10s to connect
+    });
     console.log("🔌 Using Redis from REDIS_URL");
 }
 else {

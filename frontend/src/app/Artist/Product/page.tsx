@@ -78,8 +78,6 @@ export default function ArtistProducts() {
   const products: ProductData[] = useMemo(() => {
     if (!productResponse) return [];
 
-    console.log("Raw products response:", productResponse);
-
     // Handle cache response format: {source: 'cache', data: [...]}
     if (productResponse.source && productResponse.data) {
       return safeArray(productResponse.data);
@@ -177,8 +175,6 @@ export default function ArtistProducts() {
       </div>
     );
   }
-
-  console.log("Final products data:", products);
 
   return (
     <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8 max-w-7xl">

@@ -468,13 +468,10 @@ export default function ShippingAddresses() {
       extractedBuyerData?.addresses &&
       Array.isArray(extractedBuyerData.addresses)
     ) {
-      console.log("Processing addresses:", extractedBuyerData.addresses);
       const processedAddresses =
         extractedBuyerData.addresses.map(convertLegacyAddress);
-      console.log("Processed addresses:", processedAddresses);
       setAddresses(processedAddresses);
     } else {
-      console.log("No addresses found or invalid format:", extractedBuyerData);
       setAddresses([]);
     }
   }, [extractedBuyerData]);
@@ -564,8 +561,6 @@ export default function ShippingAddresses() {
 
   const handleCreateAddress = useCallback(async () => {
     try {
-      console.log("Creating address with data:", newAddressData);
-
       // Create temporary address with ID for optimistic update
       const tempId = `temp_${Date.now()}`;
       const createdAddress: Address = {
@@ -594,8 +589,6 @@ export default function ShippingAddresses() {
           },
         },
       }).unwrap();
-
-      console.log("Address creation result:", result);
 
       setShowNewForm(false);
       setNewAddressData(INITIAL_ADDRESS);
@@ -747,8 +740,7 @@ export default function ShippingAddresses() {
 
   // Memoize address list to prevent unnecessary re-renders
   const addressList = useMemo(() => {
-    console.log("Rendering addresses:", addresses);
-
+    
     if (!addresses || addresses.length === 0) {
       return [];
     }

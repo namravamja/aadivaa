@@ -47,9 +47,6 @@ export default function Products({
     return [];
   }, [productsResponse]);
 
-  console.log("Products Response:", productsResponse);
-  console.log("Extracted Products Data:", productsData);
-
   // Generate dynamic filter options from API data
   const categories = useMemo(() => {
     if (!productsData || productsData.length === 0) {
