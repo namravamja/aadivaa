@@ -2,56 +2,173 @@ import type { Request, Response } from "express";
 import * as orderService from "../../../services/Buyer/order/order.service";
 import * as cartService from "../../../services/Buyer/cart/cart.service";
 import { getCache, setCache, deleteCache } from "../../../helpers/cache";
+import { razorpay } from "../../../utils/razorpay";
+import crypto from "crypto";
 
 interface AuthenticatedRequest extends Request {
   user?: { id: string; role: string };
 }
 
+// Updated createOrder function with better Razorpay configuration
 export const createOrder = async (req: AuthenticatedRequest, res: Response) => {
   try {
     const buyerId = req.user?.id;
-    if (!buyerId) throw new Error("Unauthorized");
+    if (!buyerId) {
+      return res.status(401).json({
+        success: false,
+        message: "Unauthorized: Buyer ID is missing",
+      });
+    }
 
     const { addressIds, paymentMethod } = req.body;
-
     if (!addressIds || !paymentMethod) {
       return res.status(400).json({
         success: false,
-        message: "add & payment method are required",
+        message: "Both addressIds and paymentMethod are required.",
       });
     }
 
-    const cartItems = await cartService.getCartByBuyerId(buyerId);
+    // Extract the first address ID (assuming single shipping address)
+    const shippingAddressId = Array.isArray(addressIds)
+      ? addressIds[0]
+      : addressIds;
 
+    const cartItems = await cartService.getCartByBuyerId(buyerId);
     if (!cartItems || cartItems.length === 0) {
       return res.status(400).json({
         success: false,
-        message: "Cart is empty. Cannot create order.",
+        message: "Cart is empty. Cannot proceed.",
       });
     }
 
+    let totalAmount = 0;
+    for (const cartItem of cartItems) {
+      const itemTotal =
+        parseFloat(cartItem.product.sellingPrice) * cartItem.quantity;
+      totalAmount += itemTotal;
+    }
+
+    const subtotal = totalAmount;
+    const shipping = subtotal >= 100 ? 0 : 15;
+    const tax = subtotal * 0.08;
+    const finalAmount = subtotal + shipping + tax;
+
+    if (paymentMethod === "razorpay") {
+      const razorpayOrderOptions = {
+        amount: Math.round(finalAmount * 100),
+        currency: "INR",
+        receipt: `rcpt_${Date.now()}`, // must be under 40 chars
+        notes: {
+          buyer_id: buyerId,
+          shippingAddressId: shippingAddressId.toString(),
+        },
+      };
+
+      const razorOrder = await razorpay.orders.create(razorpayOrderOptions);
+
+      return res.status(201).json({
+        success: true,
+        message: "Razorpay order created. Proceed with payment.",
+        data: {
+          razorpayOrderId: razorOrder.id,
+          razorpayKeyId: process.env.RAZORPAY_KEY_ID,
+          totalAmount: finalAmount,
+          currency: "INR",
+        },
+      });
+    }
+
+    // Handle other methods like COD
     const order = await orderService.createOrderFromCart(buyerId, {
-      addressIds,
+      shippingAddressId, // Pass single address ID
       paymentMethod,
       cartItems,
     });
 
     await cartService.clearCart(buyerId);
-
-    // Clear related caches after order creation
     await deleteCache(`buyer_orders:${buyerId}:*`);
     await deleteCache(`cart:${buyerId}`);
 
-    res.status(201).json({
+    return res.status(201).json({
       success: true,
-      message: "Order placed successfully",
+      message: "Order placed successfully.",
       data: order,
     });
   } catch (error) {
-    console.error("Error creating order:", error);
-    res.status(500).json({
+    console.error("Error in createOrder:", error);
+    return res.status(500).json({
       success: false,
-      message: (error as Error).message || "Failed to create order",
+      message: (error as Error).message || "Failed to create order.",
+    });
+  }
+};
+
+export const verifyRazorpayPayment = async (
+  req: AuthenticatedRequest,
+  res: Response
+) => {
+  try {
+    const buyerId = req.user?.id;
+    if (!buyerId) {
+      return res.status(401).json({ success: false, message: "Unauthorized" });
+    }
+
+    const { razorpay_order_id, razorpay_payment_id, razorpay_signature } =
+      req.body;
+
+    const hmac = crypto.createHmac("sha256", process.env.RAZORPAY_KEY_SECRET!);
+    hmac.update(`${razorpay_order_id}|${razorpay_payment_id}`);
+    const generatedSignature = hmac.digest("hex");
+
+    if (generatedSignature !== razorpay_signature) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Invalid signature" });
+    }
+
+    const razorpayOrder = await razorpay.orders.fetch(razorpay_order_id);
+    // Get single address ID from notes
+    const shippingAddressId = parseInt(
+      String(razorpayOrder.notes?.shippingAddressId || "0")
+    );
+
+    if (!shippingAddressId) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Invalid shipping address." });
+    }
+
+    const cartItems = await cartService.getCartByBuyerId(buyerId);
+    if (!cartItems || cartItems.length === 0) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Cart is empty." });
+    }
+
+    const order = await orderService.createOrderFromCart(buyerId, {
+      shippingAddressId, // Pass single address ID
+      paymentMethod: "razorpay",
+      cartItems,
+    });
+
+    await orderService.updatePaymentStatus(order.id, {
+      paymentStatus: "paid",
+    });
+
+    await cartService.clearCart(buyerId);
+    await deleteCache(`buyer_orders:${buyerId}:*`);
+    await deleteCache(`cart:${buyerId}`);
+
+    return res.status(200).json({
+      success: true,
+      message: "Payment verified and order created successfully.",
+      data: order,
+    });
+  } catch (error) {
+    console.error("Error in verifyRazorpayPayment:", error);
+    return res.status(500).json({
+      success: false,
+      message: (error as Error).message || "Verification failed.",
     });
   }
 };
@@ -181,11 +298,10 @@ export const cancelOrder = async (req: AuthenticatedRequest, res: Response) => {
 export const updatePaymentStatus = async (req: Request, res: Response) => {
   try {
     const { orderId } = req.params;
-    const { paymentStatus, transactionId } = req.body;
+    const { paymentStatus } = req.body;
 
     const order = await orderService.updatePaymentStatus(orderId, {
       paymentStatus,
-      transactionId,
     });
 
     // Clear order-related caches (we don't have buyerId here, so clear by orderId pattern)

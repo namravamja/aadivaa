@@ -14,6 +14,14 @@ export const orderApi = OrderApi.injectEndpoints({
       }),
     }),
 
+    verifyOrder: builder.mutation({
+      query: (body) => ({
+        url: "/verify-payment",
+        method: "POST",
+        body,
+      }),
+    }),
+
     // Get buyer orders
     getBuyerOrders: builder.query({
       query: (params = {}) => {
@@ -55,6 +63,7 @@ export const {
   useGetOrderByIdQuery,
   useCancelOrderMutation,
   useUpdatePaymentStatusMutation,
+  useVerifyOrderMutation,
 } = orderApi;
 
 export default orderApi;

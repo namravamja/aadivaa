@@ -27,113 +27,121 @@ interface PaymentUpdateData {
 
 export const createOrderFromCart = async (
   buyerId: string,
-  orderData: CreateOrderData
+  orderData: {
+    shippingAddressId: number; // Change from addressIds to single ID
+    paymentMethod: string;
+    cartItems: any[];
+  }
 ) => {
-  const { paymentMethod, cartItems, addressIds } = orderData;
+  const { shippingAddressId, paymentMethod, cartItems } = orderData;
 
-  try {
-    let totalAmount = 0;
-    const orderItemsData: {
-      productId: string;
-      quantity: number;
-      priceAtPurchase: number;
-      artistId: string;
-    }[] = [];
+  // Calculate totals
+  let totalAmount = 0;
+  const orderItems = cartItems.map((item) => {
+    const itemTotal = parseFloat(item.product.sellingPrice) * item.quantity;
+    totalAmount += itemTotal;
 
-    for (const cartItem of cartItems) {
-      const itemTotal =
-        parseFloat(cartItem.product.sellingPrice) * cartItem.quantity;
-      totalAmount += itemTotal;
+    return {
+      productId: item.product.id,
+      quantity: item.quantity,
+      priceAtPurchase: parseFloat(item.product.sellingPrice),
+      artistId: item.product.artistId,
+    };
+  });
 
-      orderItemsData.push({
-        productId: cartItem.productId,
-        quantity: cartItem.quantity,
-        priceAtPurchase: parseFloat(cartItem.product.sellingPrice),
-        artistId: cartItem.product.artistId,
-      });
-    }
+  const subtotal = totalAmount;
+  const shipping = subtotal >= 100 ? 0 : 15;
+  const tax = subtotal * 0.08;
+  const finalAmount = subtotal + shipping + tax;
 
-    const order = await prisma.$transaction(
-      async (tx) => {
-        const newOrder = await tx.order.create({
-          data: {
-            buyer: { connect: { id: buyerId } },
-            totalAmount,
-            shippingAddress: { connect: { id: addressIds } },
-            paymentMethod,
-            status: "pending",
-            paymentStatus: "unpaid",
-            orderItems: {
-              create: orderItemsData,
+  const order = await prisma.$transaction(
+    async (tx) => {
+      const newOrder = await tx.order.create({
+        data: {
+          buyer: {
+            connect: {
+              id: buyerId,
             },
           },
-          include: {
-            buyer: {
-              select: {
-                email: true,
-              },
+          totalAmount: finalAmount, // Convert to paise
+          shippingAddress: {
+            connect: {
+              id: shippingAddressId, // Single ID instead of array
             },
-            shippingAddress: true,
-            orderItems: {
-              include: {
-                product: {
-                  include: {
-                    artist: {
-                      select: {
-                        id: true,
-                        fullName: true,
-                        storeName: true,
-                      },
+          },
+          paymentMethod,
+          status: "pending",
+          paymentStatus: paymentMethod === "cod" ? "pending" : "unpaid",
+          orderItems: {
+            create: orderItems,
+          },
+        },
+        include: {
+          buyer: {
+            select: {
+              email: true,
+              firstName: true,
+              lastName: true,
+            },
+          },
+          shippingAddress: true,
+          orderItems: {
+            include: {
+              product: {
+                include: {
+                  artist: {
+                    select: {
+                      id: true,
+                      fullName: true,
+                      storeName: true,
                     },
                   },
                 },
               },
             },
           },
-        });
+        },
+      });
 
-        return newOrder;
-      },
-      {
-        timeout: 20000, // increase from 10000
-        maxWait: 10000,
-      }
-    );
-
-    if (!order.shippingAddress) {
-      throw new Error("Shipping address not found for the order.");
+      return newOrder;
+    },
+    {
+      timeout: 20000, // increase from 10000
+      maxWait: 10000,
     }
+  );
 
-    await sendOrderConfirmationEmail(
-      order.buyer.email,
-      `${order.shippingAddress.firstName} ${order.shippingAddress.lastName}`,
-      order.id,
-      order.orderItems.map((item: (typeof order.orderItems)[number]) => ({
-        name: item.product.productName,
-        quantity: item.quantity,
-        price: item.priceAtPurchase,
-      })),
-      order.totalAmount,
-      {
-        name: `${order.shippingAddress.firstName} ${order.shippingAddress.lastName}`,
-        address: `${order.shippingAddress.street} ${
-          order.shippingAddress.apartment || ""
-        }`,
-        city: order.shippingAddress.city,
-        state: order.shippingAddress.state,
-        zip: order.shippingAddress.postalCode,
-        country: order.shippingAddress.country,
-        phone: order.shippingAddress.phone || "N/A",
-      },
-      order.placedAt.toISOString(),
-      order.paymentMethod
-    );
+  // Send confirmation email
+  await sendOrderConfirmationEmail(
+    order.buyer.email,
+    `${order.shippingAddress?.firstName ?? ""} ${
+      order.shippingAddress?.lastName ?? ""
+    }`,
+    order.id,
+    order.orderItems.map((item: (typeof order.orderItems)[number]) => ({
+      name: item.product.productName,
+      quantity: item.quantity,
+      price: item.priceAtPurchase,
+    })),
+    order.totalAmount,
+    {
+      name: `${order.shippingAddress?.firstName ?? ""} ${
+        order.shippingAddress?.lastName ?? ""
+      }`,
+      address: `${order.shippingAddress?.street ?? ""} ${
+        order.shippingAddress?.apartment || ""
+      }`,
+      city: order.shippingAddress?.city ?? "",
+      state: order.shippingAddress?.state ?? "",
+      zip: order.shippingAddress?.postalCode ?? "",
+      country: order.shippingAddress?.country ?? "",
+      phone: order.shippingAddress?.phone || "N/A",
+    },
+    order.placedAt.toISOString(),
+    order.paymentMethod
+  );
 
-    return order;
-  } catch (error: any) {
-    console.error("Error creating order from cart:", error);
-    throw new Error(error.message || "Failed to create order");
-  }
+  return order;
 };
 
 export const getBuyerOrders = async (
@@ -316,14 +324,13 @@ export const updatePaymentStatus = async (
   orderId: string,
   paymentData: PaymentUpdateData
 ) => {
-  const { paymentStatus, transactionId } = paymentData;
+  const { paymentStatus } = paymentData;
 
   try {
     const updatedOrder = await prisma.order.update({
       where: { id: orderId },
       data: {
         paymentStatus,
-        ...(transactionId && { transactionId }),
         updatedAt: new Date(),
       },
       include: {

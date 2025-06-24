@@ -1,25 +1,16 @@
-interface CartItem {
-    productId: string;
-    quantity: number;
-    product: {
-        sellingPrice: string;
-        availableStock: string;
-        productName: string;
-        artistId: string;
-    };
-}
-interface CreateOrderData {
-    addressIds: number;
-    paymentMethod: string;
-    cartItems: CartItem[];
-}
 interface PaymentUpdateData {
     paymentStatus: string;
     transactionId?: string;
 }
-export declare const createOrderFromCart: (buyerId: string, orderData: CreateOrderData) => Promise<{
+export declare const createOrderFromCart: (buyerId: string, orderData: {
+    shippingAddressId: number;
+    paymentMethod: string;
+    cartItems: any[];
+}) => Promise<{
     buyer: {
         email: string;
+        firstName: string | null;
+        lastName: string | null;
     };
     orderItems: ({
         product: {

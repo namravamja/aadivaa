@@ -13,19 +13,54 @@ import {
   User,
   MapPin,
   Plus,
+  Smartphone,
+  Banknote,
+  Loader2,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import { useGetCartQuery } from "@/services/api/cartApi";
-import { useCreateOrderMutation } from "@/services/api/orderApi";
+import {
+  useCreateOrderMutation,
+  useVerifyOrderMutation,
+} from "@/services/api/orderApi";
 import { useGetBuyerQuery } from "@/services/api/buyerApi";
 import { useAuth } from "@/hooks/useAuth";
 import { useAuthModal } from "@/app/(auth)/components/auth-modal-provider";
 
+// Razorpay types
+declare global {
+  interface Window {
+    Razorpay: any;
+  }
+}
+
+interface RazorpayOptions {
+  key: string;
+  amount: number;
+  currency: string;
+  name: string;
+  description: string;
+  order_id: string;
+  handler: (response: any) => void;
+  prefill: {
+    name: string;
+    email: string;
+    contact: string;
+  };
+  theme: {
+    color: string;
+  };
+  modal: {
+    ondismiss: () => void;
+  };
+}
+
 export default function CheckoutPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [selectedAddressIndex, setSelectedAddressIndex] = useState(0);
-  const [paymentMethod, setPaymentMethod] = useState("card");
+  const [paymentMethod, setPaymentMethod] = useState("razorpay");
+  const [razorpayLoaded, setRazorpayLoaded] = useState(false);
   const router = useRouter();
   const { isAuthenticated, isLoading: authLoading, user } = useAuth("buyer");
   const { openBuyerLogin } = useAuthModal();
@@ -51,12 +86,34 @@ export default function CheckoutPage() {
   });
 
   const [createOrder] = useCreateOrderMutation();
+  const [verifyOrder] = useVerifyOrderMutation();
+
+  // Load Razorpay script
+  useEffect(() => {
+    const loadRazorpay = () => {
+      if (window.Razorpay) {
+        setRazorpayLoaded(true);
+        return;
+      }
+
+      const script = document.createElement("script");
+      script.src = "https://checkout.razorpay.com/v1/checkout.js";
+      script.async = true;
+      script.onload = () => setRazorpayLoaded(true);
+      script.onerror = () => {
+        console.error("Failed to load Razorpay SDK");
+        toast.error("Payment system unavailable. Please try again later.");
+      };
+      document.body.appendChild(script);
+    };
+
+    loadRazorpay();
+  }, []);
 
   // Extract data from cache responses
   const buyerData = useMemo(() => {
     if (!buyerResponse) return null;
 
-    // Handle new cache format: {source: 'cache'|'db', data: {...}}
     if (
       buyerResponse &&
       typeof buyerResponse === "object" &&
@@ -65,14 +122,12 @@ export default function CheckoutPage() {
       return buyerResponse.data;
     }
 
-    // Handle old direct format
     return buyerResponse;
   }, [buyerResponse]);
 
   const cartItems = useMemo(() => {
     if (!cartResponse) return [];
 
-    // Handle new cache format: {source: 'cache'|'db', data: [...]}
     if (
       cartResponse &&
       typeof cartResponse === "object" &&
@@ -81,7 +136,6 @@ export default function CheckoutPage() {
       return Array.isArray(cartResponse.data) ? cartResponse.data : [];
     }
 
-    // Handle old direct format
     return Array.isArray(cartResponse) ? cartResponse : [];
   }, [cartResponse]);
 
@@ -118,6 +172,101 @@ export default function CheckoutPage() {
   const tax = subtotal * 0.08;
   const total = subtotal + shipping + tax;
 
+  // Handle Razorpay payment
+  const handleRazorpayPayment = async (razorpayOrderData: any) => {
+    if (!razorpayLoaded) {
+      toast.error("Payment system is loading. Please try again.");
+      return;
+    }
+
+    const selectedAddress = addresses[selectedAddressIndex];
+
+    const options: RazorpayOptions = {
+      key: razorpayOrderData.razorpayKeyId,
+      amount: razorpayOrderData.totalAmount,
+      currency: razorpayOrderData.currency,
+      name: "Aadivaa Earth",
+      description: "Order Payment",
+      order_id: razorpayOrderData.razorpayOrderId,
+      handler: async (response: any) => {
+        try {
+          setIsLoading(true);
+
+          // Verify payment with backend
+          const verificationResult = await verifyOrder({
+            razorpay_order_id: response.razorpay_order_id,
+            razorpay_payment_id: response.razorpay_payment_id,
+            razorpay_signature: response.razorpay_signature,
+          }).unwrap();
+
+          // Refetch cart and buyer data after successful payment
+          await Promise.all([refetchCart(), refetchBuyer()]);
+
+          toast.success("Payment successful! Order placed.", {
+            duration: 3000,
+            icon: "🎉",
+          });
+
+          router.push(`/Buyer/Orders/${verificationResult.data.id}`);
+        } catch (error: any) {
+          console.error("Payment verification failed:", error);
+          const errorMessage =
+            error?.data?.message || "Payment verification failed";
+          toast.error(errorMessage, { duration: 3000 });
+        } finally {
+          setIsLoading(false);
+        }
+      },
+      prefill: {
+        name: `${selectedAddress?.firstName || buyerData?.firstName || ""} ${
+          selectedAddress?.lastName || buyerData?.lastName || ""
+        }`,
+        email: buyerData?.email || "",
+        contact: selectedAddress?.phone || buyerData?.phone || "",
+      },
+      theme: {
+        color: "#D97706", // terracotta color
+      },
+      modal: {
+        ondismiss: () => {
+          setIsLoading(false);
+          toast.error("Payment cancelled");
+        },
+      },
+    };
+
+    const rzp = new window.Razorpay(options);
+    rzp.open();
+  };
+
+  // Handle COD order
+  const handleCODOrder = async () => {
+    try {
+      const selectedAddress = addresses[selectedAddressIndex];
+
+      const orderData = {
+        addressIds: [selectedAddress.id],
+        paymentMethod: "cod",
+      };
+
+      const result = await createOrder(orderData).unwrap();
+
+      // Refetch cart and buyer data after placing order
+      await Promise.all([refetchCart(), refetchBuyer()]);
+
+      toast.success("Order placed successfully!", {
+        duration: 3000,
+        icon: "🎉",
+      });
+
+      router.push(`/Buyer/Orders/${result.data.id}`);
+    } catch (error: any) {
+      console.error("Error placing COD order:", error);
+      const errorMessage = error?.data?.message || "Failed to place order";
+      toast.error(errorMessage, { duration: 3000 });
+    }
+  };
+
   const handlePlaceOrder = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -140,36 +289,27 @@ export default function CheckoutPage() {
     setIsLoading(true);
 
     try {
-      const orderData = {
-        addressIds: addressIds[0],
-        paymentMethod,
-        buyer: {
-          connect: {
-            id: user?.id || buyerData?.id,
-          },
-        },
-      };
+      if (paymentMethod === "cod") {
+        await handleCODOrder();
+      } else {
+        // Handle Razorpay payments (card, upi, etc.)
+        const orderData = {
+          addressIds: [selectedAddress.id],
+          paymentMethod: "razorpay",
+        };
 
-      const result = await createOrder(orderData).unwrap();
+        const result = await createOrder(orderData).unwrap();
 
-      // ✅ Refetch cart and buyer data after placing order
-      await refetchCart();
-      await refetchBuyer();
-
-      toast.success("Order placed successfully!", {
-        duration: 3000,
-        icon: "🎉",
-      });
-
-      router.push(`/Buyer/Orders/${result.data.id}`);
+        if (result.data.razorpayOrderId) {
+          await handleRazorpayPayment(result.data);
+        } else {
+          throw new Error("Failed to create Razorpay order");
+        }
+      }
     } catch (error: any) {
       console.error("Error placing order:", error);
-      const errorMessage =
-        error?.data?.message || error?.message || "Failed to place order";
-      toast.error(errorMessage, {
-        duration: 3000,
-      });
-    } finally {
+      const errorMessage = error?.data?.message || "Failed to place order";
+      toast.error(errorMessage, { duration: 3000 });
       setIsLoading(false);
     }
   };
@@ -395,8 +535,15 @@ export default function CheckoutPage() {
                     Payment Method
                   </h2>
                 </div>
-                <div className="space-y-3">
-                  <label className="flex items-center cursor-pointer">
+                <div className="space-y-4">
+                  {/* Card Payment */}
+                  <label
+                    className={`flex items-center p-4 border rounded-lg cursor-pointer transition-colors ${
+                      paymentMethod === "card"
+                        ? "border-terracotta-600 bg-terracotta-50"
+                        : "border-stone-200 hover:border-stone-300"
+                    }`}
+                  >
                     <input
                       type="radio"
                       name="paymentMethod"
@@ -405,9 +552,25 @@ export default function CheckoutPage() {
                       onChange={(e) => setPaymentMethod(e.target.value)}
                       className="mr-3"
                     />
-                    <span className="text-stone-700">Credit/Debit Card</span>
+                    <CreditCard className="w-5 h-5 text-stone-600 mr-3" />
+                    <div>
+                      <span className="text-stone-900 font-medium">
+                        Credit/Debit Card
+                      </span>
+                      <p className="text-stone-500 text-sm">
+                        Visa, MasterCard, RuPay
+                      </p>
+                    </div>
                   </label>
-                  <label className="flex items-center cursor-pointer">
+
+                  {/* UPI Payment */}
+                  <label
+                    className={`flex items-center p-4 border rounded-lg cursor-pointer transition-colors ${
+                      paymentMethod === "upi"
+                        ? "border-terracotta-600 bg-terracotta-50"
+                        : "border-stone-200 hover:border-stone-300"
+                    }`}
+                  >
                     <input
                       type="radio"
                       name="paymentMethod"
@@ -416,9 +579,50 @@ export default function CheckoutPage() {
                       onChange={(e) => setPaymentMethod(e.target.value)}
                       className="mr-3"
                     />
-                    <span className="text-stone-700">UPI</span>
+                    <Smartphone className="w-5 h-5 text-stone-600 mr-3" />
+                    <div>
+                      <span className="text-stone-900 font-medium">UPI</span>
+                      <p className="text-stone-500 text-sm">
+                        Pay using UPI apps like GPay, PhonePe, Paytm
+                      </p>
+                    </div>
                   </label>
-                  <label className="flex items-center cursor-pointer">
+
+                  {/* Net Banking */}
+                  <label
+                    className={`flex items-center p-4 border rounded-lg cursor-pointer transition-colors ${
+                      paymentMethod === "netbanking"
+                        ? "border-terracotta-600 bg-terracotta-50"
+                        : "border-stone-200 hover:border-stone-300"
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="paymentMethod"
+                      value="netbanking"
+                      checked={paymentMethod === "netbanking"}
+                      onChange={(e) => setPaymentMethod(e.target.value)}
+                      className="mr-3"
+                    />
+                    <Banknote className="w-5 h-5 text-stone-600 mr-3" />
+                    <div>
+                      <span className="text-stone-900 font-medium">
+                        Net Banking
+                      </span>
+                      <p className="text-stone-500 text-sm">
+                        Pay using your bank account
+                      </p>
+                    </div>
+                  </label>
+
+                  {/* Cash on Delivery */}
+                  <label
+                    className={`flex items-center p-4 border rounded-lg cursor-pointer transition-colors ${
+                      paymentMethod === "cod"
+                        ? "border-terracotta-600 bg-terracotta-50"
+                        : "border-stone-200 hover:border-stone-300"
+                    }`}
+                  >
                     <input
                       type="radio"
                       name="paymentMethod"
@@ -427,7 +631,15 @@ export default function CheckoutPage() {
                       onChange={(e) => setPaymentMethod(e.target.value)}
                       className="mr-3"
                     />
-                    <span className="text-stone-700">Cash on Delivery</span>
+                    <Truck className="w-5 h-5 text-stone-600 mr-3" />
+                    <div>
+                      <span className="text-stone-900 font-medium">
+                        Cash on Delivery
+                      </span>
+                      <p className="text-stone-500 text-sm">
+                        Pay when your order is delivered
+                      </p>
+                    </div>
                   </label>
                 </div>
               </div>
@@ -513,20 +725,29 @@ export default function CheckoutPage() {
                 {/* Place Order Button */}
                 <button
                   type="submit"
-                  disabled={isLoading || addresses.length === 0}
+                  disabled={
+                    isLoading ||
+                    addresses.length === 0 ||
+                    (paymentMethod !== "cod" && !razorpayLoaded)
+                  }
                   className="w-full bg-terracotta-600 hover:bg-terracotta-700 text-white px-6 py-3 font-medium transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isLoading ? (
                     <span className="flex items-center justify-center">
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                      Placing Order...
+                      <Loader2 className="animate-spin h-4 w-4 mr-2" />
+                      {paymentMethod === "cod"
+                        ? "Placing Order..."
+                        : "Processing Payment..."}
                     </span>
                   ) : addresses.length === 0 ? (
                     "Add Address to Continue"
+                  ) : paymentMethod !== "cod" && !razorpayLoaded ? (
+                    "Loading Payment System..."
                   ) : (
                     <span className="flex items-center justify-center">
                       <CheckCircle className="w-4 h-4 mr-2" />
-                      Place Order - ₹{total.toFixed(2)}
+                      {paymentMethod === "cod" ? "Place Order" : "Pay Now"} - ₹
+                      {total.toFixed(2)}
                     </span>
                   )}
                 </button>

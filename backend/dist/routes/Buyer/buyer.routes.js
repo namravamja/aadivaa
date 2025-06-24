@@ -69,6 +69,7 @@ router.put("/cart/update", cartController.updateCartItem);
 router.delete("/cart/delete", cartController.removeFromCart);
 // ------------------- Order Routes -------------------
 router.post("/order/create", orderController.createOrder);
+router.post("/order/verify-payment", orderController.verifyRazorpayPayment);
 router.get("/order/list", orderController.getBuyerOrders);
 router.get("/order/:orderId", orderController.getOrderById);
 router.put("/order/cancel/:orderId", orderController.cancelOrder);

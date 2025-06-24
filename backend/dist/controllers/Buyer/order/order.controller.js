@@ -32,54 +32,154 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.updatePaymentStatus = exports.cancelOrder = exports.getOrderById = exports.getBuyerOrders = exports.createOrder = void 0;
+exports.updatePaymentStatus = exports.cancelOrder = exports.getOrderById = exports.getBuyerOrders = exports.verifyRazorpayPayment = exports.createOrder = void 0;
 const orderService = __importStar(require("../../../services/Buyer/order/order.service"));
 const cartService = __importStar(require("../../../services/Buyer/cart/cart.service"));
 const cache_1 = require("../../../helpers/cache");
+const razorpay_1 = require("../../../utils/razorpay");
+const crypto_1 = __importDefault(require("crypto"));
+// Updated createOrder function with better Razorpay configuration
 const createOrder = async (req, res) => {
     try {
         const buyerId = req.user?.id;
-        if (!buyerId)
-            throw new Error("Unauthorized");
+        if (!buyerId) {
+            return res.status(401).json({
+                success: false,
+                message: "Unauthorized: Buyer ID is missing",
+            });
+        }
         const { addressIds, paymentMethod } = req.body;
         if (!addressIds || !paymentMethod) {
             return res.status(400).json({
                 success: false,
-                message: "add & payment method are required",
+                message: "Both addressIds and paymentMethod are required.",
             });
         }
+        // Extract the first address ID (assuming single shipping address)
+        const shippingAddressId = Array.isArray(addressIds)
+            ? addressIds[0]
+            : addressIds;
         const cartItems = await cartService.getCartByBuyerId(buyerId);
         if (!cartItems || cartItems.length === 0) {
             return res.status(400).json({
                 success: false,
-                message: "Cart is empty. Cannot create order.",
+                message: "Cart is empty. Cannot proceed.",
             });
         }
+        let totalAmount = 0;
+        for (const cartItem of cartItems) {
+            const itemTotal = parseFloat(cartItem.product.sellingPrice) * cartItem.quantity;
+            totalAmount += itemTotal;
+        }
+        const subtotal = totalAmount;
+        const shipping = subtotal >= 100 ? 0 : 15;
+        const tax = subtotal * 0.08;
+        const finalAmount = subtotal + shipping + tax;
+        if (paymentMethod === "razorpay") {
+            const razorpayOrderOptions = {
+                amount: Math.round(finalAmount * 100),
+                currency: "INR",
+                receipt: `rcpt_${Date.now()}`, // must be under 40 chars
+                notes: {
+                    buyer_id: buyerId,
+                    shippingAddressId: shippingAddressId.toString(),
+                },
+            };
+            const razorOrder = await razorpay_1.razorpay.orders.create(razorpayOrderOptions);
+            return res.status(201).json({
+                success: true,
+                message: "Razorpay order created. Proceed with payment.",
+                data: {
+                    razorpayOrderId: razorOrder.id,
+                    razorpayKeyId: process.env.RAZORPAY_KEY_ID,
+                    totalAmount: finalAmount,
+                    currency: "INR",
+                },
+            });
+        }
+        // Handle other methods like COD
         const order = await orderService.createOrderFromCart(buyerId, {
-            addressIds,
+            shippingAddressId, // Pass single address ID
             paymentMethod,
             cartItems,
         });
         await cartService.clearCart(buyerId);
-        // Clear related caches after order creation
         await (0, cache_1.deleteCache)(`buyer_orders:${buyerId}:*`);
         await (0, cache_1.deleteCache)(`cart:${buyerId}`);
-        res.status(201).json({
+        return res.status(201).json({
             success: true,
-            message: "Order placed successfully",
+            message: "Order placed successfully.",
             data: order,
         });
     }
     catch (error) {
-        console.error("Error creating order:", error);
-        res.status(500).json({
+        console.error("Error in createOrder:", error);
+        return res.status(500).json({
             success: false,
-            message: error.message || "Failed to create order",
+            message: error.message || "Failed to create order.",
         });
     }
 };
 exports.createOrder = createOrder;
+const verifyRazorpayPayment = async (req, res) => {
+    try {
+        const buyerId = req.user?.id;
+        if (!buyerId) {
+            return res.status(401).json({ success: false, message: "Unauthorized" });
+        }
+        const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
+        const hmac = crypto_1.default.createHmac("sha256", process.env.RAZORPAY_KEY_SECRET);
+        hmac.update(`${razorpay_order_id}|${razorpay_payment_id}`);
+        const generatedSignature = hmac.digest("hex");
+        if (generatedSignature !== razorpay_signature) {
+            return res
+                .status(400)
+                .json({ success: false, message: "Invalid signature" });
+        }
+        const razorpayOrder = await razorpay_1.razorpay.orders.fetch(razorpay_order_id);
+        // Get single address ID from notes
+        const shippingAddressId = parseInt(String(razorpayOrder.notes?.shippingAddressId || "0"));
+        if (!shippingAddressId) {
+            return res
+                .status(400)
+                .json({ success: false, message: "Invalid shipping address." });
+        }
+        const cartItems = await cartService.getCartByBuyerId(buyerId);
+        if (!cartItems || cartItems.length === 0) {
+            return res
+                .status(400)
+                .json({ success: false, message: "Cart is empty." });
+        }
+        const order = await orderService.createOrderFromCart(buyerId, {
+            shippingAddressId, // Pass single address ID
+            paymentMethod: "razorpay",
+            cartItems,
+        });
+        await orderService.updatePaymentStatus(order.id, {
+            paymentStatus: "paid",
+        });
+        await cartService.clearCart(buyerId);
+        await (0, cache_1.deleteCache)(`buyer_orders:${buyerId}:*`);
+        await (0, cache_1.deleteCache)(`cart:${buyerId}`);
+        return res.status(200).json({
+            success: true,
+            message: "Payment verified and order created successfully.",
+            data: order,
+        });
+    }
+    catch (error) {
+        console.error("Error in verifyRazorpayPayment:", error);
+        return res.status(500).json({
+            success: false,
+            message: error.message || "Verification failed.",
+        });
+    }
+};
+exports.verifyRazorpayPayment = verifyRazorpayPayment;
 const getBuyerOrders = async (req, res) => {
     try {
         const buyerId = req.user?.id;
@@ -184,10 +284,9 @@ exports.cancelOrder = cancelOrder;
 const updatePaymentStatus = async (req, res) => {
     try {
         const { orderId } = req.params;
-        const { paymentStatus, transactionId } = req.body;
+        const { paymentStatus } = req.body;
         const order = await orderService.updatePaymentStatus(orderId, {
             paymentStatus,
-            transactionId,
         });
         // Clear order-related caches (we don't have buyerId here, so clear by orderId pattern)
         await (0, cache_1.deleteCache)(`buyer_order:*:${orderId}`);
