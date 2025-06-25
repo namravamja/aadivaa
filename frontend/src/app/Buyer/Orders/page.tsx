@@ -140,12 +140,6 @@ export default function BuyerOrdersPage() {
     return filtered;
   }, [orders, searchTerm, dateFilter]);
 
-  const downloadInvoice = (orderId: string) => {
-    // Implementation for downloading invoice
-    console.log(`Downloading invoice for order ${orderId}`);
-    // This would typically call an API endpoint to generate and download the invoice
-  };
-
   // Check if any filters are active
   const hasActiveFilters =
     searchTerm || statusFilter !== "all" || dateFilter !== "all";
@@ -478,15 +472,6 @@ export default function BuyerOrdersPage() {
                           View Details
                         </button>
                       </Link>
-                      {order.paymentStatus?.toLowerCase() === "paid" && (
-                        <button
-                          onClick={() => downloadInvoice(order.id)}
-                          className="border border-stone-600 text-black bg-blue-200 hover:bg-stone-50 px-3 py-1 text-sm font-medium transition-colors cursor-pointer rounded"
-                        >
-                          <Download className="w-4 h-4 mr-2 inline" />
-                          Invoice
-                        </button>
-                      )}
                     </div>
                   </div>
                 </div>

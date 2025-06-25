@@ -24,7 +24,7 @@ export default function Footer() {
               />
               <button
                 type="submit"
-                className="bg-terracotta-600 text-white px-6 py-3"
+                className="bg-terracotta-600 text-white px-6 py-3 cursor-pointer"
                 aria-label="Subscribe"
               >
                 Subscribe
@@ -40,7 +40,7 @@ export default function Footer() {
             <ul className="space-y-4 text-stone-600">
               <li>
                 <Link
-                  href="/products"
+                  href="/Products"
                   className="hover:text-terracotta-600 transition-colors"
                 >
                   All Products
@@ -48,7 +48,7 @@ export default function Footer() {
               </li>
               <li>
                 <Link
-                  href="/products?category=jewelry"
+                  href="/Products?category=jewelry"
                   className="hover:text-terracotta-600 transition-colors"
                 >
                   Jewelry
@@ -56,7 +56,7 @@ export default function Footer() {
               </li>
               <li>
                 <Link
-                  href="/products?category=textiles"
+                  href="/Products?category=textile"
                   className="hover:text-terracotta-600 transition-colors"
                 >
                   Textiles
@@ -64,15 +64,15 @@ export default function Footer() {
               </li>
               <li>
                 <Link
-                  href="/products?category=decor"
+                  href="/Products?category=handicraft"
                   className="hover:text-terracotta-600 transition-colors"
                 >
-                  Home Decor
+                  Handicrafts
                 </Link>
               </li>
               <li>
                 <Link
-                  href="/products?category=accessories"
+                  href="/Products?category=accessories"
                   className="hover:text-terracotta-600 transition-colors"
                 >
                   Accessories
@@ -89,7 +89,7 @@ export default function Footer() {
             <ul className="space-y-4 text-stone-600">
               <li>
                 <Link
-                  href="/about"
+                  href="/About"
                   className="hover:text-terracotta-600 transition-colors"
                 >
                   Our Mission
@@ -97,7 +97,7 @@ export default function Footer() {
               </li>
               <li>
                 <Link
-                  href="/artists"
+                  href="/Artists"
                   className="hover:text-terracotta-600 transition-colors"
                 >
                   Artists
@@ -105,15 +105,15 @@ export default function Footer() {
               </li>
               <li>
                 <Link
-                  href="/journal"
+                  href="/HowTo"
                   className="hover:text-terracotta-600 transition-colors"
                 >
-                  Journal
+                  How to be an seller
                 </Link>
               </li>
               <li>
                 <Link
-                  href="/contact"
+                  href="/About"
                   className="hover:text-terracotta-600 transition-colors"
                 >
                   Contact
@@ -121,7 +121,7 @@ export default function Footer() {
               </li>
               <li>
                 <Link
-                  href="/faq"
+                  href="/HowTo#faq"
                   className="hover:text-terracotta-600 transition-colors"
                 >
                   FAQ
@@ -133,23 +133,23 @@ export default function Footer() {
 
         <div className="border-t border-stone-200 mt-12 pt-8 flex flex-col md:flex-row justify-between items-center">
           <p className="text-stone-500 text-sm">
-            © {new Date().getFullYear()} TribalCrafts. All rights reserved.
+            © {new Date().getFullYear()} AadivaaEarth. All rights reserved.
           </p>
           <div className="flex space-x-6 mt-4 md:mt-0">
             <Link
-              href="/terms"
+              href="/#"
               className="text-stone-500 text-sm hover:text-terracotta-600 transition-colors"
             >
               Terms
             </Link>
             <Link
-              href="/privacy"
+              href="/#"
               className="text-stone-500 text-sm hover:text-terracotta-600 transition-colors"
             >
               Privacy
             </Link>
             <Link
-              href="/shipping"
+              href="/#"
               className="text-stone-500 text-sm hover:text-terracotta-600 transition-colors"
             >
               Shipping

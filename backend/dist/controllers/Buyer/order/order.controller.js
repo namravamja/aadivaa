@@ -37,12 +37,11 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.updatePaymentStatus = exports.cancelOrder = exports.getOrderById = exports.getBuyerOrders = exports.verifyRazorpayPayment = exports.createOrder = void 0;
+const crypto_1 = __importDefault(require("crypto"));
 const orderService = __importStar(require("../../../services/Buyer/order/order.service"));
 const cartService = __importStar(require("../../../services/Buyer/cart/cart.service"));
 const cache_1 = require("../../../helpers/cache");
 const razorpay_1 = require("../../../utils/razorpay");
-const crypto_1 = __importDefault(require("crypto"));
-// Updated createOrder function with better Razorpay configuration
 const createOrder = async (req, res) => {
     try {
         const buyerId = req.user?.id;
@@ -59,7 +58,6 @@ const createOrder = async (req, res) => {
                 message: "Both addressIds and paymentMethod are required.",
             });
         }
-        // Extract the first address ID (assuming single shipping address)
         const shippingAddressId = Array.isArray(addressIds)
             ? addressIds[0]
             : addressIds;
@@ -83,7 +81,7 @@ const createOrder = async (req, res) => {
             const razorpayOrderOptions = {
                 amount: Math.round(finalAmount * 100),
                 currency: "INR",
-                receipt: `rcpt_${Date.now()}`, // must be under 40 chars
+                receipt: `rcpt_${Date.now()}`,
                 notes: {
                     buyer_id: buyerId,
                     shippingAddressId: shippingAddressId.toString(),
@@ -101,15 +99,20 @@ const createOrder = async (req, res) => {
                 },
             });
         }
-        // Handle other methods like COD
         const order = await orderService.createOrderFromCart(buyerId, {
-            shippingAddressId, // Pass single address ID
+            shippingAddressId,
             paymentMethod,
             cartItems,
         });
         await cartService.clearCart(buyerId);
         await (0, cache_1.deleteCache)(`buyer_orders:${buyerId}:*`);
         await (0, cache_1.deleteCache)(`cart:${buyerId}`);
+        // ✨ Manually set fresh orders in Redis to avoid stale delay
+        const updatedOrders = await orderService.getBuyerOrders(buyerId, {
+            page: 1,
+            limit: 10,
+        });
+        await (0, cache_1.setCache)(`buyer_orders:${buyerId}:page:1:limit:10:status:all`, updatedOrders);
         return res.status(201).json({
             success: true,
             message: "Order placed successfully.",
@@ -141,7 +144,6 @@ const verifyRazorpayPayment = async (req, res) => {
                 .json({ success: false, message: "Invalid signature" });
         }
         const razorpayOrder = await razorpay_1.razorpay.orders.fetch(razorpay_order_id);
-        // Get single address ID from notes
         const shippingAddressId = parseInt(String(razorpayOrder.notes?.shippingAddressId || "0"));
         if (!shippingAddressId) {
             return res
@@ -155,7 +157,7 @@ const verifyRazorpayPayment = async (req, res) => {
                 .json({ success: false, message: "Cart is empty." });
         }
         const order = await orderService.createOrderFromCart(buyerId, {
-            shippingAddressId, // Pass single address ID
+            shippingAddressId,
             paymentMethod: "razorpay",
             cartItems,
         });
@@ -165,6 +167,12 @@ const verifyRazorpayPayment = async (req, res) => {
         await cartService.clearCart(buyerId);
         await (0, cache_1.deleteCache)(`buyer_orders:${buyerId}:*`);
         await (0, cache_1.deleteCache)(`cart:${buyerId}`);
+        // ✨ Manually set fresh orders in Redis
+        const updatedOrders = await orderService.getBuyerOrders(buyerId, {
+            page: 1,
+            limit: 10,
+        });
+        await (0, cache_1.setCache)(`buyer_orders:${buyerId}:page:1:limit:10:status:all`, updatedOrders);
         return res.status(200).json({
             success: true,
             message: "Payment verified and order created successfully.",

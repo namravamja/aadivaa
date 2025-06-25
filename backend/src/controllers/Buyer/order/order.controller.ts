@@ -1,15 +1,14 @@
-import type { Request, Response } from "express";
+import { Request, Response } from "express";
+import crypto from "crypto";
 import * as orderService from "../../../services/Buyer/order/order.service";
 import * as cartService from "../../../services/Buyer/cart/cart.service";
 import { getCache, setCache, deleteCache } from "../../../helpers/cache";
 import { razorpay } from "../../../utils/razorpay";
-import crypto from "crypto";
 
 interface AuthenticatedRequest extends Request {
   user?: { id: string; role: string };
 }
 
-// Updated createOrder function with better Razorpay configuration
 export const createOrder = async (req: AuthenticatedRequest, res: Response) => {
   try {
     const buyerId = req.user?.id;
@@ -28,7 +27,6 @@ export const createOrder = async (req: AuthenticatedRequest, res: Response) => {
       });
     }
 
-    // Extract the first address ID (assuming single shipping address)
     const shippingAddressId = Array.isArray(addressIds)
       ? addressIds[0]
       : addressIds;
@@ -57,7 +55,7 @@ export const createOrder = async (req: AuthenticatedRequest, res: Response) => {
       const razorpayOrderOptions = {
         amount: Math.round(finalAmount * 100),
         currency: "INR",
-        receipt: `rcpt_${Date.now()}`, // must be under 40 chars
+        receipt: `rcpt_${Date.now()}`,
         notes: {
           buyer_id: buyerId,
           shippingAddressId: shippingAddressId.toString(),
@@ -78,9 +76,8 @@ export const createOrder = async (req: AuthenticatedRequest, res: Response) => {
       });
     }
 
-    // Handle other methods like COD
     const order = await orderService.createOrderFromCart(buyerId, {
-      shippingAddressId, // Pass single address ID
+      shippingAddressId,
       paymentMethod,
       cartItems,
     });
@@ -88,6 +85,16 @@ export const createOrder = async (req: AuthenticatedRequest, res: Response) => {
     await cartService.clearCart(buyerId);
     await deleteCache(`buyer_orders:${buyerId}:*`);
     await deleteCache(`cart:${buyerId}`);
+
+    // ✨ Manually set fresh orders in Redis to avoid stale delay
+    const updatedOrders = await orderService.getBuyerOrders(buyerId, {
+      page: 1,
+      limit: 10,
+    });
+    await setCache(
+      `buyer_orders:${buyerId}:page:1:limit:10:status:all`,
+      updatedOrders
+    );
 
     return res.status(201).json({
       success: true,
@@ -127,7 +134,6 @@ export const verifyRazorpayPayment = async (
     }
 
     const razorpayOrder = await razorpay.orders.fetch(razorpay_order_id);
-    // Get single address ID from notes
     const shippingAddressId = parseInt(
       String(razorpayOrder.notes?.shippingAddressId || "0")
     );
@@ -146,7 +152,7 @@ export const verifyRazorpayPayment = async (
     }
 
     const order = await orderService.createOrderFromCart(buyerId, {
-      shippingAddressId, // Pass single address ID
+      shippingAddressId,
       paymentMethod: "razorpay",
       cartItems,
     });
@@ -158,6 +164,16 @@ export const verifyRazorpayPayment = async (
     await cartService.clearCart(buyerId);
     await deleteCache(`buyer_orders:${buyerId}:*`);
     await deleteCache(`cart:${buyerId}`);
+
+    // ✨ Manually set fresh orders in Redis
+    const updatedOrders = await orderService.getBuyerOrders(buyerId, {
+      page: 1,
+      limit: 10,
+    });
+    await setCache(
+      `buyer_orders:${buyerId}:page:1:limit:10:status:all`,
+      updatedOrders
+    );
 
     return res.status(200).json({
       success: true,
@@ -186,8 +202,8 @@ export const getBuyerOrders = async (
     const cacheKey = `buyer_orders:${buyerId}:page:${page}:limit:${limit}:status:${
       status || "all"
     }`;
-    const cachedOrders = await getCache(cacheKey);
 
+    const cachedOrders = await getCache(cacheKey);
     if (cachedOrders) {
       return res.status(200).json({
         success: true,

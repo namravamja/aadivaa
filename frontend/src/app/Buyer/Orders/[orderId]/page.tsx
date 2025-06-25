@@ -21,6 +21,7 @@ import {
 } from "@/services/api/orderApi";
 import { useAuth } from "@/hooks/useAuth";
 import { useAuthModal } from "@/app/(auth)/components/auth-modal-provider";
+import InvoiceComponent from "../components/Invoice"; // Import the invoice component
 
 // Custom Confirmation Dialog Component
 type ConfirmationDialogProps = {
@@ -552,7 +553,11 @@ export default function OrderDetailsPage() {
                 <h2 className="text-xl font-medium text-stone-900 mb-6">
                   Order Actions
                 </h2>
-
+                {order.paymentStatus?.toLowerCase() === "paid" && (
+                  <>
+                    <InvoiceComponent order={order} />
+                  </>
+                )}
                 {order.status === "pending" && (
                   <button
                     onClick={handleCancelOrderClick}
