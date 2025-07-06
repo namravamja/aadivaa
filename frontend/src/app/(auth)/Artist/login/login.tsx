@@ -1,7 +1,7 @@
 "use client";
 
 import type React from "react";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { Eye, EyeOff, Mail, Lock, Loader2, X } from "lucide-react";
 import toast from "react-hot-toast";
@@ -35,12 +35,29 @@ export default function ArtistLoginModal({
     useLoginArtistMutation();
 
   const {
-    data: artistData,
+    data: artistResponse,
     isLoading: isArtistLoading,
     refetch,
   } = useGetartistQuery(undefined, {
     skip: !shouldFetchArtist,
   });
+
+  // Extract artist data from cache response (same as profile page)
+  const artistData = useMemo(() => {
+    if (!artistResponse) return null;
+
+    // Handle new cache format: {source: 'cache'|'db', data: {...}}
+    if (
+      artistResponse &&
+      typeof artistResponse === "object" &&
+      "data" in artistResponse
+    ) {
+      return artistResponse.data;
+    }
+
+    // Handle old direct format
+    return artistResponse;
+  }, [artistResponse]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = e.target;
